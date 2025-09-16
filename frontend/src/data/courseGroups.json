@@ -1,0 +1,51 @@
+[
+  {
+    "title": "Planting Knowledge, Harvesting Success",
+    "subtitle": "(Skill Development - Java, Interview, Spoken English, Abacus, etc.)",
+    "description": "At Last Try Academy, our motto “Planting Knowledge, Harvesting Success” shows how education is like the growth of a plant...",
+    "image": "/Plant.png",
+    "bgColor": "linear-gradient(135deg, #d4fc79, #96e6a1)"
+  },
+  {
+    "title": "Root Group (1st – 4th Standard)",
+    "subtitle": "(Strong Foundation - Basics & Values)",
+    "description": "The Root group represents the starting stage of education, just like roots are the base of a plant...",
+    "image": "/Root.png",
+    "bgColor": "linear-gradient(135deg, #7b3f00, #4e342e)"
+  },
+  {
+    "title": "Stem Group (5th – 8th Standard)",
+    "subtitle": "(Growth & Curiosity)",
+    "description": "The Stem group symbolizes growth and support, just like the stem carries water and nutrients...",
+    "image": "/Stem.png",
+    "bgColor": "linear-gradient(135deg, #a8e063, #56ab2f)"
+  },
+  {
+    "title": "Leaf Group (9th – 12th Standard)",
+    "subtitle": "(Board Exams & Mastery)",
+    "description": "The Leaf group represents productivity, just like leaves prepare food for the whole plant...",
+    "image": "/Leaf.png",
+    "bgColor": "linear-gradient(135deg, #6D4C41, #A1887F)"
+  },
+  {
+    "title": "Flower Group (Entrance Exams – JEE, NEET, etc.)",
+    "subtitle": "(Specialization & Talent)",
+    "description": "The Flower group represents blooming and identity, just like flowers show the beauty of a plant...",
+    "image": "/Flower.png",
+    "bgColor": "linear-gradient(135deg, #E91E63, #9C27B0)"
+  },
+  {
+    "title": "Fruit Group (Government Exams – State, Central)",
+    "subtitle": "(Reward & Success)",
+    "description": "The Fruit group represents achievement and reward, just like fruits are the result of a plant’s growth...",
+    "image": "/Fruits.png",
+    "bgColor": "linear-gradient(135deg, #FF9800, #F44336)"
+  },
+  {
+    "title": "Seed Group (Skill Development – Java, Interview, Spoken English, Abacus, etc.)",
+    "subtitle": "(Career Skills)",
+    "description": "The Seed group represents new beginnings and spreading growth, just like seeds start new life...",
+    "image": "/Seed.png",
+    "bgColor": "linear-gradient(135deg, #6D4C41, #A1887F)"
+  }
+]

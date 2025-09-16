@@ -5,22 +5,27 @@ import {
   Navigate,
 } from "react-router-dom";
 import { useEffect, useState } from "react";
-import Navbar from "./components/Navbar";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard"; // student dashboard
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminUpload from "./pages/AdminUpload";
-import CourseDetail from "./pages/CourseDetail";
-import PrivateRoute from "./components/PrivateRoute";
-import AdminLayout from "./components/AdminLayout";
-import AddCourse from "./pages/AddCourse";
-import MyCourses from "./pages/MyCourses";
+import Navbar from "./components/common/Navbar";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+import Dashboard from "./pages/student/StudentDashboard"; // student dashboard
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUpload from "./pages/admin/AdminUpload";
+import CourseDetail from "./pages/student/CourseDetail";
+import PrivateRoute from "./components/auth/PrivateRoute";
+import AdminLayout from "./layouts/AdminLayout";
+import AddCourse from "./pages/admin/AddCourse";
+import MyCourses from "./pages/student/MyCourses";
+import LandingPage from "./pages/landing/LandingPage";
+import Courses from "./pages/shared/Courses";
+import AdminPayments from "./pages/admin/AdminPayments"; // ✅ new page
+
+
+
 
 // 👇 import your admin pages
-import AdminVideos from "./pages/AdminVideos";
-import AdminStudents from "./pages/AdminStudents";
+import AdminVideos from "./pages/admin/AdminVideos";
+import AdminStudents from "./pages/admin/AdminStudents";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -33,12 +38,17 @@ function App() {
   return (
     <Router>
       <div className="bg-darkBg min-h-screen text-gray-200">
-        {/* ✅ Show normal Navbar only if not admin */}
+        {/* Show normal Navbar only if not admin */}
         {user?.role !== "admin" && <Navbar />}
 
         <Routes>
-          {/* ✅ Public */}
-          <Route path="/" element={<Home />} />
+          {/* Public */}
+                    {/* Landing page */}
+          <Route path="/" element={<LandingPage />} />
+
+          {/* ✅ Courses page */}
+          <Route path="/courses" element={<Courses />} />
+
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
@@ -85,6 +95,8 @@ function App() {
             <Route path="add-course" element={<AddCourse />} />
             <Route path="videos" element={<AdminVideos />} />
             <Route path="students" element={<AdminStudents />} />
+                        <Route path="payments" element={<AdminPayments />} /> {/* ✅ new */}
+
           </Route>
 
           {/* ✅ Fallback */}

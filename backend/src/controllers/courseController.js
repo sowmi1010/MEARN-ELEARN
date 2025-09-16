@@ -4,6 +4,7 @@ const Course = require("../models/Course");
 // Create new course
 const createCourse = async (req, res) => {
   try {
+        console.log("🔑 Authenticated user:", req.user); // 👈 debug log
     const { title, description, category, price } = req.body;
 
     if (!title || !category) {
