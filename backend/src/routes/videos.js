@@ -3,10 +3,10 @@ const router = express.Router();
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
-const auth = require("../middlewares/auth");
-const role = require("../middlewares/role");
+const jwt = require("jsonwebtoken");
 const Video = require("../models/Video");
 const Course = require("../models/Course");
+const User = require("../models/User");
 
 // 📂 Ensure uploads/videos folder exists
 const uploadDir = path.join(__dirname, "../../uploads/videos");
@@ -14,7 +14,7 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// 📂 Storage config for local uploads
+// 📂 Multer storage config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) =>
@@ -27,20 +27,15 @@ const upload = multer({ storage });
  */
 router.post(
   "/upload",
-  auth,
-  role("admin"),
   upload.single("file"),
   async (req, res) => {
     try {
       const { courseId, title, lesson, description, duration } = req.body;
 
       if (!courseId || !title || !req.file) {
-        return res
-          .status(400)
-          .json({ message: "Course, title, and file are required" });
+        return res.status(400).json({ message: "Course, title, and file are required" });
       }
 
-      // save video in DB (store filePath)
       const video = await Video.create({
         course: courseId,
         title,
@@ -50,63 +45,50 @@ router.post(
         filePath: req.file.path,
       });
 
-      // link video to course
-      await Course.findByIdAndUpdate(courseId, {
-        $push: { videos: video._id },
-      });
+      await Course.findByIdAndUpdate(courseId, { $push: { videos: video._id } });
 
       res.json(video);
     } catch (err) {
       console.error("❌ Upload error:", err);
-      res
-        .status(500)
-        .json({ message: "Failed to upload video", error: err.message });
+      res.status(500).json({ message: "Failed to upload video", error: err.message });
     }
   }
 );
 
 /**
- * ✅ Get all videos (admin only)
+ * ✅ Stream video with query token
  */
-router.get("/", auth, role("admin"), async (req, res) => {
+router.get("/stream/:id", async (req, res) => {
   try {
-    const videos = await Video.find().populate("course", "title");
-    res.json(videos);
-  } catch (err) {
-    console.error("❌ Fetch videos error:", err);
-    res.status(500).json({ message: "Failed to fetch videos" });
-  }
-});
+    // 🔑 Check token (from query or header)
+    let token = req.query.token;
+    if (!token && req.headers.authorization) {
+      token = req.headers.authorization.split(" ")[1];
+    }
+    if (!token) return res.status(401).json({ message: "Unauthorized: token missing" });
 
-/**
- * ✅ Stream video (with range support)
- */
-router.get("/stream/:id", auth, async (req, res) => {
-  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(401).json({ message: "Unauthorized: user not found" });
+
+    // 🔑 Get video
     const video = await Video.findById(req.params.id);
     if (!video) return res.status(404).json({ message: "Video not found" });
 
     const filePath = path.resolve(video.filePath);
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ message: "File not found" });
-    }
+    if (!fs.existsSync(filePath)) return res.status(404).json({ message: "File not found" });
 
     const stat = fs.statSync(filePath);
     const fileSize = stat.size;
     const range = req.headers.range;
-
-    if (!range) {
-      return res.status(400).send("Range header required");
-    }
+    if (!range) return res.status(400).send("Range header required");
 
     const parts = range.replace(/bytes=/, "").split("-");
     const start = parseInt(parts[0], 10);
     const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
 
     if (start >= fileSize) {
-      return res
-        .status(416)
-        .send(`Requested range not satisfiable\n${start} >= ${fileSize}`);
+      return res.status(416).send(`Requested range not satisfiable\n${start} >= ${fileSize}`);
     }
 
     const chunkSize = end - start + 1;
@@ -115,7 +97,7 @@ router.get("/stream/:id", auth, async (req, res) => {
       "Content-Range": `bytes ${start}-${end}/${fileSize}`,
       "Accept-Ranges": "bytes",
       "Content-Length": chunkSize,
-      "Content-Type": "video/mp4", // adjust if needed
+      "Content-Type": "video/mp4", // adjust if not mp4
     };
 
     res.writeHead(206, head);
@@ -126,46 +108,25 @@ router.get("/stream/:id", auth, async (req, res) => {
   }
 });
 
-// ✅ Delete video
-router.delete("/:id", auth, role("admin"), async (req, res) => {
+/**
+ * ✅ Delete video
+ */
+router.delete("/:id", async (req, res) => {
   try {
     const video = await Video.findById(req.params.id);
     if (!video) return res.status(404).json({ message: "Video not found" });
 
-    // remove file from disk
     if (video.filePath && fs.existsSync(video.filePath)) {
       fs.unlinkSync(video.filePath);
     }
 
-    // remove video from course
-    await Course.findByIdAndUpdate(video.course, {
-      $pull: { videos: video._id },
-    });
-
+    await Course.findByIdAndUpdate(video.course, { $pull: { videos: video._id } });
     await video.deleteOne();
 
     res.json({ message: "✅ Video deleted successfully" });
   } catch (err) {
     console.error("❌ Delete video error:", err);
     res.status(500).json({ message: "Failed to delete video" });
-  }
-});
-
-// ✅ Update video metadata (title, lesson, description, duration)
-router.put("/:id", auth, role("admin"), async (req, res) => {
-  try {
-    const { title, lesson, description, duration } = req.body;
-
-    const video = await Video.findByIdAndUpdate(
-      req.params.id,
-      { title, lesson, description, duration },
-      { new: true }
-    );
-
-    res.json(video);
-  } catch (err) {
-    console.error("❌ Update video error:", err);
-    res.status(500).json({ message: "Failed to update video" });
   }
 });
 

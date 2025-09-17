@@ -1,27 +1,20 @@
 import React, { useEffect, useState } from "react";
-import api from "../../utils/api";
 
 export default function VideoPlayer({ videoId }) {
   const [videoUrl, setVideoUrl] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchVideo() {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await api.get(`/videos/stream/${videoId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        // ✅ backend should return signed streamable URL
-        setVideoUrl(res.data.url);
-      } catch (err) {
-        alert("❌ Not authorized to watch this video");
-      } finally {
-        setLoading(false);
-      }
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setLoading(false);
+      return;
     }
-    fetchVideo();
+
+    // ✅ Directly set backend stream URL with query token
+    const apiBase = process.env.REACT_APP_API_URL || "http://localhost:5000";
+    setVideoUrl(`${apiBase}/videos/stream/${videoId}?token=${token}`);
+    setLoading(false);
   }, [videoId]);
 
   if (loading) {
@@ -43,7 +36,7 @@ export default function VideoPlayer({ videoId }) {
   return (
     <div className="bg-black rounded-xl overflow-hidden shadow-2xl mt-6 border border-gray-700">
       <video
-        key={videoUrl} // ✅ force reload when URL changes
+        key={videoUrl}
         src={videoUrl}
         controls
         playsInline

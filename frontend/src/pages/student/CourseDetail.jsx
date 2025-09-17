@@ -37,26 +37,27 @@ export default function CourseDetail() {
     setVideoUrl(url);
   }
 
-  async function handleEnroll() {
-    try {
-      const token = localStorage.getItem("token");
-      await api.post(
-        `/courses/${id}/enroll`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+async function handleEnroll() {
+  try {
+    const token = localStorage.getItem("token");
+    await api.post(
+      `/courses/${id}/enroll`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-      alert("Enrolled successfully!");
-      setEnrolled(true);
+    alert("Enrolled successfully!");
+    setEnrolled(true);
 
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      user.enrolledCourses = [...(user.enrolledCourses || []), id];
-      localStorage.setItem("user", JSON.stringify(user));
-    } catch (err) {
-      console.error("Enroll error:", err.response?.data || err.message);
-      alert("Failed to enroll");
-    }
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    user.enrolledCourses = [...(user.enrolledCourses || []), id];
+    localStorage.setItem("user", JSON.stringify(user));
+  } catch (err) {
+    console.error("Enroll error:", err.response?.data || err.message);
+    alert(err.response?.data?.message || "Failed to enroll"); // ✅ better message
   }
+}
+
 
   if (!course) return <div className="p-6 text-gray-400">Loading course...</div>;
 
