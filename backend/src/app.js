@@ -27,7 +27,7 @@ uploadDirs.forEach((dir) => {
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({ origin: "*", credentials: true }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
