@@ -9,9 +9,17 @@ export default function AdminPayments() {
   const [filtered, setFiltered] = useState([]);
   const [courses, setCourses] = useState([]);
   const [courseFilter, setCourseFilter] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
     async function fetchData() {
+      if (!(user.role === "admin" || user.permissions?.includes("payments"))) {
+        setLoading(false);
+        return; // ❌ no access
+      }
+
       try {
         const token = localStorage.getItem("token");
         const headers = { Authorization: `Bearer ${token}` };
@@ -25,11 +33,13 @@ export default function AdminPayments() {
         const res2 = await api.get("/courses", { headers });
         setCourses(res2.data);
       } catch (err) {
-        console.error("Fetch payments error:", err);
+        console.error("❌ Fetch payments error:", err.response?.data || err.message);
+      } finally {
+        setLoading(false);
       }
     }
     fetchData();
-  }, []);
+  }, [user.role, user.permissions]);
 
   // ✅ filter by course
   function handleFilter(courseId) {
@@ -43,6 +53,8 @@ export default function AdminPayments() {
 
   // ✅ export to Excel
   function exportExcel() {
+    if (filtered.length === 0) return alert("No payments to export!");
+
     const ws = XLSX.utils.json_to_sheet(
       filtered.map((p) => ({
         Student: p.student?.name,
@@ -60,6 +72,8 @@ export default function AdminPayments() {
 
   // ✅ export to PDF
   function exportPDF() {
+    if (filtered.length === 0) return alert("No payments to export!");
+
     const doc = new jsPDF();
     doc.text("Payments Report", 14, 16);
     doc.autoTable({
@@ -78,6 +92,19 @@ export default function AdminPayments() {
   }
 
   const totalIncome = filtered.reduce((sum, p) => sum + p.amount, 0);
+
+  if (loading) {
+    return <div className="p-6 text-gray-400">Loading payments...</div>;
+  }
+
+  // ❌ No Access Case
+  if (!(user.role === "admin" || user.permissions?.includes("payments"))) {
+    return (
+      <div className="p-8 min-h-screen bg-darkBg text-red-400 text-xl font-semibold">
+        🚫 You do not have permission to view payment data.
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -159,9 +186,7 @@ export default function AdminPayments() {
                   </td>
                   <td
                     className={`p-3 font-semibold ${
-                      p.status === "success"
-                        ? "text-green-400"
-                        : "text-red-400"
+                      p.status === "success" ? "text-green-400" : "text-red-400"
                     }`}
                   >
                     {p.status}

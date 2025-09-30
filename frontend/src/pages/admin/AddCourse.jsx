@@ -9,6 +9,8 @@ export default function AddCourse() {
   const [courses, setCourses] = useState([]);
   const [editId, setEditId] = useState(null);
 
+  const user = JSON.parse(localStorage.getItem("user") || "{}"); // ✅ current user
+
   const categories = [
     "1-6",
     "7-10",
@@ -21,8 +23,10 @@ export default function AddCourse() {
   ];
 
   useEffect(() => {
-    loadCourses();
-  }, []);
+    if (user.role === "admin") {
+      loadCourses();
+    }
+  }, [user.role]);
 
   async function loadCourses() {
     try {
@@ -44,21 +48,21 @@ export default function AddCourse() {
           { title, description, category, price },
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        alert("Course updated!");
+        alert("✅ Course updated!");
       } else {
         await api.post(
           "/courses",
           { title, description, category, price },
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        alert("Course created!");
+        alert("✅ Course created!");
       }
 
       resetForm();
       loadCourses();
     } catch (err) {
       console.error("Add/Update error:", err.response?.data || err.message);
-      alert("Failed: " + (err.response?.data?.message || err.message));
+      alert("❌ Failed: " + (err.response?.data?.message || err.message));
     }
   }
 
@@ -69,11 +73,11 @@ export default function AddCourse() {
       await api.delete(`/courses/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      alert("Course deleted!");
+      alert("✅ Course deleted!");
       loadCourses();
     } catch (err) {
       console.error("Delete error:", err);
-      alert("Failed to delete course");
+      alert("❌ Failed to delete course");
     }
   }
 
@@ -93,11 +97,20 @@ export default function AddCourse() {
     setPrice("");
   }
 
+  // ❌ No Access Page
+  if (user.role !== "admin") {
+    return (
+      <div className="p-10 min-h-screen bg-darkBg text-red-400 text-xl font-bold">
+        🚫 You do not have permission to manage courses.
+      </div>
+    );
+  }
+
   return (
     <div className="pt-8 px-6 bg-darkBg min-h-screen text-gray-200">
       {/* Page Title */}
       <h1 className="text-4xl font-extrabold text-accent mb-10 tracking-wide">
-        {editId ? " Edit Course" : "Add New Course"}
+        {editId ? "✏️ Edit Course" : "➕ Add New Course"}
       </h1>
 
       {/* Course Form */}
@@ -186,7 +199,7 @@ export default function AddCourse() {
       </form>
 
       {/* Course List */}
-      <h2 className="text-3xl font-bold text-accent mb-6">All Courses</h2>
+      <h2 className="text-3xl font-bold text-accent mb-6">📚 All Courses</h2>
       <div className="overflow-x-auto rounded-2xl shadow-lg border border-gray-700">
         <table className="w-full border-collapse">
           <thead>

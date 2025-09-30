@@ -12,17 +12,34 @@ export default function Login() {
     try {
       const res = await api.post("/auth/login", { emailOrUserId, password });
 
-      // ✅ Save login info
+      // ✅ Save token & user
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
-      const role = res.data.user.role;
+      const { role, permissions = [] } = res.data.user;
 
       // ✅ Redirect based on role
       if (role === "admin") {
         navigate("/admin/dashboard", { replace: true });
-      } else {
-        navigate("/dashboard", { replace: true }); // 👈 redirect student to dashboard
+      } 
+      else if (role === "mentor") {
+        // ✅ Mentor always goes to admin dashboard area
+        if (permissions.includes("dashboard")) {
+          navigate("/admin/dashboard", { replace: true });
+        } else if (permissions.includes("students")) {
+          navigate("/admin/enrolled-students", { replace: true });
+        } else if (permissions.includes("videos")) {
+          navigate("/admin/videos", { replace: true });
+        } else if (permissions.includes("payments")) {
+          navigate("/admin/payments", { replace: true });
+        } else {
+          alert("❌ You don't have any permissions assigned. Contact Admin.");
+          navigate("/", { replace: true });
+        }
+      } 
+      else {
+        // ✅ Students
+        navigate("/dashboard", { replace: true });
       }
     } catch (err) {
       console.error("❌ Login failed:", err.response?.data || err.message);
@@ -48,6 +65,7 @@ export default function Login() {
           required
         />
 
+        {/* Password */}
         <input
           type="password"
           placeholder="Password"
@@ -57,6 +75,7 @@ export default function Login() {
           required
         />
 
+        {/* Submit */}
         <button
           type="submit"
           className="w-full py-2 bg-accent text-darkBg rounded hover:opacity-90"

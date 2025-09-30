@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middlewares/auth');
 const role = require('../middlewares/role');
+const permission = require('../middlewares/permission');
 const {
   createOrder,
   confirmPayment,
@@ -9,13 +10,13 @@ const {
 const Payment = require('../models/Payment');
 
 // Student: create payment order
-router.post('/create', auth, createOrder);
+router.post('/create', auth, role('student'), createOrder);
 
 // Student: confirm payment
-router.post('/confirm', auth, confirmPayment);
+router.post('/confirm', auth, role('student'), confirmPayment);
 
-// Admin: get all payments
-router.get('/all', auth, role('admin'), async (req, res) => {
+// Admin or Mentor (with "payments" permission): get all payments
+router.get('/all', auth, permission('payments'), async (req, res) => {
   try {
     const payments = await Payment.find()
       .populate('user', 'name email')

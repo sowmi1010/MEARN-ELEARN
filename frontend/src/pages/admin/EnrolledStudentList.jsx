@@ -4,13 +4,21 @@ import * as XLSX from "xlsx"; // ✅ for Excel export
 import jsPDF from "jspdf"; // ✅ for PDF export
 import "jspdf-autotable";
 
-export default function AdminStudents() {
+export default function EnrolledStudentList() {
   const [courses, setCourses] = useState([]);
   const [students, setStudents] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
     async function fetchCourses() {
+      if (!(user.role === "admin" || user.permissions?.includes("students"))) {
+        setLoading(false);
+        return; // ❌ no access for this user
+      }
+
       try {
         const token = localStorage.getItem("token");
         const res = await api.get("/courses", {
@@ -18,11 +26,13 @@ export default function AdminStudents() {
         });
         setCourses(res.data);
       } catch (err) {
-        console.error("❌ Fetch courses error:", err);
+        console.error("❌ Fetch courses error:", err.response?.data || err.message);
+      } finally {
+        setLoading(false);
       }
     }
     fetchCourses();
-  }, []);
+  }, [user.role, user.permissions]);
 
   async function loadStudents(courseId) {
     setSelectedCourse(courseId);
@@ -38,7 +48,7 @@ export default function AdminStudents() {
       });
       setStudents(res.data);
     } catch (err) {
-      console.error("❌ Fetch students error:", err);
+      console.error("❌ Fetch students error:", err.response?.data || err.message);
       setStudents([]);
     }
   }
@@ -75,6 +85,19 @@ export default function AdminStudents() {
       ]),
     });
     doc.save("students.pdf");
+  }
+
+  if (loading) {
+    return <div className="p-6 text-gray-400">Loading students...</div>;
+  }
+
+  // ❌ No Access Case
+  if (!(user.role === "admin" || user.permissions?.includes("students"))) {
+    return (
+      <div className="p-8 min-h-screen bg-darkBg text-red-400 text-xl font-semibold">
+        🚫 You do not have permission to view student data.
+      </div>
+    );
   }
 
   return (

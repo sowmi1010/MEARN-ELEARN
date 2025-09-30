@@ -22,7 +22,7 @@ async function createAdmin() {
   });
 
   await admin.save();
-  console.log('✅ Admin created:', admin.email, 'password: admin123');
+  console.log('Admin created:', admin.email, 'password: admin123');
   process.exit(0);
 }
 

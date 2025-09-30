@@ -9,18 +9,31 @@ export default function AdminUpload() {
   const [description, setDescription] = useState("");
   const [duration, setDuration] = useState("");
   const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
     async function fetchCourses() {
+      if (!(user.role === "admin" || user.permissions?.includes("videos"))) {
+        setLoading(false);
+        return; // ❌ no access
+      }
+
       try {
-        const res = await api.get("/courses");
+        const token = localStorage.getItem("token");
+        const res = await api.get("/courses", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setCourses(res.data);
       } catch (err) {
-        console.error("Fetch courses error:", err);
+        console.error("❌ Fetch courses error:", err.response?.data || err.message);
+      } finally {
+        setLoading(false);
       }
     }
     fetchCourses();
-  }, []);
+  }, [user.role, user.permissions]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -44,7 +57,7 @@ export default function AdminUpload() {
       alert("✅ Video uploaded successfully!");
       resetForm();
     } catch (err) {
-      console.error("Upload error:", err.response?.data || err.message);
+      console.error("❌ Upload error:", err.response?.data || err.message);
       alert("❌ Upload failed: " + (err.response?.data?.message || err.message));
     }
   }
@@ -56,6 +69,19 @@ export default function AdminUpload() {
     setDescription("");
     setDuration("");
     setFile(null);
+  }
+
+  if (loading) {
+    return <div className="p-6 text-gray-400">Loading upload form...</div>;
+  }
+
+  // ❌ No Access
+  if (!(user.role === "admin" || user.permissions?.includes("videos"))) {
+    return (
+      <div className="p-8 min-h-screen bg-darkBg text-red-400 text-xl font-semibold">
+        🚫 You do not have permission to upload videos.
+      </div>
+    );
   }
 
   return (

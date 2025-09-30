@@ -9,6 +9,8 @@ export default function CourseDetail() {
   const [videoUrl, setVideoUrl] = useState(null);
   const [enrolled, setEnrolled] = useState(false);
 
+  const user = JSON.parse(localStorage.getItem("user") || "{}"); // ✅ load user once
+
   useEffect(() => {
     async function fetchCourse() {
       try {
@@ -18,8 +20,12 @@ export default function CourseDetail() {
         });
         setCourse(res.data);
 
-        const user = JSON.parse(localStorage.getItem("user") || "{}");
-        if (user?.enrolledCourses?.includes(res.data._id)) {
+        // ✅ Determine access
+        if (
+          user.role === "admin" ||
+          (user.role === "mentor" && user.permissions?.includes("videos")) ||
+          user?.enrolledCourses?.includes(res.data._id)
+        ) {
           setEnrolled(true);
         }
       } catch (err) {
@@ -28,7 +34,7 @@ export default function CourseDetail() {
       }
     }
     fetchCourse();
-  }, [id]);
+  }, [id, user]);
 
   function playVideo(videoId) {
     const token = localStorage.getItem("token");
@@ -37,35 +43,42 @@ export default function CourseDetail() {
     setVideoUrl(url);
   }
 
-async function handleEnroll() {
-  try {
-    const token = localStorage.getItem("token");
-    await api.post(
-      `/courses/${id}/enroll`,
-      {},
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+  async function handleEnroll() {
+    try {
+      const token = localStorage.getItem("token");
+      await api.post(
+        `/courses/${id}/enroll`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    alert("Enrolled successfully!");
-    setEnrolled(true);
+      alert("Enrolled successfully!");
+      setEnrolled(true);
 
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    user.enrolledCourses = [...(user.enrolledCourses || []), id];
-    localStorage.setItem("user", JSON.stringify(user));
-  } catch (err) {
-    console.error("Enroll error:", err.response?.data || err.message);
-    alert(err.response?.data?.message || "Failed to enroll"); // ✅ better message
+      // update local user storage
+      const updatedUser = { ...user };
+      updatedUser.enrolledCourses = [
+        ...(updatedUser.enrolledCourses || []),
+        id,
+      ];
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+    } catch (err) {
+      console.error("Enroll error:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Failed to enroll");
+    }
   }
-}
 
-
-  if (!course) return <div className="p-6 text-gray-400">Loading course...</div>;
+  if (!course) {
+    return <div className="p-6 text-gray-400">Loading course...</div>;
+  }
 
   return (
     <div className="pt-24 px-6 min-h-screen bg-darkBg text-gray-200">
       {/* Hero Section */}
       <div className="bg-darkCard p-8 md:p-12 rounded-2xl shadow-xl mb-10">
-        <h1 className="text-4xl font-extrabold text-accent mb-3">{course.title}</h1>
+        <h1 className="text-4xl font-extrabold text-accent mb-3">
+          {course.title}
+        </h1>
         <p className="text-gray-300 mb-4">{course.description}</p>
         <div className="flex flex-wrap gap-6 items-center text-lg">
           <span className="bg-accent/20 text-accent px-4 py-1 rounded-full">
@@ -74,7 +87,8 @@ async function handleEnroll() {
           <span className="font-semibold text-white">₹{course.price}</span>
         </div>
 
-        {!enrolled && (
+        {/* ✅ Show Enroll button only for students */}
+        {!enrolled && user.role === "student" && (
           <button
             onClick={handleEnroll}
             className="mt-6 px-8 py-3 bg-accent text-darkBg rounded-lg font-semibold shadow hover:opacity-90 transition"

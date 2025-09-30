@@ -8,39 +8,61 @@ export default function AdminVideos() {
   const [videos, setVideos] = useState([]);
   const [editingVideo, setEditingVideo] = useState(null);
   const [form, setForm] = useState({ title: "", lesson: "", description: "", duration: "" });
+  const [loading, setLoading] = useState(true);
 
-  // Load courses
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  // ✅ Load courses only if user has permission
   useEffect(() => {
     async function fetchCourses() {
-      const token = localStorage.getItem("token");
-      const res = await api.get("/courses", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setCourses(res.data);
+      if (!(user.role === "admin" || user.permissions?.includes("videos"))) {
+        setLoading(false);
+        return; // ❌ no access
+      }
+
+      try {
+        const token = localStorage.getItem("token");
+        const res = await api.get("/courses", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setCourses(res.data);
+      } catch (err) {
+        console.error("❌ Fetch courses error:", err.response?.data || err.message);
+      } finally {
+        setLoading(false);
+      }
     }
     fetchCourses();
-  }, []);
+  }, [user.role, user.permissions]);
 
   // Load videos when course selected
   async function loadVideos(courseId) {
     setSelectedCourse(courseId);
     if (!courseId) return setVideos([]);
 
-    const token = localStorage.getItem("token");
-    const res = await api.get(`/courses/${courseId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setVideos(res.data.videos || []);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await api.get(`/courses/${courseId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setVideos(res.data.videos || []);
+    } catch (err) {
+      console.error("❌ Fetch videos error:", err.response?.data || err.message);
+    }
   }
 
   // Delete video
   async function deleteVideo(id) {
     if (!window.confirm("Delete this video permanently?")) return;
-    const token = localStorage.getItem("token");
-    await api.delete(`/videos/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    loadVideos(selectedCourse);
+    try {
+      const token = localStorage.getItem("token");
+      await api.delete(`/videos/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      loadVideos(selectedCourse);
+    } catch (err) {
+      console.error("❌ Delete error:", err.response?.data || err.message);
+    }
   }
 
   // Start editing
@@ -62,12 +84,29 @@ export default function AdminVideos() {
 
   // Save edit
   async function saveEdit(id) {
-    const token = localStorage.getItem("token");
-    await api.put(`/videos/${id}`, form, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    cancelEdit();
-    loadVideos(selectedCourse);
+    try {
+      const token = localStorage.getItem("token");
+      await api.put(`/videos/${id}`, form, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      cancelEdit();
+      loadVideos(selectedCourse);
+    } catch (err) {
+      console.error("❌ Save error:", err.response?.data || err.message);
+    }
+  }
+
+  if (loading) {
+    return <div className="p-6 text-gray-400">Loading videos...</div>;
+  }
+
+  // ❌ No Access
+  if (!(user.role === "admin" || user.permissions?.includes("videos"))) {
+    return (
+      <div className="p-8 min-h-screen bg-darkBg text-red-400 text-xl font-semibold">
+        🚫 You do not have permission to manage videos.
+      </div>
+    );
   }
 
   return (
@@ -175,11 +214,11 @@ export default function AdminVideos() {
               </div>
             ))
           ) : (
-            <p className="text-gray-400"> No videos available for this course</p>
+            <p className="text-gray-400">No videos available for this course</p>
           )}
         </div>
       ) : (
-        <p className="text-gray-500"> Please select a course to manage videos</p>
+        <p className="text-gray-500">Please select a course to manage videos</p>
       )}
     </div>
   );

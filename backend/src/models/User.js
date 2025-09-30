@@ -4,15 +4,21 @@ const bcrypt = require("bcryptjs");
 const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    userId: { type: String, required: true, unique: true }, // ✅ custom user ID
+    userId: { type: String, required: true, unique: true }, // custom user ID
     email: { type: String, required: true, unique: true },
     phone: { type: String, required: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ["student", "admin"], default: "student" },
+
+    // ✅ add mentor role support
+    role: { type: String, enum: ["student", "mentor", "admin"], default: "student" },
+
     profilePic: { type: String, default: "" },
 
-    // ✅ add this so enroll works
+    // for students
     enrolledCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Course" }],
+
+    // ✅ for mentors: permissions to decide dashboard access
+    permissions: [{ type: String }], // e.g. ["students", "payments"]
   },
   { timestamps: true }
 );
