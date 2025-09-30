@@ -9,7 +9,10 @@ const userSchema = new mongoose.Schema(
     phone: { type: String, required: true },
     password: { type: String, required: true },
 
-    // ✅ add mentor role support
+    // ✅ Super Admin flag
+    isSuperAdmin: { type: Boolean, default: false },  // 🔑 NEW FIELD
+
+    // ✅ roles
     role: { type: String, enum: ["student", "mentor", "admin"], default: "student" },
 
     profilePic: { type: String, default: "" },
@@ -23,7 +26,7 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Hash password before save
+// 🔑 Hash password before save
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);

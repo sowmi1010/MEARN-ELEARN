@@ -1,16 +1,14 @@
-// backend/middlewares/role.js
-module.exports = (requiredPermission) => {
+module.exports = (requiredRole) => {
   return (req, res, next) => {
-    if (!req.user) return res.status(401).json({ message: "Unauthorized: user missing" });
-
-    // Admin always has access
-    if (req.user.role === "admin") return next();
-
-    // Mentor must have the required permission
-    if (req.user.role === "mentor" && req.user.permissions?.includes(requiredPermission)) {
-      return next();
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized: user missing" });
     }
 
-    return res.status(403).json({ message: "Access denied: missing permission" });
+    // Super Admin always has access
+    if (req.user.isSuperAdmin) return next();
+
+    if (req.user.role === requiredRole) return next();
+
+    return res.status(403).json({ message: "Access denied" });
   };
 };

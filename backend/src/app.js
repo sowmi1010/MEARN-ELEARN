@@ -18,6 +18,9 @@ const uploadDirs = [
   "uploads/admins",
   "uploads/students",
   "uploads/mentors",
+  "uploads/teachers", // ✅ added for teachers
+  "uploads/feedback"    // ✅ for student feedback photos
+
 ];
 uploadDirs.forEach((dir) => {
   if (!fs.existsSync(path.join(__dirname, "..", dir))) {
@@ -51,6 +54,9 @@ const paymentRoutes = require("./routes/payments");
 const categoryRoutes = require("./routes/categories");
 const studentRoutes = require("./routes/student");
 const mentorRoutes = require("./routes/mentor"); // ✅ use THIS one
+const teacherRoutes = require("./routes/teacher");
+const feedbackRoutes = require("./routes/feedbacks");
+
 
 // API Routes
 app.use("/api/auth", authRoutes);
@@ -61,6 +67,9 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/mentor", mentorRoutes); // ✅ registered here
+app.use("/api/teachers", teacherRoutes);
+app.use("/api/feedbacks", feedbackRoutes);
+
 
 // Health check
 app.get("/api/health", (req, res) => {

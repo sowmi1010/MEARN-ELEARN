@@ -34,6 +34,8 @@ import StudentList from "./pages/admin/StudentList";
 import StudentUpload from "./pages/admin/StudentUpload";
 import StudentDetails from "./pages/admin/StudentDetails";
 import EnrolledStudentList from "./pages/admin/EnrolledStudentList";
+import TeacherUpload from "./pages/admin/TeacherUpload"; // ✅ Teachers page
+import FeedbackUpload from "./pages/admin/FeedbackUpload";
 
 // 🌍 Shared / Landing
 import LandingPage from "./pages/landing/LandingPage";
@@ -43,7 +45,6 @@ import Courses from "./pages/shared/Courses";
 import MentorList from "./pages/admin/MentorList";
 import MentorUpload from "./pages/admin/MentorUpload";
 import MentorAccess from "./pages/admin/MentorAccess";
-
 
 // ===========================
 // Animation Wrapper
@@ -71,23 +72,38 @@ function AnimatedRoutes({ user }) {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-
         {/* 🌍 Public Routes */}
         <Route
           path="/"
-          element={<PageWrapper><LandingPage /></PageWrapper>}
+          element={
+            <PageWrapper>
+              <LandingPage />
+            </PageWrapper>
+          }
         />
         <Route
           path="/courses"
-          element={<PageWrapper><Courses /></PageWrapper>}
+          element={
+            <PageWrapper>
+              <Courses />
+            </PageWrapper>
+          }
         />
         <Route
           path="/login"
-          element={<PageWrapper><Login /></PageWrapper>}
+          element={
+            <PageWrapper>
+              <Login />
+            </PageWrapper>
+          }
         />
         <Route
           path="/register"
-          element={<PageWrapper><Register /></PageWrapper>}
+          element={
+            <PageWrapper>
+              <Register />
+            </PageWrapper>
+          }
         />
 
         {/* 🎓 Student Routes */}
@@ -95,7 +111,9 @@ function AnimatedRoutes({ user }) {
           path="/course/:id"
           element={
             <PrivateRoute requiredRole="student">
-              <PageWrapper><CourseDetail /></PageWrapper>
+              <PageWrapper>
+                <CourseDetail />
+              </PageWrapper>
             </PrivateRoute>
           }
         />
@@ -103,7 +121,9 @@ function AnimatedRoutes({ user }) {
           path="/dashboard"
           element={
             <PrivateRoute requiredRole="student">
-              <PageWrapper><Dashboard /></PageWrapper>
+              <PageWrapper>
+                <Dashboard />
+              </PageWrapper>
             </PrivateRoute>
           }
         />
@@ -111,7 +131,9 @@ function AnimatedRoutes({ user }) {
           path="/my-courses"
           element={
             <PrivateRoute requiredRole="student">
-              <PageWrapper><MyCourses /></PageWrapper>
+              <PageWrapper>
+                <MyCourses />
+              </PageWrapper>
             </PrivateRoute>
           }
         />
@@ -121,7 +143,9 @@ function AnimatedRoutes({ user }) {
           path="/mentor/students"
           element={
             <PrivateRoute requiredRole="mentor">
-              <PageWrapper><EnrolledStudentList /></PageWrapper>
+              <PageWrapper>
+                <EnrolledStudentList />
+              </PageWrapper>
             </PrivateRoute>
           }
         />
@@ -129,7 +153,9 @@ function AnimatedRoutes({ user }) {
           path="/mentor/payments"
           element={
             <PrivateRoute requiredRole="mentor">
-              <PageWrapper><AdminPayments /></PageWrapper>
+              <PageWrapper>
+                <AdminPayments />
+              </PageWrapper>
             </PrivateRoute>
           }
         />
@@ -137,7 +163,9 @@ function AnimatedRoutes({ user }) {
           path="/mentor/videos"
           element={
             <PrivateRoute requiredRole="mentor">
-              <PageWrapper><AdminVideos /></PageWrapper>
+              <PageWrapper>
+                <AdminVideos />
+              </PageWrapper>
             </PrivateRoute>
           }
         />
@@ -154,79 +182,166 @@ function AnimatedRoutes({ user }) {
           {/* Dashboard + Courses */}
           <Route
             path="dashboard"
-            element={<PageWrapper><AdminDashboard /></PageWrapper>}
+            element={
+              <PageWrapper>
+                <AdminDashboard />
+              </PageWrapper>
+            }
           />
           <Route
             path="upload"
-            element={<PageWrapper><AdminUpload /></PageWrapper>}
+            element={
+              <PageWrapper>
+                <AdminUpload />
+              </PageWrapper>
+            }
           />
           <Route
             path="add-course"
-            element={<PageWrapper><AddCourse /></PageWrapper>}
+            element={
+              <PageWrapper>
+                <AddCourse />
+              </PageWrapper>
+            }
           />
           <Route
             path="videos"
-            element={<PageWrapper><AdminVideos /></PageWrapper>}
+            element={
+              <PageWrapper>
+                <AdminVideos />
+              </PageWrapper>
+            }
+          />
+
+          {/* ✅ Teachers Page (Fixed) */}
+          <Route
+            path="teachers" // ✅ now relative
+            element={
+              <PageWrapper>
+                <TeacherUpload />
+              </PageWrapper>
+            }
           />
           <Route
+            path="feedbacks"
+            element={
+              <PageWrapper>
+                <FeedbackUpload />
+              </PageWrapper>
+            }
+          />
+
+          <Route
             path="payments"
-            element={<PageWrapper><AdminPayments /></PageWrapper>}
+            element={
+              <PageWrapper>
+                <AdminPayments />
+              </PageWrapper>
+            }
           />
 
           {/* Admin Management */}
           <Route
             path="admins"
-            element={<PageWrapper><AdminList /></PageWrapper>}
+            element={
+              <PageWrapper>
+                <AdminList />
+              </PageWrapper>
+            }
           />
           <Route
             path="admins/new"
-            element={<PageWrapper><AdminDetailsUpload /></PageWrapper>}
+            element={
+              <PageWrapper>
+                <AdminDetailsUpload />
+              </PageWrapper>
+            }
           />
           <Route
             path="admins/edit/:id"
-            element={<PageWrapper><AdminDetailsUpload /></PageWrapper>}
+            element={
+              <PageWrapper>
+                <AdminDetailsUpload />
+              </PageWrapper>
+            }
           />
 
           {/* Student Management */}
           <Route
             path="students"
-            element={<PageWrapper><StudentList /></PageWrapper>}
+            element={
+              <PageWrapper>
+                <StudentList />
+              </PageWrapper>
+            }
           />
           <Route
             path="students/new"
-            element={<PageWrapper><StudentUpload /></PageWrapper>}
+            element={
+              <PageWrapper>
+                <StudentUpload />
+              </PageWrapper>
+            }
           />
           <Route
             path="students/edit/:id"
-            element={<PageWrapper><StudentUpload /></PageWrapper>}
+            element={
+              <PageWrapper>
+                <StudentUpload />
+              </PageWrapper>
+            }
           />
           <Route
             path="students/details/:id"
-            element={<PageWrapper><StudentDetails /></PageWrapper>}
+            element={
+              <PageWrapper>
+                <StudentDetails />
+              </PageWrapper>
+            }
           />
 
           {/* Enrolled Students */}
           <Route
             path="enrolled-students"
-            element={<PageWrapper><EnrolledStudentList /></PageWrapper>}
+            element={
+              <PageWrapper>
+                <EnrolledStudentList />
+              </PageWrapper>
+            }
           />
 
           {/* Mentor Management */}
           <Route
             path="mentors"
-            element={<PageWrapper><MentorList /></PageWrapper>}
+            element={
+              <PageWrapper>
+                <MentorList />
+              </PageWrapper>
+            }
           />
           <Route
             path="mentors/new"
-            element={<PageWrapper><MentorUpload /></PageWrapper>}
+            element={
+              <PageWrapper>
+                <MentorUpload />
+              </PageWrapper>
+            }
           />
           <Route
             path="mentors/edit/:id"
-            element={<PageWrapper><MentorUpload /></PageWrapper>}
+            element={
+              <PageWrapper>
+                <MentorUpload />
+              </PageWrapper>
+            }
           />
           <Route
             path="mentors/access/:id"
-            element={<PageWrapper><MentorAccess /></PageWrapper>}
+            element={
+              <PageWrapper>
+                <MentorAccess />
+              </PageWrapper>
+            }
           />
         </Route>
 

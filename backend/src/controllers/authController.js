@@ -1,54 +1,46 @@
-// backend/controllers/authController.js
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Mentor = require("../models/Mentor");
-const Student = require("../models/Student"); // ✅ Added Student model
+const Student = require("../models/Student");
 const { isValidEmail, isValidPassword } = require("../utils/validators");
 
-// ==================
-// Helper: normalize permission keys
-// ==================
+// Normalize mentor permissions
 function normalizePermissions(perms = []) {
   return perms.map((p) => {
-    if (p === "student") return "students";       // match AdminLayout
-    if (p === "courses") return "videos";        // match Upload/Manage Videos
-    if (p === "transaction") return "payments";  // match Payments
+    if (p === "student") return "students";
+    if (p === "courses") return "videos";
+    if (p === "transaction") return "payments";
     return p;
   });
 }
 
 // ==================
-// Register new user (Admins & Students only)
+// Register new user
 // ==================
 async function register(req, res) {
   try {
-    const { name, userId, email, phone, password, role } = req.body;
+    const { name, userId, email, phone, password, role, isSuperAdmin } = req.body;
 
     if (!isValidEmail(email)) {
       return res.status(400).json({ message: "Invalid email format" });
     }
-
     if (!isValidPassword(password)) {
-      return res
-        .status(400)
-        .json({ message: "Password must be at least 6 characters" });
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
 
     const existingUser = await User.findOne({ $or: [{ email }, { userId }] });
     if (existingUser) {
-      return res
-        .status(400)
-        .json({ message: "Email or User ID already registered" });
+      return res.status(400).json({ message: "Email or User ID already registered" });
     }
 
-    // Admin / Student only
     const user = await User.create({
       name,
       userId,
       email,
       phone,
       password,
-      role, // "admin" | "student"
+      role,
+      isSuperAdmin: isSuperAdmin || false,     // ✅ allow SuperAdmin creation
     });
 
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
@@ -64,6 +56,7 @@ async function register(req, res) {
         email: user.email,
         phone: user.phone,
         role: user.role,
+        isSuperAdmin: !!user.isSuperAdmin,      // ✅ include flag
         profilePic: user.profilePic,
         permissions: user.permissions || [],
         enrolledCourses: user.enrolledCourses || [],
@@ -75,7 +68,7 @@ async function register(req, res) {
 }
 
 // ==================
-// Login (Admin / Student / Mentor / Manually-added Student)
+// Login
 // ==================
 async function login(req, res) {
   try {
@@ -87,11 +80,20 @@ async function login(req, res) {
     let permissions = [];
     let profilePic = "";
     let enrolledCourses = [];
+    let isSuperAdmin = false;
 
-    // 1️⃣ Try User collection (Admin / Student registered via signup)
+    // 1️⃣ Try User collection
     user = await User.findOne({
       $or: [{ email: emailOrUserId }, { userId: emailOrUserId }],
     });
+
+    if (user) {
+      // ✅ detect super admin
+      isSuperAdmin = !!user.isSuperAdmin;
+      role = isSuperAdmin ? "admin" : user.role;
+      profilePic = user.profilePic;
+      enrolledCourses = user.enrolledCourses || [];
+    }
 
     // 2️⃣ If not found → try Mentor
     if (!user) {
@@ -106,7 +108,7 @@ async function login(req, res) {
       }
     }
 
-    // 3️⃣ If still not found → try Student (manually added by admin)
+    // 3️⃣ If still not found → try Student (manually added)
     if (!user) {
       const student = await Student.findOne({
         $or: [{ email: emailOrUserId }, { userId: emailOrUserId }],
@@ -142,11 +144,12 @@ async function login(req, res) {
       token,
       user: {
         id: user._id,
-        name: user.name || `${user.firstName} ${user.lastName || ""}`,
+        name: user.name || `${user.firstName || ""} ${user.lastName || ""}`,
         userId: user.userId,
         email: user.email,
         phone: user.phone,
         role,
+        isSuperAdmin,                            // ✅ include flag
         profilePic,
         permissions,
         enrolledCourses: enrolledCourses.length

@@ -1,7 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import CourseGroups from "../shared/CourseGroups";
-
+import Teachers from "../../components/common/Teachers";
+import StudentFeedbacks from "../../components/common/StudentFeedbacks";
 
 export default function LandingPage() {
   return (
@@ -22,8 +23,8 @@ export default function LandingPage() {
             From School Bench to Office Desk
           </p>
           <p className="text-gray-400 mb-8">
-            Learn industry-ready skills from experts and mentors. 
-            Start your journey today and transform your career
+            Learn industry-ready skills from experts and mentors. Start your
+            journey today and transform your career
           </p>
           <div className="flex gap-4">
             <Link
@@ -66,9 +67,9 @@ export default function LandingPage() {
               "PLANTING KNOWLEDGE, HARVESTING SUCCESS"
             </h2>
             <p className="text-gray-400">
-              The knowledge we provide today is like planting seeds. With dedication,
-              guidance, and effort, these seeds grow into the fruits of success in
-              exams and life.
+              The knowledge we provide today is like planting seeds. With
+              dedication, guidance, and effort, these seeds grow into the fruits
+              of success in exams and life.
             </p>
             <div className="mt-8 text-accent font-bold text-lg">
               17,000+ Creators — Yesterday’s kids, tomorrow’s leaders
@@ -84,7 +85,11 @@ export default function LandingPage() {
               <img src="/students.png" alt="Student" className="rounded-lg" />
             </div>
             <div className="bg-green-500 p-4 rounded-2xl shadow-lg flex justify-center items-center">
-              <img src="/online.png" alt="Online Class" className="rounded-lg" />
+              <img
+                src="/online.png"
+                alt="Online Class"
+                className="rounded-lg"
+              />
             </div>
             <div className="bg-red-500 p-4 rounded-2xl shadow-lg flex justify-center items-center">
               <img src="/mentor.png" alt="Mentor" className="rounded-lg" />
@@ -95,9 +100,14 @@ export default function LandingPage() {
 
       {/* ================= COURSES SECTION ================= */}
       <CourseGroups />
+      {/* ================= TEACHERS SECTION ================= */}
+      <div>
+        <Teachers />
+      </div>
+      {/* ================= STUDENT FEEDBACKS SECTION ================= */}
+      <StudentFeedbacks />
 
       {/* ================= FOOTER ================= */}
-
     </div>
   );
 }

@@ -12,21 +12,61 @@ export default function AdminLayout() {
     navigate("/login");
   }
 
-  // ✅ Navigation links config — permission keys match MentorAccess.jsx
+  // ✅ Navigation links config
   const navLinks = [
-    { to: "dashboard", label: "Dashboard", icon: "📊", roles: ["admin", "mentor"], permission: "dashboard" },
+    {
+      to: "dashboard",
+      label: "Dashboard",
+      icon: "📊",
+      roles: ["admin", "mentor"],
+      permission: "dashboard",
+    },
 
     // Admin-only
     { to: "admins", label: "Admins", icon: "🛠️", roles: ["admin"] },
     { to: "students", label: "Students", icon: "📝", roles: ["admin"] },
     { to: "mentors", label: "Mentors", icon: "👨‍🏫", roles: ["admin"] },
+
+    // ✅ Added Teachers management
+    { to: "teachers", label: "Teachers", icon: "👩‍🏫", roles: ["admin"] },
+    {
+      to: "feedbacks",
+      label: "Student Feedbacks",
+      icon: "💬",
+      roles: ["admin"],
+    },
+
     { to: "add-course", label: "Add Course", icon: "➕", roles: ["admin"] },
 
     // Shared with mentors — need permission
-    { to: "enrolled-students", label: "Enrolled Students", icon: "👨‍🎓", roles: ["admin", "mentor"], permission: "students" },
-    { to: "upload", label: "Upload Video", icon: "📤", roles: ["admin", "mentor"], permission: "videos" },
-    { to: "videos", label: "Manage Videos", icon: "🎥", roles: ["admin", "mentor"], permission: "videos" },
-    { to: "payments", label: "Payments", icon: "💳", roles: ["admin", "mentor"], permission: "payments" },
+    {
+      to: "enrolled-students",
+      label: "Enrolled Students",
+      icon: "👨‍🎓",
+      roles: ["admin", "mentor"],
+      permission: "students",
+    },
+    {
+      to: "upload",
+      label: "Upload Video",
+      icon: "📤",
+      roles: ["admin", "mentor"],
+      permission: "videos",
+    },
+    {
+      to: "videos",
+      label: "Manage Videos",
+      icon: "🎥",
+      roles: ["admin", "mentor"],
+      permission: "videos",
+    },
+    {
+      to: "payments",
+      label: "Payments",
+      icon: "💳",
+      roles: ["admin", "mentor"],
+      permission: "payments",
+    },
   ];
 
   const hasAccess = (link) => {
@@ -53,7 +93,9 @@ export default function AdminLayout() {
       <aside className="w-64 bg-darkCard border-r border-gray-700 flex flex-col fixed h-full">
         {/* Brand */}
         <div className="p-6 border-b border-gray-700">
-          <h2 className="text-2xl font-extrabold text-accent">Last Try Academy</h2>
+          <h2 className="text-2xl font-extrabold text-accent">
+            Last Try Academy
+          </h2>
           <p className="text-sm text-gray-400 mt-2">Role: {user.role}</p>
           <p className="text-sm text-gray-400">Name: {user.name}</p>
         </div>
@@ -93,13 +135,16 @@ export default function AdminLayout() {
       {/* Main Content */}
       <main className="flex-1 ml-64 p-8 bg-darkBg">
         {canViewPage ? (
-          <Outlet />  
+          <Outlet />
         ) : (
           <div className="flex items-center justify-center h-full text-center">
             <div className="p-8 bg-darkCard border border-red-500 rounded-xl shadow-lg">
-              <h1 className="text-3xl font-bold text-red-500 mb-4">⛔ No Access</h1>
+              <h1 className="text-3xl font-bold text-red-500 mb-4">
+                ⛔ No Access
+              </h1>
               <p className="text-gray-400 mb-6">
-                You don’t have permission to view this page. Please contact Admin.
+                You don’t have permission to view this page. Please contact
+                Admin.
               </p>
               <button
                 onClick={() => navigate("/admin/dashboard")}

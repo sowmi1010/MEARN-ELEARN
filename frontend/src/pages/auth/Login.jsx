@@ -16,14 +16,19 @@ export default function Login() {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
-      const { role, permissions = [] } = res.data.user;
+      const { role, permissions = [], isSuperAdmin } = res.data.user;
 
-      // ✅ Redirect based on role
-      if (role === "admin") {
+      // ✅ Role-based Redirect
+      if (isSuperAdmin) {
+        // 🔑 Super Admin always goes to Admin Dashboard
         navigate("/admin/dashboard", { replace: true });
-      } 
-      else if (role === "mentor") {
-        // ✅ Mentor always goes to admin dashboard area
+
+      } else if (role === "admin") {
+        // 🔑 Regular Admin
+        navigate("/admin/dashboard", { replace: true });
+
+      } else if (role === "mentor") {
+        // 🔑 Mentor redirects based on permissions
         if (permissions.includes("dashboard")) {
           navigate("/admin/dashboard", { replace: true });
         } else if (permissions.includes("students")) {
@@ -36,9 +41,9 @@ export default function Login() {
           alert("❌ You don't have any permissions assigned. Contact Admin.");
           navigate("/", { replace: true });
         }
-      } 
-      else {
-        // ✅ Students
+
+      } else {
+        // 🔑 Students
         navigate("/dashboard", { replace: true });
       }
     } catch (err) {
