@@ -18,7 +18,6 @@ export default function StudentFeedbacks() {
     async function fetchFeedbacks() {
       try {
         const res = await axios.get(`${apiBase}/api/feedbacks`);
-        console.log("✅ Feedback API data:", res.data);
         setFeedbacks(res.data || []);
       } catch (err) {
         console.error("❌ Fetch feedbacks error:", err);
@@ -28,9 +27,10 @@ export default function StudentFeedbacks() {
     }
     fetchFeedbacks();
   }, [apiBase]);
+
   if (loading) {
     return (
-      <div className="text-center py-12 text-gray-400">
+      <div className="text-center py-12 text-gray-500 dark:text-gray-400">
         Loading feedbacks...
       </div>
     );
@@ -38,18 +38,32 @@ export default function StudentFeedbacks() {
 
   if (!feedbacks.length) {
     return (
-      <div className="text-center py-12 text-gray-500">No feedbacks yet.</div>
+      <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+        No feedbacks yet.
+      </div>
     );
   }
 
   return (
-    <section className="relative py-16 bg-gradient-to-b from-darkBg via-darkCard to-darkBg text-gray-200 overflow-hidden">
-      {/* Decorative background */}
+    <section
+      className="
+        relative py-16 
+        bg-gray-100 dark:bg-gradient-to-b dark:from-darkBg dark:via-darkCard dark:to-darkBg 
+        text-gray-800 dark:text-gray-200 
+        overflow-hidden transition-colors duration-300
+      "
+    >
+      {/* Decorative background circles */}
       <div className="absolute top-10 -left-20 w-72 h-72 bg-accent/20 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-10 -right-20 w-96 h-96 bg-green-400/20 rounded-full blur-3xl"></div>
+      <div className="absolute bottom-10 -right-20 w-96 h-96 bg-blue-400/20 dark:bg-green-400/20 rounded-full blur-3xl"></div>
 
       <div className="relative max-w-5xl mx-auto px-6 z-10">
-        <h2 className="text-4xl font-extrabold text-center text-accent mb-14 tracking-wide drop-shadow-lg">
+        <h2
+          className="
+            text-4xl font-extrabold text-center 
+            text-accent mb-14 tracking-wide drop-shadow-lg
+          "
+        >
           What Our Students Say
         </h2>
 
@@ -57,14 +71,22 @@ export default function StudentFeedbacks() {
         <Swiper
           modules={[Autoplay, Pagination]}
           slidesPerView={1}
-          autoplay={{ delay: 2500, disableOnInteraction: false }}
+          autoplay={{ delay: 3000, disableOnInteraction: false }}
           loop={true}
           pagination={{ clickable: true }}
-          className="rounded-2xl shadow-2xl"
+          className="rounded-2xl"
         >
           {feedbacks.map((fb) => (
             <SwiperSlide key={fb._id}>
-              <div className="flex flex-col items-center bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500">
+              <div
+                className="
+                  flex flex-col items-center 
+                  bg-white dark:bg-gradient-to-br dark:from-gray-800 dark:to-gray-900 
+                  p-8 rounded-2xl shadow-md dark:shadow-lg
+                  hover:shadow-2xl hover:scale-[1.02]
+                  transition-all duration-500
+                "
+              >
                 {/* Student Photo */}
                 <div className="relative group mb-6">
                   <img
@@ -76,18 +98,27 @@ export default function StudentFeedbacks() {
                         : "https://via.placeholder.com/150?text=Student"
                     }
                     alt={fb.name}
-                    className="w-28 h-28 rounded-full border-4 border-accent shadow-lg object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="
+                      w-28 h-28 rounded-full border-4 border-accent
+                      shadow-lg object-cover
+                      transition-transform duration-500 group-hover:scale-105
+                    "
                   />
                   <div className="absolute inset-0 rounded-full border-2 border-accent/30 animate-pulse"></div>
                 </div>
 
                 {/* Comment */}
-                <p className="text-lg text-gray-300 italic text-center leading-relaxed max-w-lg">
+                <p
+                  className="
+                    text-lg italic text-center leading-relaxed max-w-lg 
+                    text-gray-700 dark:text-gray-300
+                  "
+                >
                   “{fb.comment}”
                 </p>
 
                 {/* Student Info */}
-                <h3 className="mt-6 text-2xl font-bold text-white">
+                <h3 className="mt-6 text-2xl font-bold text-gray-900 dark:text-white">
                   {fb.name}
                 </h3>
                 <p className="text-accent text-lg font-medium">{fb.course}</p>

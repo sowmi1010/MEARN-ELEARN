@@ -6,7 +6,6 @@ import api from "../../utils/api";
 
 export default function MentorList() {
   const [mentors, setMentors] = useState([]);
-
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
   useEffect(() => {
@@ -26,7 +25,7 @@ export default function MentorList() {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm("⚠️ Delete this mentor?")) return;
+    if (!window.confirm("⚠️ Are you sure you want to delete this mentor?")) return;
     try {
       const token = localStorage.getItem("token");
       await api.delete(`/mentor/${id}`, {
@@ -39,104 +38,121 @@ export default function MentorList() {
   }
 
   return (
-    <div className="p-8 space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-accent">👨‍🏫 Mentor Management</h1>
-        <Link
-          to="/admin/mentors/new"
-          className="flex items-center gap-2 px-5 py-2 bg-accent text-darkBg rounded-lg font-semibold shadow hover:scale-105 transition"
-        >
-          <FaPlus /> Add Mentor
-        </Link>
-      </div>
-
-      {/* Total Mentors */}
-      <div className="flex justify-end">
-        <div className="bg-darkCard rounded-lg shadow-lg px-6 py-4 flex items-center gap-3">
-          <span className="text-3xl">📊</span>
-          <div>
-            <p className="text-sm text-gray-400">Total Mentors</p>
-            <p className="text-2xl font-bold text-accent">{mentors.length}</p>
-          </div>
+    <div className="min-h-screen bg-gray-100 dark:bg-darkBg text-gray-800 dark:text-gray-200 transition-colors duration-300">
+      {/* === Header Bar === */}
+      <div className="bg-gradient-to-r from-teal-500 to-blue-500 py-8 shadow-lg text-white">
+        <div className="max-w-6xl mx-auto px-6 flex justify-between items-center">
+          <h1 className="text-4xl font-extrabold tracking-wide">
+            👨‍🏫 Mentor Management
+          </h1>
+          <Link
+            to="/admin/mentors/new"
+            className="flex items-center gap-2 px-5 py-2 bg-white text-teal-600 font-semibold rounded-lg shadow hover:scale-105 hover:shadow-md transition"
+          >
+            <FaPlus /> Add Mentor
+          </Link>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto bg-darkCard rounded-xl shadow-lg border border-gray-700">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-800 text-gray-300">
-              <th className="p-4 text-left">Photo</th>
-              <th className="p-4 text-left">Name</th>
-              <th className="p-4 text-left">Email</th>
-              <th className="p-4 text-left">Phone</th>
-              <th className="p-4 text-left">Department</th>
-              <th className="p-4 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mentors.map((m, idx) => (
-              <tr
-                key={m._id}
-                className={`${
-                  idx % 2 === 0 ? "bg-gray-900" : "bg-gray-800"
-                } hover:bg-gray-700 transition`}
-              >
-                {/* Photo */}
-                <td className="p-4">
-                  {m.photo ? (
-                    <img
-                      src={`${API_URL}${m.photo}`}
-                      alt="mentor"
-                      className="w-12 h-12 rounded-full object-cover border-2 border-accent shadow"
-                    />
-                  ) : (
-                    <span className="text-gray-500">—</span>
-                  )}
-                </td>
+      <div className="max-w-6xl mx-auto p-6 space-y-10 -mt-8">
+        {/* === Stats Card === */}
+        <div className="bg-white/90 dark:bg-gray-800/60 backdrop-blur-lg rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg p-6 flex items-center justify-between hover:shadow-xl transition">
+          <div className="flex items-center gap-4">
+            <span className="text-5xl">📊</span>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Total Mentors
+              </p>
+              <p className="text-3xl font-bold text-teal-500">{mentors.length}</p>
+            </div>
+          </div>
+          <p className="text-gray-500 dark:text-gray-400 italic">
+            Manage all mentor profiles in one place
+          </p>
+        </div>
 
-                {/* Info */}
-                <td className="p-4 font-semibold text-white">
-                  {m.firstName} {m.lastName}
-                </td>
-                <td className="p-4 text-gray-300">{m.email}</td>
-                <td className="p-4 text-gray-300">{m.phone}</td>
-                <td className="p-4 text-gray-300">{m.department || "—"}</td>
-
-                {/* Actions */}
-                <td className="p-4 flex gap-3">
-                  <Link
-                    to={`/admin/mentors/edit/${m._id}`}
-                    className="flex items-center gap-1 px-3 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600 shadow"
-                  >
-                    <FaEdit /> Edit
-                  </Link>
-                  <Link
-                    to={`/admin/mentors/access/${m._id}`}
-                    className="flex items-center gap-1 px-3 py-1 bg-yellow-500 text-darkBg rounded-full hover:bg-yellow-600 shadow"
-                  >
-                    <FaUserShield /> Access
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(m._id)}
-                    className="flex items-center gap-1 px-3 py-1 bg-red-500 text-white rounded-full hover:bg-red-600 shadow"
-                  >
-                    <FaTrash /> Delete
-                  </button>
-                </td>
+        {/* === Mentor Table === */}
+        <div className="bg-white/90 dark:bg-gray-800/50 backdrop-blur-lg rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg overflow-hidden hover:shadow-xl transition">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-teal-500/90 text-white text-sm uppercase tracking-wide">
+                <th className="p-4">Photo</th>
+                <th className="p-4">Name</th>
+                <th className="p-4">Email</th>
+                <th className="p-4">Phone</th>
+                <th className="p-4">Department</th>
+                <th className="p-4 text-center">Actions</th>
               </tr>
-            ))}
+            </thead>
 
-            {mentors.length === 0 && (
-              <tr>
-                <td colSpan="6" className="text-center text-gray-400 py-8">
-                  🚫 No mentors found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+            <tbody>
+              {mentors.map((m, idx) => (
+                <tr
+                  key={m._id}
+                  className={`transition-all hover:scale-[1.01] hover:shadow-md ${
+                    idx % 2 === 0
+                      ? "bg-gray-50 dark:bg-gray-700/40"
+                      : "bg-gray-100 dark:bg-gray-700/60"
+                  }`}
+                >
+                  {/* Photo */}
+                  <td className="p-4">
+                    {m.photo ? (
+                      <img
+                        src={`${API_URL}${m.photo}`}
+                        alt={m.firstName}
+                        className="w-12 h-12 rounded-full object-cover border-2 border-teal-400 shadow hover:scale-110 transition"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gray-300 dark:bg-gray-600 text-gray-500">
+                        —
+                      </div>
+                    )}
+                  </td>
+
+                  {/* Info */}
+                  <td className="p-4 font-semibold">{m.firstName} {m.lastName}</td>
+                  <td className="p-4 text-gray-600 dark:text-gray-300">{m.email}</td>
+                  <td className="p-4 text-gray-600 dark:text-gray-300">{m.phone}</td>
+                  <td className="p-4 text-gray-600 dark:text-gray-300">{m.department || "—"}</td>
+
+                  {/* Actions */}
+                  <td className="p-4 flex justify-center gap-3">
+                    <Link
+                      to={`/admin/mentors/edit/${m._id}`}
+                      className="flex items-center gap-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow hover:scale-105 transition"
+                    >
+                      <FaEdit /> Edit
+                    </Link>
+                    <Link
+                      to={`/admin/mentors/access/${m._id}`}
+                      className="flex items-center gap-1 px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-darkBg rounded-lg shadow hover:scale-105 transition"
+                    >
+                      <FaUserShield /> Access
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(m._id)}
+                      className="flex items-center gap-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow hover:scale-105 transition"
+                    >
+                      <FaTrash /> Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+
+              {mentors.length === 0 && (
+                <tr>
+                  <td
+                    colSpan="6"
+                    className="text-center text-gray-500 dark:text-gray-400 py-8"
+                  >
+                    🚫 No mentors found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

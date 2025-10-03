@@ -11,7 +11,7 @@ export default function VideoPlayer({ videoId }) {
       return;
     }
 
-    // ✅ Directly set backend stream URL with query token
+    // ✅ Set backend stream URL with token
     const apiBase = process.env.REACT_APP_API_URL || "http://localhost:5000";
     setVideoUrl(`${apiBase}/videos/stream/${videoId}?token=${token}`);
     setLoading(false);
@@ -19,28 +19,51 @@ export default function VideoPlayer({ videoId }) {
 
   if (loading) {
     return (
-      <div className="text-gray-400 bg-darkCard p-6 rounded-lg text-center">
-        Loading video...
+      <div
+        className="
+          p-6 text-center rounded-lg
+          bg-gray-100 dark:bg-darkCard
+          text-gray-600 dark:text-gray-300
+          shadow-md border border-gray-200 dark:border-gray-700
+        "
+      >
+        ⏳ Loading video...
       </div>
     );
   }
 
   if (!videoUrl) {
     return (
-      <div className="text-red-400 bg-darkCard p-6 rounded-lg text-center">
-        Video not available
+      <div
+        className="
+          p-6 text-center rounded-lg
+          bg-red-50 dark:bg-darkCard
+          text-red-600 dark:text-red-400
+          shadow-md border border-red-200 dark:border-red-500/50
+        "
+      >
+        ⚠️ Video not available
       </div>
     );
   }
 
   return (
-    <div className="bg-black rounded-xl overflow-hidden shadow-2xl mt-6 border border-gray-700">
+    <div
+      className="
+        mt-6 rounded-xl overflow-hidden shadow-lg
+        bg-black border border-gray-200 dark:border-gray-700
+        transition-colors duration-300
+      "
+    >
       <video
         key={videoUrl}
         src={videoUrl}
         controls
         playsInline
-        className="w-full max-h-[500px] object-contain"
+        className="
+          w-full max-h-[520px] object-contain
+          bg-black
+        "
       />
     </div>
   );

@@ -26,7 +26,7 @@ export default function PaymentButton({ courseId, price }) {
           alert("✅ Payment successful! You are now enrolled.");
           window.location.reload();
         },
-        theme: { color: "#38bdf8" },
+        theme: { color: "#38bdf8" }, // Accent color
       };
 
       const rzp = new window.Razorpay(options);
@@ -40,8 +40,13 @@ export default function PaymentButton({ courseId, price }) {
     <div className="mt-6">
       <button
         onClick={handlePayment}
-        className="relative w-full py-4 rounded-xl bg-gradient-to-r from-accent to-blue-500 text-darkBg font-extrabold text-lg shadow-lg 
-                   hover:scale-[1.03] hover:shadow-2xl transition-all duration-300 overflow-hidden"
+        className="
+          group relative w-full py-4 rounded-xl 
+          bg-gradient-to-r from-accent to-blue-500 
+          text-darkBg font-extrabold text-lg
+          shadow-lg hover:shadow-2xl hover:scale-[1.03] 
+          transition-all duration-300 overflow-hidden
+        "
       >
         <span className="relative z-10 flex items-center justify-center gap-2">
           💳 Buy Course – ₹{price}
@@ -51,8 +56,8 @@ export default function PaymentButton({ courseId, price }) {
         <span className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition duration-500"></span>
       </button>
 
-      {/* Small Guarantee note */}
-      <p className="text-xs text-gray-400 text-center mt-2">
+      {/* Secure Payment Note */}
+      <p className="text-xs text-gray-600 dark:text-gray-400 text-center mt-2">
         🔒 Secure Payment via Razorpay | 100% Safe
       </p>
     </div>

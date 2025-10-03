@@ -19,17 +19,17 @@ export default function Categories() {
     fetchCourses();
   }, []);
 
-  // Icon mapping per category
+  // Icon mapping for categories
   const categoryIcons = {
-    "FullStack": <Layers size={32} />,
-    "AWS": <Cloud size={32} />,
-    "AI-ML": <Brain size={32} />,
-    "1-6": <BookOpen size={32} />,
-    "7-10": <BookOpen size={32} />,
-    "11-12": <BookOpen size={32} />,
+    FullStack: <Layers size={36} />,
+    AWS: <Cloud size={36} />,
+    "AI-ML": <Brain size={36} />,
+    "1-6": <BookOpen size={36} />,
+    "7-10": <BookOpen size={36} />,
+    "11-12": <BookOpen size={36} />,
   };
 
-  // Gradient colors for variety
+  // Gradient backgrounds
   const gradients = [
     "from-purple-500 to-indigo-600",
     "from-pink-500 to-rose-500",
@@ -39,23 +39,53 @@ export default function Categories() {
   ];
 
   return (
-    <div className="p-8">
-      <h1 className="text-4xl font-extrabold text-accent mb-8 text-center">
-        Top Categories
+    <div className="px-6 md:px-12 py-16 bg-gray-100 dark:bg-darkBg transition-colors duration-300">
+      {/* Section Title */}
+      <h1 className="text-4xl font-extrabold text-center mb-12">
+        <span className="bg-gradient-to-r from-accent to-blue-500 bg-clip-text text-transparent">
+          Top Categories
+        </span>
       </h1>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+      {/* Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
         {categories.map((cat, i) => (
           <Link
             key={cat}
             to={`/courses?category=${cat}`}
-            className={`rounded-xl shadow-lg p-6 flex flex-col items-center justify-center text-white bg-gradient-to-br ${gradients[i % gradients.length]} hover:scale-105 transform transition`}
+            className={`
+              group rounded-2xl p-6 shadow-md
+              bg-gradient-to-br ${gradients[i % gradients.length]}
+              text-white relative overflow-hidden
+              transform transition-all duration-300 hover:scale-[1.07] hover:shadow-2xl
+              animate-fadeInUp
+            `}
+            style={{ animationDelay: `${i * 0.1}s` }}
           >
-            <div className="mb-3">{categoryIcons[cat] || <BookOpen size={32} />}</div>
-            <h2 className="text-xl font-bold">{cat}</h2>
+            {/* Glow Overlay */}
+            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-10 transition duration-300"></div>
+
+            {/* Icon */}
+            <div className="mb-4 group-hover:rotate-12 transition-transform duration-300">
+              {categoryIcons[cat] || <BookOpen size={36} />}
+            </div>
+
+            {/* Title */}
+            <h2 className="text-xl font-semibold tracking-wide">{cat}</h2>
           </Link>
         ))}
       </div>
+
+      {/* ✨ Animations */}
+      <style>{`
+        @keyframes fadeInUp {
+          0% {opacity: 0; transform: translateY(30px);}
+          100% {opacity: 1; transform: translateY(0);}
+        }
+        .animate-fadeInUp {
+          animation: fadeInUp 0.6s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 }

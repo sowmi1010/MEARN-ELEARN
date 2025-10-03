@@ -18,26 +18,16 @@ export default function Login() {
 
       const { role, permissions = [], isSuperAdmin } = res.data.user;
 
-      // ✅ Role-based Redirect
-      if (isSuperAdmin) {
-        // 🔑 Super Admin always goes to Admin Dashboard
-        navigate("/admin/dashboard", { replace: true });
-
-      } else if (role === "admin") {
-        // 🔑 Regular Admin
+      // ✅ Role-based redirect
+      if (isSuperAdmin || role === "admin") {
         navigate("/admin/dashboard", { replace: true });
 
       } else if (role === "mentor") {
-        // 🔑 Mentor redirects based on permissions
-        if (permissions.includes("dashboard")) {
-          navigate("/admin/dashboard", { replace: true });
-        } else if (permissions.includes("students")) {
-          navigate("/admin/enrolled-students", { replace: true });
-        } else if (permissions.includes("videos")) {
-          navigate("/admin/videos", { replace: true });
-        } else if (permissions.includes("payments")) {
-          navigate("/admin/payments", { replace: true });
-        } else {
+        if (permissions.includes("dashboard")) navigate("/admin/dashboard", { replace: true });
+        else if (permissions.includes("students")) navigate("/admin/enrolled-students", { replace: true });
+        else if (permissions.includes("videos")) navigate("/admin/videos", { replace: true });
+        else if (permissions.includes("payments")) navigate("/admin/payments", { replace: true });
+        else {
           alert("❌ You don't have any permissions assigned. Contact Admin.");
           navigate("/", { replace: true });
         }
@@ -53,40 +43,93 @@ export default function Login() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-darkBg">
+    <div
+      className="
+        flex items-center justify-center min-h-screen
+        bg-gray-100 dark:bg-darkBg
+        transition-colors duration-300
+      "
+    >
       <form
         onSubmit={handleLogin}
-        className="bg-darkCard p-8 rounded-lg shadow-lg w-96"
+        className="
+          w-96 p-8 rounded-2xl
+          bg-white dark:bg-darkCard
+          shadow-lg dark:shadow-xl
+          border border-gray-200 dark:border-gray-700
+          transition-colors duration-300
+        "
       >
-        <h2 className="text-2xl font-bold text-accent mb-6">Login</h2>
+        <h2
+          className="
+            text-3xl font-extrabold text-center
+            text-accent mb-8
+          "
+        >
+          Welcome Back 👋
+        </h2>
 
         {/* Email OR User ID */}
-        <input
-          type="text"
-          placeholder="Email or User ID"
-          value={emailOrUserId}
-          onChange={(e) => setEmailOrUserId(e.target.value)}
-          className="w-full mb-4 px-4 py-2 rounded bg-gray-800 text-white"
-          required
-        />
+        <label className="block mb-3">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Email or User ID
+          </span>
+          <input
+            type="text"
+            placeholder="Enter your email or ID"
+            value={emailOrUserId}
+            onChange={(e) => setEmailOrUserId(e.target.value)}
+            required
+            className="
+              mt-1 w-full px-4 py-2 rounded-lg
+              bg-gray-100 dark:bg-gray-800
+              text-gray-800 dark:text-gray-100
+              border border-gray-300 dark:border-gray-600
+              focus:ring-2 focus:ring-accent focus:border-accent
+              outline-none transition
+            "
+          />
+        </label>
 
         {/* Password */}
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full mb-4 px-4 py-2 rounded bg-gray-800 text-white"
-          required
-        />
+        <label className="block mb-5">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Password
+          </span>
+          <input
+            type="password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="
+              mt-1 w-full px-4 py-2 rounded-lg
+              bg-gray-100 dark:bg-gray-800
+              text-gray-800 dark:text-gray-100
+              border border-gray-300 dark:border-gray-600
+              focus:ring-2 focus:ring-accent focus:border-accent
+              outline-none transition
+            "
+          />
+        </label>
 
         {/* Submit */}
         <button
           type="submit"
-          className="w-full py-2 bg-accent text-darkBg rounded hover:opacity-90"
+          className="
+            w-full py-3 rounded-lg
+            bg-accent text-darkBg font-bold
+            hover:opacity-90 hover:scale-[1.02]
+            shadow-md transition-all duration-300
+          "
         >
           Login
         </button>
+
+        {/* Footer */}
+        <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-4">
+          🔒 Secure login – your data is safe with us
+        </p>
       </form>
     </div>
   );

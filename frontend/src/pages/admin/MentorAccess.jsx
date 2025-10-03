@@ -11,7 +11,6 @@ import {
   FaArrowLeft,
 } from "react-icons/fa";
 
-// ✅ Only show permissions that match AdminLayout tabs
 const availablePermissions = [
   { key: "dashboard", label: "Dashboard", icon: <FaTachometerAlt /> },
   { key: "students", label: "Enrolled Students", icon: <FaUserGraduate /> },
@@ -25,7 +24,6 @@ export default function MentorAccess() {
   const navigate = useNavigate();
   const [selected, setSelected] = useState([]);
 
-  // 🔹 Load mentor’s current permissions
   useEffect(() => {
     fetchMentor();
   }, [id]);
@@ -42,16 +40,14 @@ export default function MentorAccess() {
     }
   }
 
-  // 🔹 Toggle permissions
   function togglePermission(key) {
-    setSelected(prev =>
+    setSelected((prev) =>
       prev.includes(key)
-        ? prev.filter(p => p !== key)
+        ? prev.filter((p) => p !== key)
         : [...prev, key]
     );
   }
 
-  // 🔹 Save permissions
   async function handleSubmit() {
     try {
       const token = localStorage.getItem("token");
@@ -69,47 +65,58 @@ export default function MentorAccess() {
   }
 
   return (
-    <div className="p-8 bg-darkCard rounded-xl max-w-5xl mx-auto space-y-8">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-accent">
-          👨‍🏫 Add Mentor – Step 2: Assign Access
-        </h1>
-        <span className="text-gray-400 text-sm">Step 2 of 2</span>
+    <div className="min-h-screen bg-gray-100 dark:bg-darkBg text-gray-800 dark:text-gray-200 transition-colors duration-300">
+      {/* === Header Bar === */}
+      <div className="bg-gradient-to-r from-teal-500 to-blue-500 py-8 shadow-lg text-white">
+        <div className="max-w-5xl mx-auto px-6 flex justify-between items-center">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-wide">
+            👨‍🏫 Assign Mentor Access
+          </h1>
+          <span className="text-sm italic opacity-90">Step 2 of 2</span>
+        </div>
       </div>
 
-      {/* Permissions grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {availablePermissions.map(p => (
-          <div
-            key={p.key}
-            onClick={() => togglePermission(p.key)}
-            className={`cursor-pointer flex flex-col items-center justify-center p-6 rounded-xl border transition transform hover:scale-105 ${
-              selected.includes(p.key)
-                ? "bg-gradient-to-r from-accent to-blue-500 text-darkBg border-accent shadow-lg"
-                : "bg-gray-800 text-white border-gray-700 hover:border-accent"
-            }`}
-          >
-            <div className="text-3xl mb-3">{p.icon}</div>
-            <span className="font-semibold">{p.label}</span>
+      <div className="max-w-5xl mx-auto px-4 -mt-8">
+        <div className="bg-white/90 dark:bg-gray-800/70 backdrop-blur-lg rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xl p-8 space-y-8">
+          {/* Info */}
+          <p className="text-gray-600 dark:text-gray-300 text-center">
+            ✅ Select which <span className="text-teal-500 font-semibold">modules</span> this mentor can access by clicking below:
+          </p>
+
+          {/* Permission Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {availablePermissions.map((p) => (
+              <div
+                key={p.key}
+                onClick={() => togglePermission(p.key)}
+                className={`cursor-pointer flex flex-col items-center justify-center p-6 rounded-xl border transition-all transform hover:scale-105 shadow-sm ${
+                  selected.includes(p.key)
+                    ? "bg-gradient-to-r from-teal-500 to-blue-500 text-white shadow-lg border-teal-400 hover:shadow-xl"
+                    : "bg-gray-50 dark:bg-gray-700/60 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:border-teal-400/70"
+                }`}
+              >
+                <div className="text-4xl mb-3 drop-shadow">{p.icon}</div>
+                <span className="font-semibold text-center">{p.label}</span>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      {/* Buttons */}
-      <div className="mt-8 flex justify-between">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition"
-        >
-          <FaArrowLeft /> Back
-        </button>
-        <button
-          onClick={handleSubmit}
-          className="px-8 py-3 bg-accent text-darkBg font-bold rounded-lg shadow-lg hover:scale-105 transition"
-        >
-          ✅ Complete
-        </button>
+          {/* Buttons */}
+          <div className="flex justify-between pt-6">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 px-6 py-3 rounded-lg bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold shadow hover:scale-105 transition"
+            >
+              <FaArrowLeft /> Back
+            </button>
+            <button
+              onClick={handleSubmit}
+              className="px-8 py-3 rounded-lg font-bold bg-gradient-to-r from-teal-500 to-blue-500 text-white shadow-md hover:scale-105 hover:shadow-lg transition"
+            >
+              ✅ Complete
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

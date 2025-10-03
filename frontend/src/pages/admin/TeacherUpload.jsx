@@ -1,3 +1,4 @@
+// src/pages/admin/TeacherUpload.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
@@ -20,6 +21,7 @@ export default function TeacherUpload() {
   const apiBase = import.meta.env.VITE_API_URL || "http://localhost:4000";
   const token = localStorage.getItem("token");
 
+  // ✅ Fetch teachers
   useEffect(() => {
     fetchTeachers();
   }, []);
@@ -29,7 +31,7 @@ export default function TeacherUpload() {
       const res = await axios.get(`${apiBase}/api/teachers`);
       setTeachers(res.data);
     } catch {
-      toast.error("Failed to fetch teachers");
+      toast.error("❌ Failed to fetch teachers");
     }
   }
 
@@ -52,18 +54,18 @@ export default function TeacherUpload() {
         await axios.put(`${apiBase}/api/teachers/${editingId}`, formData, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        toast.success("✅ Teacher updated");
+        toast.success("✅ Teacher updated!");
       } else {
         await axios.post(`${apiBase}/api/teachers`, formData, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        toast.success("🎉 Teacher added");
+        toast.success("🎉 Teacher added!");
       }
       setForm({ name: "", subject: "", description: "", photo: null });
       setEditingId(null);
       fetchTeachers();
     } catch {
-      toast.error("Save failed");
+      toast.error("⚠️ Failed to save teacher");
     } finally {
       setLoading(false);
     }
@@ -78,11 +80,12 @@ export default function TeacherUpload() {
       photo: null,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
+    toast("✏️ Edit mode enabled", { icon: "📝" });
   }
 
   function confirmDelete(id) {
-    setShowModal(true);
     setDeleteId(id);
+    setShowModal(true);
   }
 
   async function handleDelete() {
@@ -90,10 +93,10 @@ export default function TeacherUpload() {
       await axios.delete(`${apiBase}/api/teachers/${deleteId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      toast.success("🗑️ Teacher deleted");
+      toast.success("🗑️ Teacher deleted!");
       fetchTeachers();
     } catch {
-      toast.error("Delete failed");
+      toast.error("⚠️ Failed to delete teacher");
     }
     setShowModal(false);
   }
@@ -105,148 +108,178 @@ export default function TeacherUpload() {
   );
 
   return (
-    <div className="pt-24 px-4 sm:px-6 min-h-screen bg-gradient-to-br from-gray-900 to-black text-gray-200">
+    <div className="min-h-screen bg-gray-100 dark:bg-darkBg text-gray-800 dark:text-gray-200 transition-colors duration-300">
       <Toaster position="top-right" />
 
-      {/* FORM */}
-      <div className="max-w-2xl mx-auto bg-gray-800/40 backdrop-blur-lg border border-gray-700 p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all mb-10">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-teal-400 to-blue-400 bg-clip-text text-transparent text-center mb-5">
-          {editingId ? "✏️ Edit Teacher" : "➕ Add Teacher"}
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            name="name"
-            placeholder="👩‍🏫 Name"
-            value={form.name}
-            onChange={handleChange}
-            required
-            className="w-full p-3 rounded-lg bg-gray-900/70 text-gray-100 border border-gray-700 focus:ring-2 focus:ring-teal-400 outline-none"
-          />
-          <input
-            name="subject"
-            placeholder="📘 Subject"
-            value={form.subject}
-            onChange={handleChange}
-            required
-            className="w-full p-3 rounded-lg bg-gray-900/70 text-gray-100 border border-gray-700 focus:ring-2 focus:ring-teal-400 outline-none"
-          />
-          <textarea
-            name="description"
-            placeholder="📝 Description"
-            rows="3"
-            value={form.description}
-            onChange={handleChange}
-            className="w-full p-3 rounded-lg bg-gray-900/70 text-gray-100 border border-gray-700 focus:ring-2 focus:ring-teal-400 outline-none"
-          />
-          <div>
+      {/* Header */}
+      <div className="bg-gradient-to-r from-teal-500 to-blue-500 text-white py-8 shadow-md">
+        <h1 className="text-center text-4xl font-extrabold tracking-wide">
+          👩‍🏫 Teacher Management
+        </h1>
+      </div>
+
+      <div className="max-w-5xl mx-auto p-6 -mt-8 space-y-10">
+        {/* Teacher Form */}
+        <div className="bg-white/80 dark:bg-gray-800/60 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition">
+          <h2 className="text-3xl font-bold text-center bg-gradient-to-r from-teal-400 to-blue-400 bg-clip-text text-transparent mb-5">
+            {editingId ? "✏️ Edit Teacher" : "➕ Add Teacher"}
+          </h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <input
-              type="file"
-              name="photo"
-              accept="image/*"
+              type="text"
+              name="name"
+              placeholder="👩‍🏫 Teacher Name"
+              value={form.name}
               onChange={handleChange}
-              className="w-full text-gray-300 cursor-pointer"
+              required
+              className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-teal-400 outline-none"
             />
-            {form.photo && (
-              <div className="mt-3 flex justify-center">
-                <img
-                  src={URL.createObjectURL(form.photo)}
-                  className="w-24 h-24 rounded-full border-2 border-teal-400 shadow-md hover:scale-105 transition-all"
-                />
-              </div>
-            )}
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-gradient-to-r from-teal-500 to-blue-500 rounded-lg font-semibold shadow-lg hover:scale-105 hover:opacity-90 transition disabled:opacity-50"
-          >
-            {loading ? "Saving..." : editingId ? "Update Teacher" : "Add Teacher"}
-          </button>
-        </form>
-      </div>
-
-      {/* SEARCH BAR */}
-      <div className="max-w-4xl mx-auto mb-6 flex items-center gap-3 bg-gray-800/50 p-3 rounded-xl border border-gray-700">
-        <FaSearch className="text-teal-400 ml-2" />
-        <input
-          placeholder="Search teacher by name or subject..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 bg-transparent text-gray-200 outline-none px-2"
-        />
-      </div>
-
-      {/* TEACHER LIST */}
-      <div className="max-w-5xl mx-auto bg-gray-800/30 border border-gray-700 rounded-2xl shadow-xl p-6">
-        <h2 className="text-2xl font-semibold text-teal-400 mb-5">
-          👩‍🏫 Teacher List <span className="text-sm text-gray-400">({filtered.length})</span>
-        </h2>
-        {filtered.length === 0 ? (
-          <p className="text-gray-400 text-center py-6">No teachers found.</p>
-        ) : (
-          <div className="space-y-4">
-            {filtered.map((t) => (
-              <div
-                key={t._id}
-                className="flex items-center justify-between gap-4 p-4 bg-gray-900/60 hover:bg-gray-800/80 transition-all rounded-xl shadow hover:shadow-teal-500/20"
-              >
-                <div className="flex items-center gap-4">
+            <input
+              type="text"
+              name="subject"
+              placeholder="📘 Subject"
+              value={form.subject}
+              onChange={handleChange}
+              required
+              className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-teal-400 outline-none"
+            />
+            <textarea
+              name="description"
+              placeholder="📝 Description"
+              value={form.description}
+              onChange={handleChange}
+              rows="3"
+              required
+              className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-teal-400 outline-none"
+            ></textarea>
+            <div>
+              <input
+                type="file"
+                name="photo"
+                accept="image/*"
+                onChange={handleChange}
+                className="w-full text-gray-600 dark:text-gray-300"
+              />
+              {form.photo && (
+                <div className="mt-3 flex justify-center">
                   <img
-                    src={
-                      t.photo
-                        ? `${apiBase}${t.photo.startsWith("/") ? t.photo : "/" + t.photo}`
-                        : "https://via.placeholder.com/60"
-                    }
-                    alt={t.name}
-                    className="w-16 h-16 object-cover rounded-full border-2 border-teal-400 hover:scale-110 transition"
+                    src={URL.createObjectURL(form.photo)}
+                    alt="Preview"
+                    className="w-24 h-24 rounded-full border-2 border-teal-400 shadow hover:scale-105 transition"
                   />
-                  <div>
-                    <h3 className="text-lg font-semibold">{t.name}</h3>
-                    <p className="text-sm text-teal-300">{t.subject}</p>
-                    <p className="text-gray-400 text-sm">{t.description}</p>
+                </div>
+              )}
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-gradient-to-r from-teal-500 to-blue-500 text-white font-semibold rounded-lg shadow-lg hover:scale-105 transition disabled:opacity-50"
+            >
+              {loading
+                ? "⏳ Saving..."
+                : editingId
+                ? "✅ Update Teacher"
+                : "➕ Add Teacher"}
+            </button>
+          </form>
+        </div>
+
+        {/* Search Bar */}
+        <div className="flex items-center gap-3 bg-white dark:bg-gray-800 p-3 rounded-xl shadow border border-gray-200 dark:border-gray-700">
+          <FaSearch className="text-teal-500" />
+          <input
+            type="text"
+            placeholder="Search by teacher name or subject..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-1 bg-transparent outline-none text-gray-700 dark:text-gray-200"
+          />
+        </div>
+
+        {/* Teacher List */}
+        <div className="bg-white/90 dark:bg-gray-800/50 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+          <h2 className="text-2xl font-semibold text-teal-500 mb-4">
+            👩‍🏫 Teacher List
+            <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
+              ({filtered.length})
+            </span>
+          </h2>
+          {filtered.length === 0 ? (
+            <p className="text-gray-500 dark:text-gray-400 text-center py-6">
+              🚫 No teachers found.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {filtered.map((t) => (
+                <div
+                  key={t._id}
+                  className="flex items-center justify-between gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-xl shadow hover:shadow-teal-500/20 transition hover:scale-[1.01]"
+                >
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={
+                        t.photo
+                          ? `${apiBase}${t.photo.startsWith("/") ? t.photo : "/" + t.photo}`
+                          : "https://via.placeholder.com/60"
+                      }
+                      alt={t.name}
+                      className="w-16 h-16 object-cover rounded-full border-2 border-teal-400 shadow hover:scale-110 transition"
+                    />
+                    <div>
+                      <h3 className="text-lg font-semibold">{t.name}</h3>
+                      <p className="text-sm text-teal-500">{t.subject}</p>
+                      <p className="text-gray-600 dark:text-gray-300 text-sm">
+                        {t.description}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEdit(t)}
+                      className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow flex items-center gap-2 hover:scale-105 transition"
+                    >
+                      <FaEdit /> Edit
+                    </button>
+                    <button
+                      onClick={() => confirmDelete(t._id)}
+                      className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow flex items-center gap-2 hover:scale-105 transition"
+                    >
+                      <FaTrash /> Delete
+                    </button>
                   </div>
                 </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => handleEdit(t)}
-                    className="flex items-center gap-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg shadow hover:scale-105 transition"
-                  >
-                    <FaEdit /> Edit
-                  </button>
-                  <button
-                    onClick={() => confirmDelete(t._id)}
-                    className="flex items-center gap-1 px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg shadow hover:scale-105 transition"
-                  >
-                    <FaTrash /> Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* DELETE MODAL */}
+      {/* Delete Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 p-6 rounded-xl shadow-xl max-w-sm w-full">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg max-w-sm w-full">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-red-400">Confirm Delete</h3>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white">
+              <h3 className="text-lg font-semibold text-red-500">Confirm Delete</h3>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-500 hover:text-gray-800 dark:hover:text-white"
+              >
                 <FaTimes />
               </button>
             </div>
-            <p className="text-gray-300 mb-4">Are you sure you want to delete this teacher?</p>
+            <p className="text-gray-700 dark:text-gray-300 mb-6">
+              Are you sure you want to delete this teacher?
+            </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-500"
+                className="px-4 py-2 rounded-lg bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white"
+                className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white shadow"
               >
                 Delete
               </button>

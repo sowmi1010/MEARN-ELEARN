@@ -9,7 +9,7 @@ export default function AddCourse() {
   const [courses, setCourses] = useState([]);
   const [editId, setEditId] = useState(null);
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}"); // ✅ current user
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   const categories = [
     "1-6",
@@ -23,9 +23,7 @@ export default function AddCourse() {
   ];
 
   useEffect(() => {
-    if (user.role === "admin") {
-      loadCourses();
-    }
+    if (user.role === "admin") loadCourses();
   }, [user.role]);
 
   async function loadCourses() {
@@ -57,11 +55,9 @@ export default function AddCourse() {
         );
         alert("✅ Course created!");
       }
-
       resetForm();
       loadCourses();
     } catch (err) {
-      console.error("Add/Update error:", err.response?.data || err.message);
       alert("❌ Failed: " + (err.response?.data?.message || err.message));
     }
   }
@@ -76,7 +72,6 @@ export default function AddCourse() {
       alert("✅ Course deleted!");
       loadCourses();
     } catch (err) {
-      console.error("Delete error:", err);
       alert("❌ Failed to delete course");
     }
   }
@@ -87,6 +82,7 @@ export default function AddCourse() {
     setDescription(course.description);
     setCategory(course.category);
     setPrice(course.price);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function resetForm() {
@@ -97,29 +93,36 @@ export default function AddCourse() {
     setPrice("");
   }
 
-  // ❌ No Access Page
+  // 🚫 No Access
   if (user.role !== "admin") {
     return (
-      <div className="p-10 min-h-screen bg-darkBg text-red-400 text-xl font-bold">
+      <div className="p-10 min-h-screen bg-gray-100 dark:bg-darkBg text-red-500 text-xl font-bold">
         🚫 You do not have permission to manage courses.
       </div>
     );
   }
 
   return (
-    <div className="pt-8 px-6 bg-darkBg min-h-screen text-gray-200">
-      {/* Page Title */}
-      <h1 className="text-4xl font-extrabold text-accent mb-10 tracking-wide">
-        {editId ? "✏️ Edit Course" : "➕ Add New Course"}
+    <div className="pt-10 px-6 min-h-screen bg-gray-100 dark:bg-darkBg transition-colors duration-300">
+      {/* ===== PAGE TITLE ===== */}
+      <h1 className="text-4xl font-extrabold mb-10 text-center">
+        <span className="bg-gradient-to-r from-accent to-blue-500 bg-clip-text text-transparent">
+          {editId ? "✏️ Edit Course" : "➕ Add New Course"}
+        </span>
       </h1>
 
-      {/* Course Form */}
+      {/* ===== FORM ===== */}
       <form
         onSubmit={handleSubmit}
-        className="bg-darkCard p-8 rounded-2xl shadow-2xl w-full max-w-2xl mb-12 border border-gray-700 space-y-5"
+        className="
+          bg-white dark:bg-darkCard
+          p-8 rounded-2xl shadow-xl max-w-2xl mx-auto
+          border border-gray-200 dark:border-gray-700
+          space-y-5 transition-colors
+        "
       >
         <div>
-          <label className="block mb-2 font-semibold text-gray-300">
+          <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-300">
             Course Title
           </label>
           <input
@@ -128,33 +131,51 @@ export default function AddCourse() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
-            className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-accent outline-none"
+            className="
+              w-full p-3 rounded-lg
+              bg-gray-50 dark:bg-gray-800
+              border border-gray-300 dark:border-gray-600
+              focus:border-accent outline-none
+              text-gray-800 dark:text-gray-100
+            "
           />
         </div>
 
         <div>
-          <label className="block mb-2 font-semibold text-gray-300">
+          <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-300">
             Description
           </label>
           <textarea
             placeholder="Description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-accent outline-none"
             rows="4"
-          ></textarea>
+            className="
+              w-full p-3 rounded-lg
+              bg-gray-50 dark:bg-gray-800
+              border border-gray-300 dark:border-gray-600
+              focus:border-accent outline-none
+              text-gray-800 dark:text-gray-100
+            "
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block mb-2 font-semibold text-gray-300">
+            <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-300">
               Category
             </label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               required
-              className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-accent outline-none"
+              className="
+                w-full p-3 rounded-lg
+                bg-gray-50 dark:bg-gray-800
+                border border-gray-300 dark:border-gray-600
+                focus:border-accent outline-none
+                text-gray-800 dark:text-gray-100
+              "
             >
               <option value="">Select Category</option>
               {categories.map((cat) => (
@@ -166,7 +187,7 @@ export default function AddCourse() {
           </div>
 
           <div>
-            <label className="block mb-2 font-semibold text-gray-300">
+            <label className="block mb-2 font-semibold text-gray-700 dark:text-gray-300">
               Price (₹)
             </label>
             <input
@@ -174,7 +195,13 @@ export default function AddCourse() {
               placeholder="Price"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
-              className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:border-accent outline-none"
+              className="
+                w-full p-3 rounded-lg
+                bg-gray-50 dark:bg-gray-800
+                border border-gray-300 dark:border-gray-600
+                focus:border-accent outline-none
+                text-gray-800 dark:text-gray-100
+              "
             />
           </div>
         </div>
@@ -182,7 +209,11 @@ export default function AddCourse() {
         <div className="flex gap-4">
           <button
             type="submit"
-            className="flex-1 py-3 rounded-lg bg-gradient-to-r from-accent to-blue-500 text-darkBg font-bold shadow-lg hover:scale-[1.02] transition-transform"
+            className="
+              flex-1 py-3 rounded-lg font-bold shadow-lg
+              bg-gradient-to-r from-accent to-blue-500 text-darkBg
+              hover:scale-[1.03] transition-transform duration-300
+            "
           >
             {editId ? "Update Course" : "Add Course"}
           </button>
@@ -190,7 +221,11 @@ export default function AddCourse() {
             <button
               type="button"
               onClick={resetForm}
-              className="flex-1 py-3 rounded-lg bg-gray-600 text-white font-semibold hover:bg-gray-500 transition"
+              className="
+                flex-1 py-3 rounded-lg bg-gray-400 dark:bg-gray-600
+                text-white font-semibold hover:bg-gray-500
+                transition-colors duration-300
+              "
             >
               Cancel
             </button>
@@ -198,62 +233,92 @@ export default function AddCourse() {
         </div>
       </form>
 
-      {/* Course List */}
-      <h2 className="text-3xl font-bold text-accent mb-6">📚 All Courses</h2>
-      <div className="overflow-x-auto rounded-2xl shadow-lg border border-gray-700">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-800 text-gray-300">
-              <th className="p-4 text-left">Title</th>
-              <th className="p-4 text-left">Category</th>
-              <th className="p-4 text-left">Price</th>
-              <th className="p-4 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {courses.length > 0 ? (
-              courses.map((c, i) => (
-                <tr
-                  key={c._id}
-                  className={`border-b border-gray-700 hover:bg-gray-800 transition ${
-                    i % 2 === 0 ? "bg-darkBg" : "bg-darkCard"
-                  }`}
-                >
-                  <td className="p-4 font-semibold text-white">{c.title}</td>
-                  <td className="p-4">
-                    <span className="px-3 py-1 rounded-full bg-accent/20 text-accent font-medium">
-                      {c.category}
-                    </span>
-                  </td>
-                  <td className="p-4 font-bold text-green-400">₹{c.price}</td>
-                  <td className="p-4 space-x-3">
-                    <button
-                      onClick={() => startEdit(c)}
-                      className="px-4 py-2 rounded-lg bg-blue-500 text-white font-semibold shadow hover:bg-blue-600 transition"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => deleteCourse(c._id)}
-                      className="px-4 py-2 rounded-lg bg-red-500 text-white font-semibold shadow hover:bg-red-600 transition"
-                    >
-                      Delete
-                    </button>
+      {/* ===== COURSE LIST ===== */}
+      <div className="max-w-5xl mx-auto mt-14">
+        <h2 className="text-3xl font-bold mb-6 text-center text-gray-800 dark:text-accent">
+          📚 All Courses
+        </h2>
+        <div
+          className="
+            overflow-x-auto rounded-2xl shadow-lg
+            border border-gray-200 dark:border-gray-700
+          "
+        >
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                <th className="p-4 text-left">Title</th>
+                <th className="p-4 text-left">Category</th>
+                <th className="p-4 text-left">Price</th>
+                <th className="p-4 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {courses.length > 0 ? (
+                courses.map((c, i) => (
+                  <tr
+                    key={c._id}
+                    className={`
+                      border-b border-gray-200 dark:border-gray-700
+                      hover:bg-accent/10 dark:hover:bg-accent/20
+                      transition-colors duration-200
+                      ${i % 2 === 0 ? "bg-gray-50 dark:bg-darkBg" : "bg-white dark:bg-darkCard"}
+                    `}
+                  >
+                    <td className="p-4 font-semibold text-gray-800 dark:text-gray-100">
+                      {c.title}
+                    </td>
+                    <td className="p-4">
+                      <span
+                        className="
+                          px-3 py-1 rounded-full text-sm font-semibold
+                          bg-gradient-to-r from-accent to-blue-500 text-darkBg
+                          shadow-sm
+                        "
+                      >
+                        {c.category}
+                      </span>
+                    </td>
+                    <td className="p-4 font-bold text-green-600 dark:text-green-400">
+                      ₹{c.price}
+                    </td>
+                    <td className="p-4 space-x-3">
+                      <button
+                        onClick={() => startEdit(c)}
+                        className="
+                          px-4 py-2 rounded-lg
+                          bg-blue-500 hover:bg-blue-600 text-white font-semibold
+                          transition duration-200 shadow
+                        "
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => deleteCourse(c._id)}
+                        className="
+                          px-4 py-2 rounded-lg
+                          bg-red-500 hover:bg-red-600 text-white font-semibold
+                          transition duration-200 shadow
+                        "
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="4"
+                    className="p-6 text-center text-gray-500 dark:text-gray-400 font-medium"
+                  >
+                    No courses available
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td
-                  colSpan="4"
-                  className="p-6 text-center text-gray-400 font-medium"
-                >
-                  No courses available
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

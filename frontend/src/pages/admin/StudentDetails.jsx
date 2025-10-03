@@ -7,7 +7,6 @@ export default function StudentDetails() {
   const navigate = useNavigate();
   const [student, setStudent] = useState(null);
 
-  // ✅ Use Vite env variable
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
   useEffect(() => {
@@ -27,40 +26,42 @@ export default function StudentDetails() {
   }
 
   if (!student) {
-    return <p className="text-center text-gray-400">Loading student...</p>;
+    return <p className="text-center text-gray-400 mt-20">Loading student details...</p>;
   }
 
   return (
-    <div className="p-8 bg-darkCard rounded-xl shadow-lg max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-accent">
+    <div className="p-8 min-h-screen bg-darkBg text-gray-200">
+      {/* ===== Header ===== */}
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-extrabold text-accent tracking-wide">
           🎓 Student Details
         </h1>
         <button
           onClick={() => navigate(-1)}
-          className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
+          className="px-5 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition text-white shadow"
         >
           ← Back
         </button>
       </div>
 
-      {/* Profile Photo + Info */}
-      <div className="flex items-center gap-6">
-        <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-accent shadow">
-          {student.photo ? (
-            <img
-              src={`${API_URL}${student.photo}`}
-              alt="student"
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-800 text-gray-400">
-              No Photo
-            </div>
-          )}
+      {/* ===== Profile Card ===== */}
+      <div className="flex flex-col sm:flex-row gap-8 bg-darkCard/80 p-6 rounded-2xl shadow-xl border border-gray-700">
+        <div className="flex-shrink-0">
+          <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-accent shadow-lg">
+            {student.photo ? (
+              <img
+                src={`${API_URL}${student.photo}`}
+                alt="student"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-800 text-gray-400">
+                No Photo
+              </div>
+            )}
+          </div>
         </div>
-        <div>
+        <div className="flex flex-col justify-center">
           <h2 className="text-2xl font-semibold text-white">
             {student.firstName} {student.lastName}
           </h2>
@@ -69,8 +70,8 @@ export default function StudentDetails() {
         </div>
       </div>
 
-      {/* Details Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* ===== Details Grid ===== */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-8">
         <Detail label="DOB" value={student.dob?.substring(0, 10)} />
         <Detail label="Age" value={student.age} />
         <Detail label="Gender" value={student.gender} />
@@ -95,25 +96,25 @@ export default function StudentDetails() {
         <Detail label="User ID" value={student.userId} />
       </div>
 
-      {/* Actions */}
-      <div className="flex justify-end gap-3 mt-6">
+      {/* ===== Actions ===== */}
+      <div className="flex justify-end mt-8">
         <Link
           to={`/admin/students/edit/${student._id}`}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          className="px-6 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-semibold shadow hover:scale-105 transition"
         >
-          Edit
+          ✏️ Edit
         </Link>
       </div>
     </div>
   );
 }
 
-// ✅ Reusable field component
+// ✅ Reusable info card
 function Detail({ label, value }) {
   return (
-    <div className="bg-gray-800 p-4 rounded-lg shadow">
+    <div className="bg-darkCard p-4 rounded-xl border border-gray-700 hover:border-accent/60 shadow transition">
       <p className="text-sm text-gray-400">{label}</p>
-      <p className="text-white font-semibold">{value || "—"}</p>
+      <p className="text-white font-semibold mt-1">{value || "—"}</p>
     </div>
   );
 }
