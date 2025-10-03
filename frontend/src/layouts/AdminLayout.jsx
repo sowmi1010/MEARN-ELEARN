@@ -1,3 +1,4 @@
+// src/layouts/AdminLayout.jsx
 import React, { useState, useEffect } from "react";
 import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 
@@ -6,7 +7,9 @@ export default function AdminLayout() {
   const location = useLocation();
 
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
-  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("user") || "{}"));
+  const [user, setUser] = useState(() =>
+    JSON.parse(localStorage.getItem("user") || "{}")
+  );
 
   // 🌓 Apply theme
   useEffect(() => {
@@ -38,16 +41,22 @@ export default function AdminLayout() {
     { to: "payments", label: "Payments", icon: "💳", roles: ["admin", "mentor"], permission: "payments" },
   ];
 
+  // ✅ Access control
   const hasAccess = (link) => {
     if (!user?.role) return false;
     if (user.role === "admin") return link.roles.includes("admin");
     if (user.role === "mentor") {
-      return link.roles.includes("mentor") && (!link.permission || (user.permissions || []).includes(link.permission));
+      return (
+        link.roles.includes("mentor") &&
+        (!link.permission || (user.permissions || []).includes(link.permission))
+      );
     }
     return false;
   };
 
-  const currentLink = navLinks.find((link) => location.pathname.includes(`/admin/${link.to}`));
+  const currentLink = navLinks.find((link) =>
+    location.pathname.includes(`/admin/${link.to}`)
+  );
   const canViewPage = !currentLink || hasAccess(currentLink);
 
   return (
@@ -99,13 +108,16 @@ export default function AdminLayout() {
             return (
               <Link
                 key={link.to}
-                to={link.to}
+                to={link.to}              // ✅ stays relative
+                relative="path"          // ✅ makes it append to /admin
                 className={`
                   flex items-center gap-3 px-4 py-2 rounded-lg font-medium
                   transition-all duration-300
-                  ${active
-                    ? "bg-gradient-to-r from-accent to-blue-500 text-darkBg shadow-md"
-                    : "hover:bg-accent/20 hover:text-accent text-gray-700 dark:text-gray-300"}
+                  ${
+                    active
+                      ? "bg-gradient-to-r from-accent to-blue-500 text-darkBg shadow-md"
+                      : "hover:bg-accent/20 hover:text-accent text-gray-700 dark:text-gray-300"
+                  }
                 `}
               >
                 <span>{link.icon}</span> {link.label}

@@ -1,3 +1,4 @@
+// src/App.jsx
 import {
   BrowserRouter as Router,
   Routes,
@@ -17,7 +18,6 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 
 // 🎓 Student Pages
-import Dashboard from "./pages/student/StudentDashboard";
 import CourseDetail from "./pages/student/CourseDetail";
 import MyCourses from "./pages/student/MyCourses";
 
@@ -34,7 +34,7 @@ import StudentList from "./pages/admin/StudentList";
 import StudentUpload from "./pages/admin/StudentUpload";
 import StudentDetails from "./pages/admin/StudentDetails";
 import EnrolledStudentList from "./pages/admin/EnrolledStudentList";
-import TeacherUpload from "./pages/admin/TeacherUpload"; // ✅ Teachers page
+import TeacherUpload from "./pages/admin/TeacherUpload";
 import FeedbackUpload from "./pages/admin/FeedbackUpload";
 
 // 🌍 Shared / Landing
@@ -72,7 +72,7 @@ function AnimatedRoutes({ user }) {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        {/* 🌍 Public Routes */}
+        {/* Public Routes */}
         <Route
           path="/"
           element={
@@ -106,23 +106,13 @@ function AnimatedRoutes({ user }) {
           }
         />
 
-        {/* 🎓 Student Routes */}
+        {/* Student Routes */}
         <Route
           path="/course/:id"
           element={
             <PrivateRoute requiredRole="student">
               <PageWrapper>
                 <CourseDetail />
-              </PageWrapper>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            <PrivateRoute requiredRole="student">
-              <PageWrapper>
-                <Dashboard />
               </PageWrapper>
             </PrivateRoute>
           }
@@ -138,7 +128,7 @@ function AnimatedRoutes({ user }) {
           }
         />
 
-        {/* 👨‍🏫 Mentor Direct Routes */}
+        {/* Mentor Routes */}
         <Route
           path="/mentor/students"
           element={
@@ -170,7 +160,7 @@ function AnimatedRoutes({ user }) {
           }
         />
 
-        {/* 🛠️ Admin Routes */}
+        {/* Admin Routes */}
         <Route
           path="/admin"
           element={
@@ -179,7 +169,6 @@ function AnimatedRoutes({ user }) {
             </PrivateRoute>
           }
         >
-          {/* Dashboard + Courses */}
           <Route
             path="dashboard"
             element={
@@ -212,10 +201,8 @@ function AnimatedRoutes({ user }) {
               </PageWrapper>
             }
           />
-
-          {/* ✅ Teachers Page (Fixed) */}
           <Route
-            path="teachers" // ✅ now relative
+            path="teachers"
             element={
               <PageWrapper>
                 <TeacherUpload />
@@ -230,7 +217,6 @@ function AnimatedRoutes({ user }) {
               </PageWrapper>
             }
           />
-
           <Route
             path="payments"
             element={
@@ -239,8 +225,6 @@ function AnimatedRoutes({ user }) {
               </PageWrapper>
             }
           />
-
-          {/* Admin Management */}
           <Route
             path="admins"
             element={
@@ -265,8 +249,6 @@ function AnimatedRoutes({ user }) {
               </PageWrapper>
             }
           />
-
-          {/* Student Management */}
           <Route
             path="students"
             element={
@@ -299,8 +281,6 @@ function AnimatedRoutes({ user }) {
               </PageWrapper>
             }
           />
-
-          {/* Enrolled Students */}
           <Route
             path="enrolled-students"
             element={
@@ -309,8 +289,6 @@ function AnimatedRoutes({ user }) {
               </PageWrapper>
             }
           />
-
-          {/* Mentor Management */}
           <Route
             path="mentors"
             element={
@@ -345,7 +323,7 @@ function AnimatedRoutes({ user }) {
           />
         </Route>
 
-        {/* ❌ Fallback */}
+        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </AnimatePresence>
@@ -366,8 +344,8 @@ function App() {
   return (
     <Router>
       <div className="bg-darkBg min-h-screen text-gray-200">
-        {/* Show Navbar only for students & guests */}
-        {user?.role !== "admin" && <Navbar />}
+        {/* ✅ Navbar always shown on public/student pages */}
+        <Navbar />
         <AnimatedRoutes user={user} />
       </div>
     </Router>

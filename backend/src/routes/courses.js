@@ -108,7 +108,6 @@ router.post("/:id/enroll", auth, async (req, res) => {
     if (alreadyEnrolled) {
       return res.status(400).json({ message: "Already enrolled" });
     }
-
     // ✅ Add user to course
     course.enrolledStudents.push(userId);
     await course.save();

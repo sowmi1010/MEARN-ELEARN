@@ -21,20 +21,22 @@ export default function Login() {
       // ✅ Role-based redirect
       if (isSuperAdmin || role === "admin") {
         navigate("/admin/dashboard", { replace: true });
-
       } else if (role === "mentor") {
-        if (permissions.includes("dashboard")) navigate("/admin/dashboard", { replace: true });
-        else if (permissions.includes("students")) navigate("/admin/enrolled-students", { replace: true });
-        else if (permissions.includes("videos")) navigate("/admin/videos", { replace: true });
-        else if (permissions.includes("payments")) navigate("/admin/payments", { replace: true });
+        if (permissions.includes("dashboard"))
+          navigate("/admin/dashboard", { replace: true });
+        else if (permissions.includes("students"))
+          navigate("/admin/enrolled-students", { replace: true });
+        else if (permissions.includes("videos"))
+          navigate("/admin/videos", { replace: true });
+        else if (permissions.includes("payments"))
+          navigate("/admin/payments", { replace: true });
         else {
           alert("❌ You don't have any permissions assigned. Contact Admin.");
           navigate("/", { replace: true });
         }
-
       } else {
         // 🔑 Students
-        navigate("/dashboard", { replace: true });
+        navigate("/", { replace: true });
       }
     } catch (err) {
       console.error("❌ Login failed:", err.response?.data || err.message);

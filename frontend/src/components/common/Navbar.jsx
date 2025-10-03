@@ -1,12 +1,15 @@
+// src/components/common/Navbar.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom"; // ✅ useLocation added
 import api from "../../utils/api";
 
 export default function Navbar() {
   const navigate = useNavigate();
-  const location = useLocation();
+  const location = useLocation(); // ✅ detect current route
+
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const fileInputRef = useRef(null);
 
   // 🌞 Default theme → light
@@ -16,11 +19,8 @@ export default function Navbar() {
 
   // 🌓 Apply theme
   useEffect(() => {
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    if (theme === "dark") document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
     localStorage.setItem("theme", theme);
   }, [theme]);
 
@@ -32,7 +32,7 @@ export default function Navbar() {
     if (storedUser) setUser(JSON.parse(storedUser));
   }, []);
 
-  // Hide navbar on admin pages
+  // ✅ Hide Navbar if URL starts with /admin
   if (location.pathname.startsWith("/admin")) return null;
 
   // 🚪 Logout
@@ -80,7 +80,7 @@ export default function Navbar() {
           onClick={() => navigate("/")}
           className="text-2xl font-extrabold bg-gradient-to-r from-accent to-blue-500 bg-clip-text text-transparent cursor-pointer tracking-wide"
         >
-          E-Learn
+          LAST TRY ACADEMY
         </h1>
 
         {/* 🖥 Desktop Links */}
@@ -93,7 +93,34 @@ export default function Navbar() {
 
           {!user ? (
             <>
-              <NavLink to="/login">Login</NavLink>
+              {/* 🔽 Dropdown for Admin & Mentor Login */}
+              <div
+                className="relative"
+                onMouseEnter={() => setDropdownOpen(true)}
+                onMouseLeave={() => setDropdownOpen(false)}
+              >
+                <button className="flex items-center gap-1 font-medium text-gray-700 dark:text-gray-300 hover:text-accent transition">
+                  Page ▾
+                </button>
+                {dropdownOpen && (
+                  <div className="absolute top-full mt-1 w-44 rounded-lg bg-white dark:bg-darkCard border border-gray-200 dark:border-gray-700 shadow-md z-50">
+                    <Link
+                      to="/login?role=admin"
+                      className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      Admin Login
+                    </Link>
+                    <Link
+                      to="/login?role=mentor"
+                      className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      Mentor Login
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              <NavLink to="/login?role=student">Student Login</NavLink>
               <NavLink to="/register">Register</NavLink>
             </>
           ) : (
@@ -106,8 +133,9 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* 🌗 Toggle Switch */}
+        {/* 🌗 Toggle & Avatar */}
         <div className="flex items-center gap-4">
+          {/* Toggle Switch */}
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
@@ -199,8 +227,20 @@ export default function Navbar() {
           )}
           {!user ? (
             <>
-              <NavLink to="/login" onClick={() => setMenuOpen(false)}>
-                Login
+              <NavLink to="/login?role=admin" onClick={() => setMenuOpen(false)}>
+                Admin Login
+              </NavLink>
+              <NavLink
+                to="/login?role=mentor"
+                onClick={() => setMenuOpen(false)}
+              >
+                Mentor Login
+              </NavLink>
+              <NavLink
+                to="/login?role=student"
+                onClick={() => setMenuOpen(false)}
+              >
+                Student Login
               </NavLink>
               <NavLink to="/register" onClick={() => setMenuOpen(false)}>
                 Register

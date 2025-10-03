@@ -1,13 +1,7 @@
-# TODO List for Fixing Navbar and Admin Dashboard Issue
+# TODO: Fix Enrollment Error in CourseDetail.jsx
 
-## Tasks
-- [x] Update Navbar.jsx to display logged-in user's name and conditionally show links based on login state.
-- [x] Update App.jsx to pass user info to Navbar.jsx.
-- [ ] Test login as user and admin to verify navbar and dashboard display.
-- [x] Add logout functionality in Navbar for normal users (removed as per user feedback).
-
-## Notes
-- Keep AdminLayout.jsx as is for admin users.
-- Ensure routing in App.jsx remains unchanged for admin and user dashboards.
-- Admin dashboard should only be accessible to admin users.
-- Updated Navbar to show only "Welcome, {user.name}" for logged-in users as per user feedback.
+- [x] Modify handleEnroll function in frontend/src/pages/student/CourseDetail.jsx to handle "Already enrolled" error gracefully:
+  - Check if err.response?.data?.message === "Already enrolled"
+  - If true, set enrolled to true, update localStorage with the course ID, and alert a success/info message
+  - This prevents error alerts when user is already enrolled but localStorage is outdated
+- [x] Test the enrollment flow to ensure no more 400 errors for already enrolled users

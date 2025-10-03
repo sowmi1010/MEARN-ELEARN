@@ -67,7 +67,19 @@ export default function CourseDetail() {
       localStorage.setItem("user", JSON.stringify(updatedUser));
     } catch (err) {
       console.error("❌ Enroll error:", err.response?.data || err.message);
-      alert(err.response?.data?.message || "Failed to enroll");
+      if (err.response?.data?.message === "Already enrolled") {
+        alert("You are already enrolled in this course!");
+        setEnrolled(true);
+        // Update user in localStorage
+        const updatedUser = { ...user };
+        updatedUser.enrolledCourses = [
+          ...(updatedUser.enrolledCourses || []),
+          id,
+        ];
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+      } else {
+        alert(err.response?.data?.message || "Failed to enroll");
+      }
     }
   }
 
