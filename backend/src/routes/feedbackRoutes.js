@@ -5,7 +5,7 @@ const fs = require("fs");
 const multer = require("multer");
 
 const auth = require("../middlewares/auth");
-const role = require("../middlewares/role");
+const checkPermission = require("../middlewares/permission"); // ✅ Added
 const Feedback = require("../models/Feedback");
 
 // 📂 Ensure upload dir exists
@@ -50,22 +50,22 @@ router.get("/", async (req, res) => {
 
 /**
  * ============================
- * ADMIN: create feedback
- * POST /api/feedbacks
- * form-data: { name, course, comment, photo(file) }
+ * ADMIN / MENTOR (with access): create feedback
  * ============================
  */
 router.post(
   "/",
   auth,
-  role("admin"),
+  checkPermission("feedbacks"), // ✅ Changed
   upload.single("photo"),
   async (req, res) => {
     try {
       const { name, course, comment, isActive, featured } = req.body;
 
       if (!name || !course || !comment) {
-        return res.status(400).json({ message: "Name, course, and comment are required" });
+        return res.status(400).json({
+          message: "Name, course, and comment are required",
+        });
       }
 
       const doc = await Feedback.create({
@@ -87,39 +87,42 @@ router.post(
 
 /**
  * ============================
- * ADMIN: update feedback
- * PUT /api/feedbacks/:id
- * form-data supported (optional new photo)
+ * ADMIN / MENTOR (with access): update feedback
  * ============================
  */
 router.put(
   "/:id",
   auth,
-  role("admin"),
+  checkPermission("feedbacks"), // ✅ Changed
   upload.single("photo"),
   async (req, res) => {
     try {
       const { name, course, comment, isActive, featured } = req.body;
 
       const updates = { name, course, comment };
-      if (typeof isActive !== "undefined") updates.isActive = isActive === "true" || isActive === true;
-      if (typeof featured !== "undefined") updates.featured = featured === "true" || featured === true;
+      if (typeof isActive !== "undefined")
+        updates.isActive = isActive === "true" || isActive === true;
+      if (typeof featured !== "undefined")
+        updates.featured = featured === "true" || featured === true;
 
-      // handle new photo
       if (req.file) {
         updates.photo = `/uploads/feedback/${req.file.filename}`;
       }
 
       const prev = await Feedback.findById(req.params.id);
-      if (!prev) return res.status(404).json({ message: "Feedback not found" });
+      if (!prev)
+        return res.status(404).json({ message: "Feedback not found" });
 
-      // delete old photo if replaced
       if (req.file && prev.photo) {
         const oldPath = path.join(__dirname, "..", "..", prev.photo);
         if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
       }
 
-      const updated = await Feedback.findByIdAndUpdate(req.params.id, updates, { new: true });
+      const updated = await Feedback.findByIdAndUpdate(
+        req.params.id,
+        updates,
+        { new: true }
+      );
       res.json({ message: "✅ Feedback updated", feedback: updated });
     } catch (err) {
       console.error("❌ feedback update error:", err);
@@ -130,26 +133,30 @@ router.put(
 
 /**
  * ============================
- * ADMIN: delete feedback
- * DELETE /api/feedbacks/:id
+ * ADMIN / MENTOR (with access): delete feedback
  * ============================
  */
-router.delete("/:id", auth, role("admin"), async (req, res) => {
-  try {
-    const doc = await Feedback.findById(req.params.id);
-    if (!doc) return res.status(404).json({ message: "Feedback not found" });
+router.delete(
+  "/:id",
+  auth,
+  checkPermission("feedbacks"), // ✅ Changed
+  async (req, res) => {
+    try {
+      const doc = await Feedback.findById(req.params.id);
+      if (!doc) return res.status(404).json({ message: "Feedback not found" });
 
-    if (doc.photo) {
-      const filePath = path.join(__dirname, "..", "..", doc.photo);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      if (doc.photo) {
+        const filePath = path.join(__dirname, "..", "..", doc.photo);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      }
+
+      await doc.deleteOne();
+      res.json({ message: "🗑️ Feedback deleted" });
+    } catch (err) {
+      console.error("❌ feedback delete error:", err);
+      res.status(500).json({ message: "Failed to delete feedback" });
     }
-
-    await doc.deleteOne();
-    res.json({ message: "🗑️ Feedback deleted" });
-  } catch (err) {
-    console.error("❌ feedback delete error:", err);
-    res.status(500).json({ message: "Failed to delete feedback" });
   }
-});
+);
 
 module.exports = router;

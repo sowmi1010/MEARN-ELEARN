@@ -6,12 +6,13 @@ const path = require("path");
 
 const Teacher = require("../models/Teacher");
 const auth = require("../middlewares/auth");
-const role = require("../middlewares/role");
+const checkPermission = require("../middlewares/permission"); // ✅ Added
 
 // 📂 Ensure uploads/teachers folder exists
 const uploadDir = path.join(__dirname, "../../uploads/teachers");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
+  console.log("📂 Created folder: uploads/teachers");
 }
 
 // 📂 Multer config
@@ -23,9 +24,9 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 /**
- * ✅ Add Teacher (Admin only)
+ * ✅ Add Teacher (Admin or Mentor with "teachers" permission)
  */
-router.post("/", auth, role("admin"), upload.single("photo"), async (req, res) => {
+router.post("/", auth, checkPermission("teachers"), upload.single("photo"), async (req, res) => {
   try {
     const { name, subject, description } = req.body;
 
@@ -61,9 +62,9 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * ✅ Delete Teacher (Admin only)
+ * ✅ Delete Teacher (Admin or Mentor with "teachers" permission)
  */
-router.delete("/:id", auth, role("admin"), async (req, res) => {
+router.delete("/:id", auth, checkPermission("teachers"), async (req, res) => {
   try {
     const teacher = await Teacher.findById(req.params.id);
     if (!teacher) return res.status(404).json({ message: "Teacher not found" });

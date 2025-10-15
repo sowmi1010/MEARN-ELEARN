@@ -33,7 +33,6 @@ router.post("/reset-password", resetPassword);
 /* ============================================================
    🧩 PROFILE UPLOAD (Common for all roles)
 ============================================================ */
-
 const uploadDir = path.join(__dirname, "../../uploads/profile");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
@@ -68,7 +67,7 @@ router.post("/upload-profile", auth, upload.single("profilePic"), async (req, re
 
     await userDoc.save();
     res.json({
-      message: "Profile picture updated successfully ✅",
+      message: "✅ Profile picture updated successfully",
       profilePic: userDoc.profilePic || userDoc.photo,
     });
   } catch (err) {
@@ -78,11 +77,11 @@ router.post("/upload-profile", auth, upload.single("profilePic"), async (req, re
 });
 
 /* ============================================================
-   🧩 ADMIN DASHBOARD — GET ALL USERS
+   🧩 ADMIN / MENTOR DASHBOARD ACCESS
 ============================================================ */
 
-// ✅ Admin-only route to view all users, mentors, and students
-router.get("/users", auth, permission("admin"), async (req, res) => {
+// ✅ Admin or Mentor(with "dashboard" permission) — View all users
+router.get("/users", auth, permission("dashboard"), async (req, res) => {
   try {
     const [users, mentors, students] = await Promise.all([
       User.find().select("-password -__v").sort({ createdAt: -1 }),

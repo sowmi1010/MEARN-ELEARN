@@ -5,7 +5,7 @@ const path = require("path");
 const fs = require("fs");
 
 const auth = require("../middlewares/auth");
-const role = require("../middlewares/role");
+const checkPermission = require("../middlewares/permission"); // ✅ Added
 const Student = require("../models/Student");
 
 const router = express.Router();
@@ -44,7 +44,7 @@ function sanitizeStudent(student) {
 router.post(
   "/detailed-student",
   auth,
-  role("admin"),
+  checkPermission("students"), // ✅ Replaced
   upload.single("photo"),
   async (req, res) => {
     try {
@@ -65,7 +65,6 @@ router.post(
         return res.status(400).json({ message: "❌ Email already exists" });
       }
 
-      // Hash password here only if your model doesn't auto-hash with pre("save")
       data.password = await bcrypt.hash(data.password, 10);
 
       if (req.file) {
@@ -90,7 +89,7 @@ router.post(
 // ====================
 // Get All Students
 // ====================
-router.get("/detailed-students", auth, role("admin"), async (req, res) => {
+router.get("/detailed-students", auth, checkPermission("students"), async (req, res) => {
   try {
     const students = await Student.find().sort({ createdAt: -1 });
     res.json(students.map(sanitizeStudent));
@@ -103,7 +102,7 @@ router.get("/detailed-students", auth, role("admin"), async (req, res) => {
 // ====================
 // Get One Student
 // ====================
-router.get("/detailed-students/:id", auth, role("admin"), async (req, res) => {
+router.get("/detailed-students/:id", auth, checkPermission("students"), async (req, res) => {
   try {
     const student = await Student.findById(req.params.id);
     if (!student) return res.status(404).json({ message: "Student not found" });
@@ -120,7 +119,7 @@ router.get("/detailed-students/:id", auth, role("admin"), async (req, res) => {
 router.put(
   "/detailed-students/:id",
   auth,
-  role("admin"),
+  checkPermission("students"), // ✅ Replaced
   upload.single("photo"),
   async (req, res) => {
     try {
@@ -157,7 +156,7 @@ router.put(
 // ====================
 // Delete Student
 // ====================
-router.delete("/detailed-students/:id", auth, role("admin"), async (req, res) => {
+router.delete("/detailed-students/:id", auth, checkPermission("students"), async (req, res) => {
   try {
     const student = await Student.findByIdAndDelete(req.params.id);
     if (!student) return res.status(404).json({ message: "Student not found" });

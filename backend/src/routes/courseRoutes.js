@@ -3,7 +3,7 @@ const express = require("express");
 const router = express.Router();
 
 const auth = require("../middlewares/auth");
-const role = require("../middlewares/role");
+const checkPermission = require("../middlewares/permission"); // ✅ Added
 
 const {
   createCourse,
@@ -26,14 +26,13 @@ router.get("/", listCourses);
 
 /**
  * ==========================================================
- * ✅ Admin & Mentor(with "students" permission): View students
+ * ✅ Admin or Mentor(with "students" permission): View enrolled students
  * ==========================================================
  */
 router.get("/:id/students", auth, async (req, res) => {
   try {
     const user = req.user;
 
-    // Only allow admin OR mentor with "students" permission
     if (
       user.role !== "admin" &&
       !(user.role === "mentor" && user.permissions?.includes("students"))
@@ -64,24 +63,24 @@ router.get("/:id", auth, getCourse);
 
 /**
  * ==========================
- * ✅ Admin only: Create a course
+ * ✅ Admin or Mentor(with "courses" permission): Create a course
  * ==========================
  */
-router.post("/", auth, role("admin"), createCourse);
+router.post("/", auth, checkPermission("courses"), createCourse);
 
 /**
  * ==========================
- * ✅ Admin only: Update a course
+ * ✅ Admin or Mentor(with "courses" permission): Update a course
  * ==========================
  */
-router.put("/:id", auth, role("admin"), updateCourse);
+router.put("/:id", auth, checkPermission("courses"), updateCourse);
 
 /**
  * ==========================
- * ✅ Admin only: Delete a course
+ * ✅ Admin or Mentor(with "courses" permission): Delete a course
  * ==========================
  */
-router.delete("/:id", auth, role("admin"), deleteCourse);
+router.delete("/:id", auth, checkPermission("courses"), deleteCourse);
 
 /**
  * ==========================================================
@@ -96,23 +95,20 @@ router.post("/:id/enroll", auth, async (req, res) => {
     const course = await Course.findById(courseId);
     if (!course) return res.status(404).json({ message: "Course not found" });
 
-    // ✅ Ensure enrolledStudents is always an array
     if (!Array.isArray(course.enrolledStudents)) {
       course.enrolledStudents = [];
     }
 
-    // ✅ Prevent duplicate enrollment
     const alreadyEnrolled = course.enrolledStudents.some(
       (s) => s && s.toString() === userId.toString()
     );
     if (alreadyEnrolled) {
       return res.status(400).json({ message: "Already enrolled" });
     }
-    // ✅ Add user to course
+
     course.enrolledStudents.push(userId);
     await course.save();
 
-    // ✅ Update either User OR Student collection
     let updated = await User.findByIdAndUpdate(
       userId,
       { $addToSet: { enrolledCourses: courseId } },

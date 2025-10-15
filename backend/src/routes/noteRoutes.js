@@ -4,7 +4,8 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const auth = require("../middlewares/auth");
-const role = require("../middlewares/role");
+const checkPermission = require("../middlewares/permission"); // ✅ Added
+
 const {
   addNote,
   getNotes,
@@ -51,7 +52,7 @@ const upload = multer({ storage });
 router.post(
   "/upload",
   auth,
-  role("admin"),
+  checkPermission("notes"), // ✅ Changed
   upload.fields([
     { name: "thumbnail", maxCount: 1 },
     { name: "file", maxCount: 1 },
@@ -60,7 +61,7 @@ router.post(
 );
 
 // 📄 Get all notes
-router.get("/", auth, getNotes);
+router.get("/", auth, getNotes); // ✅ Accessible to all authenticated users (students/mentors/admins)
 
 // 🔍 Get single note
 router.get("/:id", auth, getNoteById);
@@ -69,7 +70,7 @@ router.get("/:id", auth, getNoteById);
 router.put(
   "/:id",
   auth,
-  role("admin"),
+  checkPermission("notes"), // ✅ Changed
   upload.fields([
     { name: "thumbnail", maxCount: 1 },
     { name: "file", maxCount: 1 },
@@ -78,6 +79,6 @@ router.put(
 );
 
 // 🗑️ Delete note
-router.delete("/:id", auth, role("admin"), deleteNote);
+router.delete("/:id", auth, checkPermission("notes"), deleteNote); // ✅ Changed
 
 module.exports = router;

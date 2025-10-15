@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { HiPlusCircle, HiUser, HiUserGroup, HiPencil } from "react-icons/hi2";
+import { Link, useNavigate } from "react-router-dom";
+import { HiPlusCircle, HiUser, HiUserGroup, HiPencil, HiKey } from "react-icons/hi2";
 import api from "../../../utils/api";
 
 export default function MentorList() {
   const [mentors, setMentors] = useState([]);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+  const navigate = useNavigate(); // ✅ Add navigate hook
 
   useEffect(() => {
     fetchMentors();
@@ -19,10 +20,7 @@ export default function MentorList() {
       });
       setMentors(res.data);
     } catch (err) {
-      console.error(
-        "Error fetching mentors:",
-        err.response?.data || err.message
-      );
+      console.error("Error fetching mentors:", err.response?.data || err.message);
     }
   }
 
@@ -37,6 +35,11 @@ export default function MentorList() {
     } catch (err) {
       console.error("Delete error:", err.response?.data || err.message);
     }
+  }
+
+  // 🟢 Access Button → Navigate to Mentor Access Page
+  function handleAccess(mentor) {
+    navigate(`/admin/mentor-access/${mentor._id}`);
   }
 
   return (
@@ -75,7 +78,7 @@ export default function MentorList() {
           </div>
         </div>
 
-        {/* Analytics Chart Placeholder */}
+        {/* Chart Placeholder */}
         <div className="bg-gradient-to-b from-gray-800/90 to-gray-900 rounded-2xl shadow-xl border border-gray-700 p-6">
           <h2 className="text-gray-300 font-semibold mb-3 flex items-center gap-2">
             <HiUser className="text-blue-400" /> Visitor Insights
@@ -98,6 +101,7 @@ export default function MentorList() {
                 <th className="py-4 px-4">Department</th>
                 <th className="py-4 px-4">Type</th>
                 <th className="py-4 px-4">Phone</th>
+                <th className="py-4 px-4 text-center">Access</th>
                 <th className="py-4 px-4 text-center">Edit</th>
               </tr>
             </thead>
@@ -106,7 +110,7 @@ export default function MentorList() {
               {mentors.map((m, idx) => (
                 <tr
                   key={m._id}
-                  className={`border-b border-gray-800 hover:bg-gray-800/60 transition`}
+                  className="border-b border-gray-800 hover:bg-gray-800/60 transition"
                 >
                   <td className="py-3 px-4 text-gray-400 text-sm">
                     {String(idx + 1).padStart(2, "0")}
@@ -140,6 +144,18 @@ export default function MentorList() {
                   </td>
                   <td className="py-3 px-4 text-gray-400">{m.type || "—"}</td>
                   <td className="py-3 px-4 text-gray-400">{m.phone || "—"}</td>
+
+                  {/* 🟢 Access Button */}
+                  <td className="py-3 px-4 text-center">
+                    <button
+                      onClick={() => handleAccess(m)}
+                      className="px-4 py-1.5 bg-teal-500 hover:bg-teal-600 rounded-md text-white text-sm font-medium flex items-center gap-1 justify-center transition"
+                    >
+                      <HiKey className="text-sm" /> Access
+                    </button>
+                  </td>
+
+                  {/* 🟦 Edit Button */}
                   <td className="py-3 px-4 text-center">
                     <Link
                       to={`/admin/mentors/edit/${m._id}`}
@@ -153,10 +169,7 @@ export default function MentorList() {
 
               {mentors.length === 0 && (
                 <tr>
-                  <td
-                    colSpan="9"
-                    className="py-10 text-center text-gray-500 italic"
-                  >
+                  <td colSpan="10" className="py-10 text-center text-gray-500 italic">
                     No mentors found
                   </td>
                 </tr>

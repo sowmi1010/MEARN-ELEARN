@@ -8,7 +8,6 @@ module.exports = async (req, res, next) => {
   try {
     const header = req.headers.authorization || "";
     const token = header.startsWith("Bearer ") ? header.split(" ")[1] : null;
-
     if (!token) return res.status(401).json({ message: "Token missing" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -27,7 +26,6 @@ module.exports = async (req, res, next) => {
       };
     };
 
-    // Try to find the user in any collection
     req.user =
       (await lookup(Admin, "admin")) ||
       (await lookup(User, "user")) ||
@@ -36,7 +34,6 @@ module.exports = async (req, res, next) => {
 
     if (!req.user) return res.status(401).json({ message: "User not found" });
 
-    // ✅ Force admin if token says so or DB flag says so
     if (
       decoded.role === "admin" ||
       req.user.isSuperAdmin === true ||
@@ -45,9 +42,6 @@ module.exports = async (req, res, next) => {
       req.user.role = "admin";
       req.user.isSuperAdmin = true;
     }
-
-   // console.log("Decoded Token:", decoded);
-   // console.log("Authenticated User:", req.user);
 
     next();
   } catch (err) {

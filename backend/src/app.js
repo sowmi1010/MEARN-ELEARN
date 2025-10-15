@@ -78,7 +78,6 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const studentRoutes = require("./routes/studentRoutes");
 const mentorRoutes = require("./routes/mentorRoutes");
-const mentorStatsRoutes = require("./routes/mentor");
 const teacherRoutes = require("./routes/teacherRoutes");
 const feedbackRoutes = require("./routes/feedbackRoutes");
 
@@ -97,7 +96,6 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/mentor", mentorRoutes);
-app.use("/api/mentor/stats", mentorStatsRoutes);
 app.use("/api/teachers", teacherRoutes);
 app.use("/api/feedbacks", feedbackRoutes);
 

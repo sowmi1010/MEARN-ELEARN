@@ -7,7 +7,6 @@ import {
   HiOutlinePhone,
   HiOutlineHomeModern,
   HiOutlineLockClosed,
-  HiArrowLeft,
 } from "react-icons/hi2";
 import api from "../../../utils/api";
 
@@ -86,15 +85,14 @@ export default function MentorUpload() {
       if (id) {
         await api.put(`/mentor/${id}`, data, { headers });
         alert("Mentor updated successfully!");
-        navigate("/admin/mentors");
       } else {
         await api.post("/mentor", data, { headers });
         alert("Mentor added successfully!");
-        navigate("/admin/mentors");
       }
+      navigate("/admin/mentors");
     } catch (err) {
       console.error("Save error:", err.response?.data || err.message);
-      alert("Failed to save mentor");
+      alert(err.response?.data?.message || "Failed to save mentor");
     } finally {
       setLoading(false);
     }
@@ -114,7 +112,7 @@ export default function MentorUpload() {
         </div>
 
         {/* Form */}
-        <div className=" p-8">
+        <div className="p-8">
           <form
             onSubmit={handleSubmit}
             className="grid grid-cols-1 md:grid-cols-3 gap-6"
@@ -147,59 +145,59 @@ export default function MentorUpload() {
             </div>
 
             {/* Personal Info */}
-            <SectionTitle
-              icon={<HiOutlineUserPlus />}
-              title="Personal Information"
-            />
-            <Input name="firstName" placeholder="First Name" value={formData.firstName} onChange={handleChange} />
-            <Input name="lastName" placeholder="Last Name" value={formData.lastName} onChange={handleChange} />
+            <SectionTitle title="Personal Information" />
+            <Input name="firstName" placeholder="Enter First Name" value={formData.firstName} onChange={handleChange} />
+            <Input name="lastName" placeholder="Enter Last Name" value={formData.lastName} onChange={handleChange} />
             <Input type="date" name="dob" value={formData.dob} onChange={handleChange} />
-            <Input name="age" placeholder="Age" value={formData.age} onChange={handleChange} />
-            <Select name="gender" value={formData.gender} onChange={handleChange} options={["Male", "Female", "Other"]} placeholder="Gender" />
+            <Input name="age" placeholder="Enter Age" value={formData.age} onChange={handleChange} />
+            <Select name="gender" value={formData.gender} onChange={handleChange}
+              options={["Male", "Female", "Other"]} placeholder="Select Gender" />
             <Input name="blood" placeholder="Blood Group" value={formData.blood} onChange={handleChange} />
-            <Select name="handicap" value={formData.handicap} onChange={handleChange} options={["Yes", "No"]} placeholder="Handicap" />
-            <Select name="maritalStatus" value={formData.maritalStatus} onChange={handleChange} options={["Married", "Unmarried"]} placeholder="Marital Status" />
+            <Select name="handicap" value={formData.handicap} onChange={handleChange}
+              options={["No", "Yes"]} placeholder="Handicap" />
+            <Select name="maritalStatus" value={formData.maritalStatus} onChange={handleChange}
+              options={["Unmarried", "Married"]} placeholder="Marital Status" />
 
             {/* Job Details */}
-            <SectionTitle
-              icon={<HiOutlineBuildingOffice />}
-              title="Job Details"
-            />
+            <SectionTitle title="Job Details" />
             <Input name="branchName" placeholder="Branch Name" value={formData.branchName} onChange={handleChange} />
             <Input name="branchNumber" placeholder="Branch Number" value={formData.branchNumber} onChange={handleChange} />
-            <Input name="role" placeholder="Role" value={formData.role} onChange={handleChange} />
+            <Select name="role" value={formData.role} onChange={handleChange}
+              options={["Mentor", "Admin", "Trainer", "Coordinator", "Assistant"]} placeholder="Select Role" />
+            <Select name="experience" value={formData.experience} onChange={handleChange}
+              options={["Fresher", "Junior", "Senior", "Expert"]} placeholder="Experience Level" />
+            <Select name="type" value={formData.type} onChange={handleChange}
+              options={["Full-time", "Part-time", "Contract", "Intern"]} placeholder="Employment Type" />
+            <Input name="qualification" placeholder="Enter Qualification" value={formData.qualification} onChange={handleChange} />
+            <Input name="language" placeholder="Languages Known" value={formData.language} onChange={handleChange} />
+            <Input name="skills" placeholder="Enter Skills" value={formData.skills} onChange={handleChange} />
+            <Input name="salary" placeholder="Salary (₹)" value={formData.salary} onChange={handleChange} />
             <Input name="department" placeholder="Department" value={formData.department} onChange={handleChange} />
-            <Input name="qualification" placeholder="Qualification" value={formData.qualification} onChange={handleChange} />
-            <Input name="experience" placeholder="Experience" value={formData.experience} onChange={handleChange} />
-            <Input name="language" placeholder="Language" value={formData.language} onChange={handleChange} />
-            <Input name="skills" placeholder="Skills" value={formData.skills} onChange={handleChange} />
-            <Input name="salary" placeholder="Salary" value={formData.salary} onChange={handleChange} />
-            <Input name="type" placeholder="Employment Type" value={formData.type} onChange={handleChange} />
 
             {/* Contact Info */}
-            <SectionTitle icon={<HiOutlinePhone />} title="Contact Information" />
-            <Input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} />
+            <SectionTitle title="Contact Information" />
+            <Input type="email" name="email" placeholder="Email ID" value={formData.email} onChange={handleChange} />
             <Input name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleChange} />
             <Input name="altPhone" placeholder="Alternate Phone" value={formData.altPhone} onChange={handleChange} />
 
             {/* Address */}
-            <SectionTitle icon={<HiOutlineHomeModern />} title="Address" />
-            <Input className="md:col-span-3" name="address" placeholder="Address" value={formData.address} onChange={handleChange} />
+            <SectionTitle title="Address" />
+            <Input className="md:col-span-3" name="address" placeholder="Enter Full Address" value={formData.address} onChange={handleChange} />
             <Input name="district" placeholder="District" value={formData.district} onChange={handleChange} />
             <Input name="state" placeholder="State" value={formData.state} onChange={handleChange} />
             <Input name="pincode" placeholder="Pincode" value={formData.pincode} onChange={handleChange} />
 
             {/* Login Credentials */}
-            <SectionTitle icon={<HiOutlineLockClosed />} title="Login Credentials" />
-            <Input name="userId" placeholder="User ID" value={formData.userId} onChange={handleChange} />
-            <Input type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} required={!id} />
+            <SectionTitle title="Login Credentials" />
+            <Input name="userId" placeholder="Enter User ID" value={formData.userId} onChange={handleChange} />
+            <Input type="password" name="password" placeholder="Enter Password" value={formData.password} onChange={handleChange} required={!id} />
 
             {/* Submit */}
             <div className="md:col-span-3 flex justify-end mt-6">
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-lg font-semibold text-white shadow-lg transition"
+                className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 px-10 py-3 rounded-xl font-semibold text-white shadow-lg transition-all duration-300"
               >
                 {loading ? "Saving..." : id ? "Update Mentor" : "Next"}
               </button>
@@ -211,7 +209,7 @@ export default function MentorUpload() {
   );
 }
 
-/* 🟩 Reusable Input */
+/* 🔹 Reusable Input */
 function Input({ className = "", ...props }) {
   return (
     <input
@@ -221,7 +219,7 @@ function Input({ className = "", ...props }) {
   );
 }
 
-/* 🟩 Reusable Select */
+/* 🔹 Reusable Select */
 function Select({ name, value, onChange, options, placeholder, className = "" }) {
   return (
     <select
@@ -240,12 +238,13 @@ function Select({ name, value, onChange, options, placeholder, className = "" })
   );
 }
 
-/* 🟩 Section Title */
-function SectionTitle({ icon, title }) {
+/* 🔹 Section Title */
+function SectionTitle({ title }) {
   return (
-    <div className="md:col-span-3 flex items-center gap-2 mt-6 mb-2 border-b border-gray-700 pb-1">
-      {icon}
-      <h2 className="text-lg font-semibold text-blue-400">{title}</h2>
+    <div className="md:col-span-3 flex items-center gap-2 mt-8 mb-3 border-b border-gray-700 pb-1">
+      <h2 className="text-lg font-semibold text-blue-400 uppercase tracking-wide">
+        {title}
+      </h2>
     </div>
   );
 }

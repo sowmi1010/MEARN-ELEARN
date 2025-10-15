@@ -7,15 +7,24 @@ import {
   HiOutlineUserGroup,
   HiOutlinePlayCircle,
   HiOutlineCurrencyRupee,
+  HiOutlineHome,
+  HiOutlineUser,
+  HiOutlineCog6Tooth,
+  HiOutlineCreditCard,
+  HiOutlineDocumentText,
+  HiOutlineUsers,
   HiArrowLeft,
   HiShieldCheck,
 } from "react-icons/hi2";
 
+// 🟦 Full Access Modules (same as sidebar)
 const availablePermissions = [
   { key: "dashboard", label: "Dashboard", icon: <HiOutlineChartBar /> },
-  { key: "students", label: "Enrolled Students", icon: <HiOutlineUserGroup /> },
+  { key: "home", label: "Home Page", icon: <HiOutlineHome /> },
   { key: "courses", label: "Courses", icon: <HiOutlineBookOpen /> },
-  { key: "videos", label: "Manage Videos", icon: <HiOutlinePlayCircle /> },
+  { key: "admin", label: "Admin", icon: <HiOutlineUser /> },
+  { key: "mentor", label: "Mentor", icon: <HiOutlineUserGroup /> },
+  { key: "students", label: "Student", icon: <HiOutlineUsers /> },
   { key: "payments", label: "Payments", icon: <HiOutlineCurrencyRupee /> },
 ];
 
@@ -23,6 +32,7 @@ export default function MentorAccess() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [selected, setSelected] = useState([]);
+  const [mentorName, setMentorName] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -36,6 +46,7 @@ export default function MentorAccess() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSelected(res.data.permissions || []);
+      setMentorName(res.data.firstName || "Mentor");
     } catch (err) {
       console.error("Fetch mentor permissions error:", err);
     }
@@ -43,9 +54,7 @@ export default function MentorAccess() {
 
   function togglePermission(key) {
     setSelected((prev) =>
-      prev.includes(key)
-        ? prev.filter((p) => p !== key)
-        : [...prev, key]
+      prev.includes(key) ? prev.filter((p) => p !== key) : [...prev, key]
     );
   }
 
@@ -58,11 +67,11 @@ export default function MentorAccess() {
         { permissions: selected },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert("Mentor permissions updated!");
+      alert("✅ Mentor access permissions updated successfully!");
       navigate("/admin/mentors");
     } catch (err) {
       console.error("Update permissions error:", err);
-      alert("Failed to update permissions");
+      alert("❌ Failed to update permissions");
     } finally {
       setLoading(false);
     }
@@ -71,26 +80,26 @@ export default function MentorAccess() {
   return (
     <div className="min-h-screen bg-[#0B0F19] text-white py-10 px-6">
       <div className="max-w-6xl mx-auto bg-gray-900/80 border border-gray-700 rounded-2xl shadow-2xl overflow-hidden">
-        {/* ===== Header Bar ===== */}
+        {/* Header Bar */}
         <div className="bg-gradient-to-r from-blue-500 to-teal-400 p-6 flex justify-between items-center border-b border-gray-700">
           <div className="flex items-center gap-3">
             <HiShieldCheck className="text-3xl" />
             <h1 className="text-2xl font-bold tracking-wide">
-              Assign Mentor Access
+              Set Access for: <span className="text-white">{mentorName}</span>
             </h1>
           </div>
           <span className="text-sm italic text-white/80">Step 2 of 2</span>
         </div>
 
-        {/* ===== Content Section ===== */}
+        {/* Content Section */}
         <div className="p-8 space-y-10">
           <p className="text-gray-400 text-center">
             Select which{" "}
             <span className="text-teal-400 font-semibold">modules</span> this
-            mentor can access by clicking below.
+            mentor can access in their sidebar.
           </p>
 
-          {/* ===== Permission Grid ===== */}
+          {/* Permission Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {availablePermissions.map((p) => (
               <div
@@ -116,7 +125,7 @@ export default function MentorAccess() {
             ))}
           </div>
 
-          {/* ===== Buttons ===== */}
+          {/* Buttons */}
           <div className="flex justify-between pt-8 border-t border-gray-700">
             <button
               onClick={() => navigate(-1)}
@@ -129,7 +138,7 @@ export default function MentorAccess() {
               disabled={loading}
               className="px-8 py-3 rounded-lg font-semibold bg-gradient-to-r from-blue-500 to-teal-400 text-white shadow-md hover:scale-105 hover:shadow-lg transition disabled:opacity-50"
             >
-              {loading ? "Saving..." : "Complete"}
+              {loading ? "Saving..." : "✅ Save Access"}
             </button>
           </div>
         </div>

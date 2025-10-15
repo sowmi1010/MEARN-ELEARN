@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
-import { FaMoon, FaSun, FaSignOutAlt, FaBell, FaArrowLeft, FaArrowRight, FaSearch } from "react-icons/fa";
+import {
+  FaMoon,
+  FaSun,
+  FaSignOutAlt,
+  FaBell,
+  FaArrowLeft,
+  FaArrowRight,
+  FaSearch,
+} from "react-icons/fa";
 import {
   HiOutlineUserGroup,
   HiOutlineBookOpen,
@@ -15,9 +23,10 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ Theme + User
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
-  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user") || "{}"));
+  const [user, setUser] = useState(
+    JSON.parse(localStorage.getItem("user") || "{}")
+  );
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -31,17 +40,34 @@ export default function AdminLayout() {
     navigate("/login");
   };
 
-  const navLinks = [
-    { to: "dashboard", label: "Dashboard", icon: <HiOutlineChartBar /> },
-    { to: "courses", label: "Courses", icon: <HiOutlineBookOpen /> },
-    { to: "admins", label: "Admins", icon: <HiOutlineUser /> },
-    { to: "mentors", label: "Mentors", icon: <HiOutlineAcademicCap /> },
-    { to: "students", label: "Students", icon: <HiOutlineUserGroup /> },
-    { to: "feedbacks", label: "Feedbacks", icon: <HiOutlineChatAlt2 /> },
-    { to: "payments", label: "Payments", icon: <HiOutlineCurrencyRupee /> },
-  ];
+  // 🔹 All possible admin modules
+  const allNavLinks = [
+  { key: "dashboard", to: "dashboard", label: "Dashboard", icon: <HiOutlineChartBar /> },
+  { key: "courses", to: "courses", label: "Courses", icon: <HiOutlineBookOpen /> },
+  { key: "admin", to: "admins", label: "Admins", icon: <HiOutlineUser /> },
+  { key: "mentor", to: "mentors", label: "Mentors", icon: <HiOutlineAcademicCap /> },
+  { key: "students", to: "students", label: "Students", icon: <HiOutlineUserGroup /> },
+  { key: "payments", to: "payments", label: "Payments", icon: <HiOutlineCurrencyRupee /> },
+];
 
-  // ✅ Navigation arrows
+
+  // ✅ Normalize permission key (handle singular/plural or case mismatch)
+  const normalize = (key) => key?.toLowerCase()?.replace(/s$/, "");
+
+  // ✅ Determine visible sidebar links based on permissions
+  const visibleLinks =
+    user?.role === "admin"
+      ? allNavLinks
+      : allNavLinks.filter((link) =>
+          (user?.permissions || []).includes(link.key)
+        );
+
+  // ✅ Optional: Keep modules in same order as selected in permission panel
+  const sortedLinks = visibleLinks.sort((a, b) => {
+    const order = user?.permissions || [];
+    return order.indexOf(a.key) - order.indexOf(b.key);
+  });
+
   const handleBack = () => navigate(-1);
   const handleForward = () => navigate(1);
 
@@ -51,25 +77,34 @@ export default function AdminLayout() {
       <aside className="w-64 fixed left-0 top-0 h-full bg-gradient-to-b from-[#0c1633] to-[#091025] shadow-xl border-r border-gray-800 flex flex-col">
         {/* Logo + User Info */}
         <div className="p-6 flex flex-col items-center border-b border-gray-700">
-          <img src="/logo.png" alt="Logo" className="w-12 h-12 mb-2 rounded-full shadow-lg" />
-          <h1 className="text-lg font-extrabold text-white">Last Try Academy</h1>
-          <p className="text-sm text-gray-400 mt-2">Role: {user.role || "Admin"}</p>
-          <p className="text-xs text-gray-500">Name: {user.name || "Super Admin"}</p>
+          <img
+            src="/logo.png"
+            alt="Logo"
+            className="w-12 h-12 mb-2 rounded-full shadow-lg"
+          />
+          <h1 className="text-lg font-extrabold text-white">
+            Last Try Academy
+          </h1>
+          <p className="text-sm text-gray-400 mt-2">
+            Role: {user.role || "Admin"}
+          </p>
+          <p className="text-xs text-gray-500">
+            Name: {user.name || "Super Admin"}
+          </p>
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 mt-4 space-y-2 overflow-y-auto">
-          {navLinks.map((link) => (
+          {sortedLinks.map((link) => (
             <NavLink
               key={link.to}
               to={`/admin/${link.to}`}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-5 py-3 text-sm font-medium rounded-lg transition-all duration-300
-                 ${
-                   isActive
-                     ? "bg-blue-600 text-white shadow-md"
-                     : "text-gray-300 hover:bg-blue-500/20 hover:text-white"
-                 }`
+                `flex items-center gap-3 px-5 py-3 text-sm font-medium rounded-lg transition-all duration-300 ${
+                  isActive
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "text-gray-300 hover:bg-blue-500/20 hover:text-white"
+                }`
               }
             >
               <span className="text-lg">{link.icon}</span>
@@ -84,7 +119,8 @@ export default function AdminLayout() {
             onClick={toggleTheme}
             className="flex items-center justify-center w-full gap-2 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-sm font-semibold transition"
           >
-            {theme === "dark" ? <FaSun /> : <FaMoon />} {theme === "dark" ? "Light Mode" : "Dark Mode"}
+            {theme === "dark" ? <FaSun /> : <FaMoon />}{" "}
+            {theme === "dark" ? "Light Mode" : "Dark Mode"}
           </button>
 
           <button
@@ -96,11 +132,10 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      {/* ===== Main Content Area ===== */}
+      {/* ===== Main Content ===== */}
       <div className="flex-1 ml-64 flex flex-col">
         {/* ===== Top Navbar ===== */}
         <header className="h-16 bg-[#0c1633] border-b border-gray-800 flex items-center justify-between px-6 shadow-md fixed top-0 left-64 right-0 z-20">
-          {/* Search bar */}
           <div className="flex items-center bg-gray-800 rounded-full px-4 py-2 w-72 text-gray-300">
             <FaSearch className="mr-2 text-gray-400" />
             <input
@@ -110,7 +145,6 @@ export default function AdminLayout() {
             />
           </div>
 
-          {/* Controls */}
           <div className="flex items-center gap-4">
             <button
               onClick={handleBack}

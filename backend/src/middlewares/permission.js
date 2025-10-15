@@ -1,17 +1,26 @@
+// middlewares/permission.js
 module.exports = (requiredPermission) => {
   return (req, res, next) => {
-    if (!req.user) {
+    if (!req.user)
       return res.status(401).json({ message: "Unauthorized: user missing" });
-    }
 
-    // Admin always has access
-    if (req.user.role === "admin") return next();
-
-    // Mentor must have required permission
-    if (req.user.role === "mentor" && req.user.permissions?.includes(requiredPermission)) {
+    // ✅ Super Admin or Admin always have full access
+    if (req.user.role === "admin" || req.user.isSuperAdmin) {
       return next();
     }
 
-    return res.status(403).json({ message: "Access denied: missing permission" });
+    // ✅ Mentor: check if permission exists
+    if (
+      req.user.role === "mentor" &&
+      Array.isArray(req.user.permissions) &&
+      req.user.permissions.includes(requiredPermission)
+    ) {
+      return next();
+    }
+
+    // ❌ Access denied
+    return res.status(403).json({
+      message: `Access denied: missing permission (${requiredPermission})`,
+    });
   };
 };

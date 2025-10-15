@@ -183,7 +183,8 @@ function AnimatedRoutes() {
           <Route path="mentors" element={<MentorList />} />
           <Route path="mentors/new" element={<MentorUpload />} />
           <Route path="mentors/edit/:id" element={<MentorUpload />} />
-          <Route path="mentors/access/:id" element={<MentorAccess />} />
+          <Route path="mentor-access/:id" element={<MentorAccess />} />
+
 
           {/* Course management */}
           <Route path="courses" element={<CourseHome />} />

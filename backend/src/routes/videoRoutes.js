@@ -9,10 +9,11 @@ const {
   getVideoById,
   updateVideo,
   deleteVideo,
-  getVideoCount, // ✅ Added
+  getVideoCount,
 } = require("../controllers/videoController");
+
 const auth = require("../middlewares/auth");
-const role = require("../middlewares/role");
+const checkPermission = require("../middlewares/permission"); // ✅ Added
 
 // ====================================================
 // ✅ Ensure upload folders exist
@@ -29,7 +30,7 @@ const thumbDir = path.join(baseUploadDir, "thumbnails");
 });
 
 // ====================================================
-// ✅ Configure multer storage (relative path normalization)
+// ✅ Configure multer storage
 // ====================================================
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -58,23 +59,15 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ storage, fileFilter });
 
 // ====================================================
-// ✅ Middleware: Normalize Uploaded Paths
+// ✅ Normalize Uploaded Paths
 // ====================================================
 const normalizePaths = (req, res, next) => {
   if (req.files?.thumbnail?.[0]) {
-    req.files.thumbnail[0].path = path
-      .relative(baseUploadDir, req.files.thumbnail[0].path)
-      .replace(/\\/g, "/");
-    req.files.thumbnail[0].path = "uploads/" + req.files.thumbnail[0].path;
+    req.files.thumbnail[0].path = "uploads/thumbnails/" + path.basename(req.files.thumbnail[0].path);
   }
-
   if (req.files?.file?.[0]) {
-    req.files.file[0].path = path
-      .relative(baseUploadDir, req.files.file[0].path)
-      .replace(/\\/g, "/");
-    req.files.file[0].path = "uploads/" + req.files.file[0].path;
+    req.files.file[0].path = "uploads/videos/" + path.basename(req.files.file[0].path);
   }
-
   next();
 };
 
@@ -82,11 +75,11 @@ const normalizePaths = (req, res, next) => {
 // ✅ ROUTES
 // ====================================================
 
-// 🟢 Add Video
+// ➕ Add Video (Admin or Mentor with “videos” permission)
 router.post(
   "/upload",
   auth,
-  role("admin"),
+  checkPermission("videos"),
   upload.fields([
     { name: "thumbnail", maxCount: 1 },
     { name: "file", maxCount: 1 },
@@ -95,20 +88,20 @@ router.post(
   addVideo
 );
 
-// 🟢 Get total video count (MUST be before :id)
+// 📊 Get total video count
 router.get("/count/total", auth, getVideoCount);
 
-// 🟢 Get all videos
+// 📺 Get all videos (accessible to all authenticated users)
 router.get("/", auth, getVideos);
 
-// 🟢 Get single video
+// 🔍 Get single video
 router.get("/:id", auth, getVideoById);
 
-// 🟢 Update video
+// ✏️ Update Video (Admin or Mentor with “videos” permission)
 router.put(
   "/:id",
   auth,
-  role("admin"),
+  checkPermission("videos"),
   upload.fields([
     { name: "thumbnail", maxCount: 1 },
     { name: "file", maxCount: 1 },
@@ -117,7 +110,7 @@ router.put(
   updateVideo
 );
 
-// 🟢 Delete video
-router.delete("/:id", auth, role("admin"), deleteVideo);
+// 🗑️ Delete Video (Admin or Mentor with “videos” permission)
+router.delete("/:id", auth, checkPermission("videos"), deleteVideo);
 
 module.exports = router;

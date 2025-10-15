@@ -40,7 +40,8 @@ const mentorSchema = new mongoose.Schema(
     photo: { type: String },
 
     // 🔹 Mentor access permissions
-    permissions: [{ type: String }],
+    permissions: { type: [String], default: [] },
+
   },
   { timestamps: true }
 );
