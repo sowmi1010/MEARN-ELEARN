@@ -5,10 +5,13 @@ import api from "../../utils/api";
 export default function Login() {
   const [emailOrUserId, setEmailOrUserId] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(""); // 🔴 store error message
   const navigate = useNavigate();
 
   async function handleLogin(e) {
     e.preventDefault();
+    setError(""); // clear previous errors
+
     try {
       const res = await api.post("/auth/login", { emailOrUserId, password });
 
@@ -16,7 +19,7 @@ export default function Login() {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
-      // ✅ 🚀 Trigger instant Navbar & App update (NO refresh needed)
+      // ✅ Trigger app update
       window.dispatchEvent(new Event("user-login"));
 
       const { role, permissions = [], isSuperAdmin } = res.data.user;
@@ -36,7 +39,9 @@ export default function Login() {
       }
     } catch (err) {
       console.error("❌ Login failed:", err.response?.data || err.message);
-      alert(err.response?.data?.message || "Invalid credentials");
+
+      // 🟥 Show user-friendly message (instead of alert)
+      setError(err.response?.data?.message || "Incorrect password");
     }
   }
 
@@ -84,6 +89,13 @@ export default function Login() {
         >
           Login
         </button>
+
+        {/* 🔴 Error message shown here */}
+        {error && (
+          <p className="text-red-600 text-sm text-center mt-3 font-medium">
+            {error}
+          </p>
+        )}
 
         <p
           onClick={() => navigate("/forgot-password")}

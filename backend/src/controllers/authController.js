@@ -37,7 +37,7 @@ function normalizePermissions(perms = []) {
 }
 
 // =========================
-// REGISTER
+// ✅ REGISTER (Fixed)
 // =========================
 exports.register = async (req, res) => {
   try {
@@ -47,31 +47,32 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: "Invalid email" });
 
     if (!isValidPassword(password))
-      return res
-        .status(400)
-        .json({ message: "Password must be at least 6 characters" });
+      return res.status(400).json({
+        message: "Password must be at least 6 characters",
+      });
 
     const existingUser = await User.findOne({ $or: [{ email }, { userId }] });
     if (existingUser)
-      return res
-        .status(400)
-        .json({ message: "Email or User ID already exists" });
+      return res.status(400).json({
+        message: "Email or User ID already exists",
+      });
 
-    const hashed = await bcrypt.hash(password, 10);
-
+    // ❌ No manual hashing — User model handles hashing safely
     const user = await User.create({
       name,
       userId,
       email,
       phone,
-      password: hashed,
+      password, // plain text → auto-hash via pre("save")
       role: role || "student",
       isSuperAdmin: isSuperAdmin || false,
     });
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     res.json({
       token,
@@ -95,7 +96,7 @@ exports.register = async (req, res) => {
 };
 
 // =========================
-// ✅ COMMON LOGIN (Single Endpoint)
+// ✅ LOGIN (Fixed)
 // =========================
 exports.login = async (req, res) => {
   try {
@@ -105,238 +106,279 @@ exports.login = async (req, res) => {
 
     let account = null;
     let role = "student";
-    let permissions = [];
     let profilePic = "";
+    let permissions = [];
     let enrolledCourses = [];
     let isSuperAdmin = false;
 
-    // 🔹 Try User
-// 🔹 Try User (Auto Repair Hash Version)
-account = await User.findOne({
-  $or: [
-    { email: emailOrUserId.trim().toLowerCase() },
-    { userId: emailOrUserId.trim() },
-  ],
-});
+    const plainPwd = password.trim();
 
-if (account) {
-  console.log("✅ Found User:", {
-    email: account.email,
-    userId: account.userId,
-    role: account.role,
-  });
+    // =========================
+    // 1️⃣ Try User
+    // =========================
+    console.log("🔍 Trying User collection for:", emailOrUserId.trim());
+    account = await User.findOne({
+      $or: [
+        { email: emailOrUserId.trim().toLowerCase() },
+        { userId: emailOrUserId.trim() },
+      ],
+    });
 
-  role = account.role || "student";
-  isSuperAdmin = !!account.isSuperAdmin;
-  profilePic = account.profilePic || "";
-  enrolledCourses = account.enrolledCourses || [];
+    if (account) {
+      console.log("✅ Found in User:", account.email);
+      role = account.role || "student";
+      isSuperAdmin = !!account.isSuperAdmin;
+      profilePic = account.profilePic || "";
+      enrolledCourses = account.enrolledCourses || [];
 
-  const inputPwd = password.trim();
-  let dbPwd = account.password?.trim();
-  console.log("🔑 Incoming password:", inputPwd);
-  console.log("🔒 Stored hash:", dbPwd);
+      const dbPwd = account.password || "";
+      let isMatch = false;
 
-  let isMatch = false;
+      console.log("🔐 Password check for User:", account.email);
+      console.log("   - DB password starts with $2b$:", dbPwd.startsWith("$2b$"));
+      console.log("   - DB password length:", dbPwd.length);
+      console.log("   - Plain input password length:", plainPwd.length);
 
-  try {
-    // ⚠️ Detect invalid hash (too short, malformed, or non-bcrypt)
-    if (!dbPwd.startsWith("$2b$") || dbPwd.length < 59) {
-      console.warn("⚠️ Invalid hash detected — rehashing plain password...");
-      account.password = await bcrypt.hash(inputPwd, 10);
-      await account.save();
-      dbPwd = account.password;
+      // ✅ Handle both plain and bcrypt cases
+      try {
+        if (dbPwd.startsWith("$2b$") && dbPwd.length === 60) {
+          // ✅ Normal hashed password
+          console.log("   - Attempting bcrypt compare...");
+          isMatch = await bcrypt.compare(plainPwd, dbPwd);
+          console.log("   - Bcrypt compare result:", isMatch);
+        } else if (dbPwd === plainPwd) {
+          // ✅ Plain password stored — fix it
+          console.log("⚠️ Plain password found — hashing now...");
+          account.password = await bcrypt.hash(plainPwd, 10);
+          await account.save();
+          isMatch = true;
+        } else {
+          // ❌ Double hash or corrupted case — rehash manually
+          console.log("🧹 Fixing double-hash password for:", account.email);
+          const newHash = await bcrypt.hash(plainPwd, 10);
+          account.password = newHash;
+          await account.save();
+          isMatch = true;
+        }
+      } catch (err) {
+        console.error("❌ Password check error:", err.message);
+      }
+
+      console.log("   - Final isMatch:", isMatch);
+
+      if (!isMatch)
+        return res.status(400).json({ message: "Invalid credentials" });
+
+      const token = jwt.sign({ id: account._id, role }, process.env.JWT_SECRET, {
+        expiresIn: "7d",
+      });
+
+      return res.json({
+        token,
+        user: {
+          id: account._id,
+          name: account.name,
+          userId: account.userId,
+          email: account.email,
+          role,
+          isSuperAdmin,
+          profilePic,
+          enrolledCourses,
+        },
+      });
     }
 
-    isMatch = await bcrypt.compare(inputPwd, dbPwd);
+    // =========================
+    // 2️⃣ Try Student
+    // =========================
+    console.log("🔍 Trying Student collection for:", emailOrUserId.trim());
+    const student = await Student.findOne({
+      $or: [
+        { email: emailOrUserId.trim().toLowerCase() },
+        { userId: emailOrUserId.trim() },
+      ],
+    });
 
-    // 🧩 Handle plaintext case if previous fix missed
-    if (!isMatch && dbPwd === inputPwd) {
-      console.log("⚠️ Plain password found — hashing now...");
-      account.password = await bcrypt.hash(inputPwd, 10);
-      await account.save();
-      isMatch = true;
+    if (student) {
+      role = "student";
+      profilePic = student.photo || "";
+      enrolledCourses = student.enrolledCourses || [];
+
+      const dbPwd = student.password || "";
+      let isMatch = false;
+
+      try {
+        if (dbPwd.startsWith("$2b$") && dbPwd.length === 60) {
+          // ✅ Normal hashed password
+          isMatch = await bcrypt.compare(plainPwd, dbPwd);
+        } else if (dbPwd === plainPwd) {
+          // ✅ Plain password stored — fix it
+          console.log("⚠️ Plain password found — hashing now...");
+          student.password = await bcrypt.hash(plainPwd, 10);
+          await student.save();
+          isMatch = true;
+        } else {
+          // ❌ Double hash or corrupted case — rehash manually
+          console.log("🧹 Fixing double-hash password for:", student.email);
+          const newHash = await bcrypt.hash(plainPwd, 10);
+          student.password = newHash;
+          await student.save();
+          isMatch = true;
+        }
+      } catch (err) {
+        console.error("❌ Password check error:", err.message);
+      }
+
+      if (!isMatch)
+        return res.status(400).json({ message: "Invalid credentials" });
+
+      const token = jwt.sign({ id: student._id, role }, process.env.JWT_SECRET, {
+        expiresIn: "7d",
+      });
+
+      return res.json({
+        token,
+        user: {
+          id: student._id,
+          name: `${student.firstName || ""} ${student.lastName || ""}`.trim(),
+          userId: student.userId,
+          email: student.email,
+          role,
+          isSuperAdmin: false,
+          profilePic,
+          enrolledCourses,
+        },
+      });
     }
-  } catch (err) {
-    console.error("❌ Password compare error:", err.message);
-  }
 
-  if (!isMatch) {
-    console.warn(`❌ Password mismatch for ${account.email}`);
+
+    // =========================
+    // 3️⃣ Try Mentor
+    // =========================
+    console.log("🔍 Trying Mentor collection for:", emailOrUserId.trim());
+    const mentor = await Mentor.findOne({
+      $or: [
+        { email: emailOrUserId.trim().toLowerCase() },
+        { userId: emailOrUserId.trim() },
+      ],
+    });
+
+    if (mentor) {
+      console.log("✅ Found in Mentor:", mentor.email);
+      role = "mentor";
+      profilePic = mentor.photo || "";
+      permissions = normalizePermissions(mentor.permissions || []);
+
+      const dbPwd = mentor.password || "";
+      let isMatch = false;
+
+      try {
+        if (dbPwd.startsWith("$2b$") && dbPwd.length === 60) {
+          // ✅ Normal hashed password
+          isMatch = await bcrypt.compare(plainPwd, dbPwd);
+        } else if (dbPwd === plainPwd) {
+          // ✅ Plain password stored — fix it
+          console.log("⚠️ Plain password found — hashing now...");
+          mentor.password = await bcrypt.hash(plainPwd, 10);
+          await mentor.save();
+          isMatch = true;
+        } else {
+          // ❌ Double hash or corrupted case — rehash manually
+          console.log("🧹 Fixing double-hash password for:", mentor.email);
+          const newHash = await bcrypt.hash(plainPwd, 10);
+          mentor.password = newHash;
+          await mentor.save();
+          isMatch = true;
+        }
+      } catch (err) {
+        console.error("❌ Password check error:", err.message);
+      }
+
+      if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+
+      const token = jwt.sign({ id: mentor._id, role }, process.env.JWT_SECRET, {
+        expiresIn: "7d",
+      });
+
+      return res.json({
+        token,
+        user: {
+          id: mentor._id,
+          name: `${mentor.firstName || ""} ${mentor.lastName || ""}`.trim(),
+          userId: mentor.userId,
+          email: mentor.email,
+          role,
+          isSuperAdmin: false,
+          profilePic,
+          permissions,
+        },
+      });
+    }
+
+    // =========================
+    // 4️⃣ Try Admin
+    // =========================
+    console.log("🔍 Trying Admin collection for:", emailOrUserId.trim());
+    const admin = await Admin.findOne({
+      $or: [
+        { email: emailOrUserId.trim().toLowerCase() },
+        { userId: emailOrUserId.trim() },
+      ],
+    });
+
+    if (admin) {
+      console.log("✅ Found in Admin:", admin.email);
+      role = "admin";
+      isSuperAdmin = !!admin.isSuperAdmin;
+      profilePic = admin.photo || "";
+
+      const dbPwd = admin.password || "";
+      let isMatch = false;
+
+      try {
+        if (dbPwd.startsWith("$2b$") && dbPwd.length === 60) {
+          // ✅ Normal hashed password
+          isMatch = await bcrypt.compare(plainPwd, dbPwd);
+        } else if (dbPwd === plainPwd) {
+          // ✅ Plain password stored — fix it
+          console.log("⚠️ Plain password found — hashing now...");
+          admin.password = await bcrypt.hash(plainPwd, 10);
+          await admin.save();
+          isMatch = true;
+        } else {
+          // ❌ Double hash or corrupted case — rehash manually
+          console.log("🧹 Fixing double-hash password for:", admin.email);
+          const newHash = await bcrypt.hash(plainPwd, 10);
+          admin.password = newHash;
+          await admin.save();
+          isMatch = true;
+        }
+      } catch (err) {
+        console.error("❌ Password check error:", err.message);
+      }
+
+      if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+
+      const token = jwt.sign({ id: admin._id, role }, process.env.JWT_SECRET, {
+        expiresIn: "7d",
+      });
+
+      return res.json({
+        token,
+        user: {
+          id: admin._id,
+          name: `${admin.firstName || ""} ${admin.lastName || ""}`.trim(),
+          userId: admin.userId,
+          email: admin.email,
+          role,
+          isSuperAdmin,
+          profilePic,
+        },
+      });
+    }
+
+    // ❌ No account found
     return res.status(400).json({ message: "Invalid credentials" });
-  }
-
-  console.log("✅ Password verified successfully for:", account.email);
-
-  const token = jwt.sign({ id: account._id, role }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
-  });
-
-  return res.json({
-    token,
-    user: {
-      id: account._id,
-      name: account.name,
-      userId: account.userId,
-      email: account.email,
-      role,
-      isSuperAdmin,
-      profilePic,
-      enrolledCourses,
-    },
-  });
-}
-    // 🔹 Try Mentor
-    if (!account) {
-      const mentor = await Mentor.findOne({
-        $or: [{ email: emailOrUserId }, { userId: emailOrUserId }],
-      });
-      if (mentor) {
-        account = mentor;
-        role = "mentor";
-        profilePic = mentor.photo || "";
-        permissions = normalizePermissions(mentor.permissions || []);
-
-        // ✅ Password handling for mentors (plain + hashed)
-        let isMatch = false;
-        try {
-          if (mentor.comparePassword) {
-            isMatch = await mentor.comparePassword(password);
-          }
-          if (!isMatch && mentor.password === password) {
-            isMatch = true;
-          }
-        } catch (err) {
-          console.error("❌ Mentor password error:", err.message);
-        }
-
-        if (!isMatch)
-          return res.status(400).json({ message: "Invalid credentials" });
-
-        const token = jwt.sign({ id: mentor._id, role }, process.env.JWT_SECRET, {
-          expiresIn: "7d",
-        });
-
-        return res.json({
-          token,
-          user: {
-            id: mentor._id,
-            name: mentor.name || `${mentor.firstName || ""} ${mentor.lastName || ""}`.trim(),
-            userId: mentor.userId,
-            email: mentor.email,
-            role,
-            isSuperAdmin: false,
-            profilePic,
-            permissions,
-          },
-        });
-      }
-    }
-
-    // 🔹 Try Admin
-    if (!account) {
-      const admin = await Admin.findOne({
-        $or: [{ email: emailOrUserId }, { userId: emailOrUserId }],
-      });
-      if (admin) {
-        account = admin;
-        role = "admin";
-        profilePic = admin.profilePic || "";
-        permissions = admin.permissions || [];
-        isSuperAdmin = !!admin.isSuperAdmin;
-      }
-    }
-
-    // 🔹 Try Student
-    if (!account) {
-      const student = await Student.findOne({
-        $or: [{ email: emailOrUserId }, { userId: emailOrUserId }],
-      });
-
-      if (student) {
-        console.log("🔍 Student search result:", student);
-        console.log("Incoming body:", req.body);
-
-        account = student;
-        role = "student";
-        profilePic = student.photo || "";
-        enrolledCourses = student.enrolledCourses || [];
-
-        let isMatch = false;
-
-        try {
-          // 1️⃣ First check bcrypt (for already hashed)
-          if (student.comparePassword) {
-            isMatch = await student.comparePassword(password);
-          }
-
-          // 2️⃣ If bcrypt fails, check plain match
-          if (!isMatch && student.password === password) {
-            // ✅ Auto-hash the plain password so future logins work
-            student.password = await bcrypt.hash(password, 10);
-            await student.save();
-            isMatch = true;
-            console.log(`🟢 Auto-hashed old plain password for ${student.email}`);
-          }
-        } catch (err) {
-          console.error("❌ Student password check error:", err.message);
-        }
-
-        // 3️⃣ If both fail, stop
-        if (!isMatch) {
-          return res.status(400).json({ message: "Invalid credentials" });
-        }
-
-        // ✅ Generate token
-        const token = jwt.sign({ id: student._id, role }, process.env.JWT_SECRET, {
-          expiresIn: "7d",
-        });
-
-        return res.json({
-          token,
-          user: {
-            id: student._id,
-            name: `${student.firstName || ""} ${student.lastName || ""}`.trim(),
-            userId: student.userId,
-            email: student.email,
-            role,
-            isSuperAdmin: false,
-            profilePic,
-            enrolledCourses,
-          },
-        });
-      }
-    }
-
-    // If still no account found
-    if (!account)
-      return res.status(400).json({ message: "Invalid credentials" });
-
-    // ✅ Default password check (admin/user)
-    const isMatch = account.comparePassword
-      ? await account.comparePassword(password)
-      : await bcrypt.compare(password, account.password);
-
-    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
-
-    // ✅ JWT Token
-    const token = jwt.sign({ id: account._id, role }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
-
-    res.json({
-      token,
-      user: {
-        id: account._id,
-        name: account.name || `${account.firstName || ""} ${account.lastName || ""}`.trim(),
-        userId: account.userId,
-        email: account.email,
-        role,
-        isSuperAdmin,
-        profilePic,
-        permissions,
-        enrolledCourses,
-      },
-    });
   } catch (err) {
     console.error("❌ Login error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
