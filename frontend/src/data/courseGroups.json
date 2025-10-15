@@ -1,0 +1,51 @@
+[
+  {
+    "title": "Planting Knowledge",
+    "subtitle": "Skill Development-Java, Interview, Spoken English, Abacus, etc.",
+    "description": "At Last Try Academy, our motto “Planting Knowledge, Harvesting Success” shows how education is like the growth of a plant: the root gives a strong foundation, the stem supports continuous growth, the leaves represent curiosity and learning, the flower shows creativity and talent, the fruit symbolizes achievements, and the seed stands for skill development that helps students grow further.This is why we say at Last Try Academy: when we plant knowledge in you, together we harvest success in your life.",
+    "image": "/Plant.png",
+    "bgColor": "linear-gradient(135deg, #d4fc79, #96e6a1)"
+  },
+  {
+    "title": "Root Group",
+    "subtitle": "1st – 4th Standard",
+    "description": "The Root group represents the starting stage of education, just like roots are the base of a plant. In 1st to 4th standard, children learn the most important basics such as reading, writing, numbers, discipline, and values. These early lessons form the strong foundation on which all future learning will grow, just like roots give strength and stability to a plant.",
+    "image": "/Root.png",
+    "bgColor": "linear-gradient(135deg, #7b3f00, #4e342e)"
+  },
+  {
+    "title": "Stem Group",
+    "subtitle": "5th – 8th Standard",
+    "description": "The Stem group symbolizes growth and support, just like the stem carries water and nutrients to the plant. From 5th to 8th standard, students begin to expand their knowledge in science, mathematics, and languages. This stage develops curiosity, logical thinking, and habits of study, giving children the support they need to stand strong in higher classes.",
+    "image": "/Stem.png",
+    "bgColor": "linear-gradient(135deg, #6D4C41, #A1887F)"
+  },
+  {
+    "title": "Leaf Group",
+    "subtitle": "9th – 12th Standard",
+    "description": "The Leaf group represents productivity, just like leaves prepare food for the whole plant. In 9th to 12th standard, students focus on board exams and subject mastery. This stage is where hard work and self-discipline turn into the “food” of knowledge, preparing students for their future goals and strengthening their confidence for the next level.",
+    "image": "/Leaf.png",
+    "bgColor": "linear-gradient(135deg, #a8e063, #56ab2f)"
+  },
+  {
+    "title": "Flower Group",
+    "subtitle": "Entrance Exams – JEE, NEET, etc.",
+    "description": "The Flower group represents blooming and identity, just like flowers show the beauty of a plant. At this stage, students prepare for competitive entrance exams such as JEE, NEET, and other professional entrances. Their talents and abilities blossom, and they begin to specialize in career paths, just as flowers prepare for the fruit of success.",
+    "image": "/Flower.png",
+    "bgColor": "linear-gradient(135deg, #E91E63, #9C27B0)"
+  },
+  {
+    "title": "Fruit Group",
+    "subtitle": "Government Exams – State, Central",
+    "description": " The Fruit group represents achievement and reward, just like fruits are the result of a plant’s growth. This stage focuses on government exams like UPSC, state service exams, banking, and central government jobs. The years of preparation and dedication give results in the form of success, just as fruits provide sweetness after the hard work of growth.",
+    "image": "/Fruits.png",
+    "bgColor": "linear-gradient(135deg, #FF9800, #F44336)"
+  },
+  {
+    "title": "Seed Group",
+    "subtitle": "Skill Development–Java, Interview, Spoken English, Abacus, etc.",
+    "description": "The Seed group represents new beginnings and spreading growth, just like seeds start new life. At this stage, students focus on skill development such as programming (Java), interview training, spoken English, abacus, and other career skills. These skills become the seeds of their future success, helping them grow independently and contribute to society with confidence.",
+    "image": "/Seed.png",
+    "bgColor": "linear-gradient(135deg, #6D4C41, #A1887F)"
+  }
+]
