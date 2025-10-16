@@ -54,14 +54,14 @@ app.use(
 );
 
 /* ======================================================
-   ✅ 3. MongoDB Connection
+   3. MongoDB Connection
 ====================================================== */
 const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/elearn";
 
 mongoose
   .connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error("MongoDB connection error:", err));
 
 /* ======================================================
    ✅ 4. Import all routes

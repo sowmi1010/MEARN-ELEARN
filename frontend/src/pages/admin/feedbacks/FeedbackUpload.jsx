@@ -29,7 +29,7 @@ export default function FeedbackUpload() {
       const res = await axios.get(`${apiBase}/api/feedbacks`);
       setFeedbacks(res.data);
     } catch {
-      toast.error("❌ Failed to fetch feedbacks");
+      toast.error("Failed to fetch feedbacks");
     }
   }
 
@@ -52,18 +52,18 @@ export default function FeedbackUpload() {
         await axios.put(`${apiBase}/api/feedbacks/${editingId}`, formData, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        toast.success("✅ Feedback updated!");
+        toast.success("Feedback updated!");
       } else {
         await axios.post(`${apiBase}/api/feedbacks`, formData, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        toast.success("🎉 Feedback added!");
+        toast.success("Feedback added!");
       }
       setForm({ name: "", course: "", comment: "", photo: null });
       setEditingId(null);
       fetchFeedbacks();
     } catch {
-      toast.error("⚠️ Failed to save feedback");
+      toast.error("Failed to save feedback");
     } finally {
       setLoading(false);
     }
@@ -78,7 +78,7 @@ export default function FeedbackUpload() {
       photo: null,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
-    toast("✏️ Edit mode enabled", { icon: "📝" });
+    toast("Edit mode enabled", { icon: "📝" });
   }
 
   function confirmDelete(id) {
@@ -91,10 +91,10 @@ export default function FeedbackUpload() {
       await axios.delete(`${apiBase}/api/feedbacks/${deleteId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      toast.success("🗑️ Feedback deleted!");
+      toast.success("Feedback deleted!");
       fetchFeedbacks();
     } catch {
-      toast.error("⚠️ Failed to delete feedback");
+      toast.error("Failed to delete feedback");
     }
     setShowModal(false);
   }
@@ -112,7 +112,7 @@ export default function FeedbackUpload() {
       {/* Header */}
       <div className="bg-gradient-to-r from-teal-500 to-blue-500 text-white py-8 shadow-md">
         <h1 className="text-center text-4xl font-extrabold tracking-wide">
-          📢 Student Feedbacks
+           Student Feedbacks
         </h1>
       </div>
 
@@ -126,7 +126,7 @@ export default function FeedbackUpload() {
             <input
               type="text"
               name="name"
-              placeholder="👩‍🎓 Student Name"
+              placeholder="Student Name"
               value={form.name}
               onChange={handleChange}
               required
@@ -135,7 +135,7 @@ export default function FeedbackUpload() {
             <input
               type="text"
               name="course"
-              placeholder="📘 Course"
+              placeholder="Course"
               value={form.course}
               onChange={handleChange}
               required
@@ -143,7 +143,7 @@ export default function FeedbackUpload() {
             />
             <textarea
               name="comment"
-              placeholder="💬 Feedback / Comment"
+              placeholder="Feedback / Comment"
               value={form.comment}
               onChange={handleChange}
               rows="3"
@@ -174,10 +174,10 @@ export default function FeedbackUpload() {
               className="w-full py-3 bg-gradient-to-r from-teal-500 to-blue-500 text-white font-semibold rounded-lg shadow-lg hover:scale-105 transition disabled:opacity-50"
             >
               {loading
-                ? "⏳ Saving..."
+                ? "Saving..."
                 : editingId
-                ? "✅ Update Feedback"
-                : "➕ Add Feedback"}
+                ? "Update Feedback"
+                : "Add Feedback"}
             </button>
           </form>
         </div>
@@ -204,7 +204,7 @@ export default function FeedbackUpload() {
           </h2>
           {filtered.length === 0 ? (
             <p className="text-gray-500 dark:text-gray-400 text-center py-6">
-              🚫 No feedback available.
+              No feedback available.
             </p>
           ) : (
             <div className="space-y-4">

@@ -19,20 +19,16 @@ const User = require("../models/User");
 const Mentor = require("../models/Mentor");
 const Student = require("../models/Student");
 
-/* ============================================================
-   🧩 AUTH ROUTES
-============================================================ */
+// AUTH ROUTES
 
-// 🔹 Register / Login / Password routes
+// Register / Login / Password routes
 router.post("/register", register);
 router.post("/login", login);
 router.post("/forgot-password", forgotPassword);
 router.post("/verify-code", verifyResetCode);
 router.post("/reset-password", resetPassword);
 
-/* ============================================================
-   🧩 PROFILE UPLOAD (Common for all roles)
-============================================================ */
+// PROFILE UPLOAD (Common for all roles)
 const uploadDir = path.join(__dirname, "../../uploads/profile");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
@@ -67,20 +63,18 @@ router.post("/upload-profile", auth, upload.single("profilePic"), async (req, re
 
     await userDoc.save();
     res.json({
-      message: "✅ Profile picture updated successfully",
+      message: " Profile picture updated successfully",
       profilePic: userDoc.profilePic || userDoc.photo,
     });
   } catch (err) {
-    console.error("❌ Upload failed:", err);
+    console.error(" Upload failed:", err);
     res.status(500).json({ message: "Upload failed", error: err.message });
   }
 });
 
-/* ============================================================
-   🧩 ADMIN / MENTOR DASHBOARD ACCESS
-============================================================ */
+// ADMIN / MENTOR DASHBOARD ACCESS
 
-// ✅ Admin or Mentor(with "dashboard" permission) — View all users
+// Admin or Mentor(with "dashboard" permission) — View all users
 router.get("/users", auth, permission("dashboard"), async (req, res) => {
   try {
     const [users, mentors, students] = await Promise.all([
@@ -96,7 +90,7 @@ router.get("/users", auth, permission("dashboard"), async (req, res) => {
       students,
     });
   } catch (err) {
-    console.error("❌ Fetch users error:", err);
+    console.error("Fetch users error:", err);
     res.status(500).json({ message: "Failed to fetch users", error: err.message });
   }
 });

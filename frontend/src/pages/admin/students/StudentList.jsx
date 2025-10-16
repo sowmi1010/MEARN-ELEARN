@@ -28,7 +28,7 @@ export default function StudentList() {
       });
       setStudents(res.data);
     } catch (err) {
-      console.error("❌ Error fetching students:", err.response?.data || err.message);
+      console.error("Error fetching students:", err.response?.data || err.message);
     }
   }
 

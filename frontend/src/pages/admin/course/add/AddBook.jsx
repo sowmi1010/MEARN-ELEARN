@@ -25,7 +25,7 @@ export default function AddBook() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  /* 🧠 Handle Input Change */
+  /* Handle Input Change */
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "group") {
@@ -40,13 +40,13 @@ export default function AddBook() {
     }
   };
 
-  /* 📂 Handle File Change */
+  /* Handle File Change */
   const handleFileChange = (e) => {
     if (e.target.name === "thumbnail") setThumbnail(e.target.files[0]);
     else setFile(e.target.files[0]);
   };
 
-  /* 🚀 Submit Form */
+  /* Submit Form */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -62,7 +62,7 @@ export default function AddBook() {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      setMessage("✅ Book uploaded successfully!");
+      setMessage("Book uploaded successfully!");
 
       // Reset
       setFormData({
@@ -77,15 +77,15 @@ export default function AddBook() {
       setThumbnail(null);
       setFile(null);
     } catch (err) {
-      console.error("❌ Upload Error:", err);
-      setMessage("❌ Upload failed. Try again.");
+      console.error("Upload Error:", err);
+      setMessage("Upload failed. Try again.");
     } finally {
       setLoading(false);
       setTimeout(() => setMessage(""), 4000);
     }
   };
 
-  /* 🎨 UI */
+  /* UI */
   return (
     <div className="p-8 bg-gray-900 text-white min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-center">📘 Add New Book</h1>
@@ -94,7 +94,7 @@ export default function AddBook() {
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700"
       >
-        {/* 🔹 Dropdowns */}
+        {/* Dropdowns */}
         <Dropdown
           label="Group"
           name="group"
@@ -136,7 +136,7 @@ export default function AddBook() {
           required
         />
 
-        {/* 🔹 Inputs */}
+        {/* Inputs */}
         <input
           type="text"
           name="title"
@@ -156,7 +156,7 @@ export default function AddBook() {
           className="p-2 rounded bg-gray-700 border border-gray-600 col-span-2"
         ></textarea>
 
-        {/* 🔹 File Uploads */}
+        {/* File Uploads */}
         <div>
           <label className="block mb-2 text-gray-300">Upload Thumbnail</label>
           <input
@@ -181,12 +181,11 @@ export default function AddBook() {
           />
         </div>
 
-        {/* 🔹 Submit */}
+        {/* Submit */}
         <button
           type="submit"
           disabled={loading}
-          className="col-span-2 bg-green-600 hover:bg-green-700 p-3 rounded font-semibold transition-all"
-        >
+          className="col-span-2 bg-green-600 hover:bg-green-700 p-3 rounded font-semibold transition-all">
           {loading ? "Uploading..." : "Upload Book"}
         </button>
 

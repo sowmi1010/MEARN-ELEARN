@@ -27,7 +27,7 @@ export default function AdminList() {
       });
       setAdmins(res.data);
     } catch (err) {
-      console.error("❌ Error fetching admins:", err);
+      console.error(" Error fetching admins:", err);
     }
   }
 
@@ -40,7 +40,7 @@ export default function AdminList() {
       });
       setAdmins((prev) => prev.filter((a) => a._id !== id));
     } catch (err) {
-      console.error("❌ Delete error:", err);
+      console.error(" Delete error:", err);
     }
   }
 

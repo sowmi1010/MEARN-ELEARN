@@ -9,7 +9,7 @@ export default function ViewNotes() {
   const [loading, setLoading] = useState(true);
   const fileBase = "http://localhost:4000";
 
-  // ✅ Normalize any backend path (old or new)
+  // Normalize any backend path (old or new)
   const normalizePath = (path) => {
     if (!path) return "";
     // Remove drive letter (D:\mern-elearn\backend\...) if exists
@@ -23,7 +23,7 @@ export default function ViewNotes() {
         const res = await api.get(`/notes/${id}`);
         const data = res.data;
 
-        // ✅ Always include clean URLs (prefer backend virtuals)
+        // Always include clean URLs (prefer backend virtuals)
         const noteWithCleanUrls = {
           ...data,
           thumbnailUrl: data.thumbnailUrl || normalizePath(data.thumbnail),
@@ -32,7 +32,7 @@ export default function ViewNotes() {
 
         setNote(noteWithCleanUrls);
       } catch (err) {
-        console.error("❌ Failed to fetch note:", err);
+        console.error("Failed to fetch note:", err);
       } finally {
         setLoading(false);
       }
@@ -57,19 +57,12 @@ export default function ViewNotes() {
 
   return (
     <div className="p-8 bg-gray-900 text-white min-h-screen flex flex-col items-center">
-      {/* 🔙 Back Button */}
-      <button
-        onClick={() => navigate(-1)}
-        className="self-start mb-4 bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded"
-      >
-        ⬅ Back
-      </button>
-
+      {/* Back Button */}
       <div className="max-w-4xl w-full bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700">
-        {/* 🔹 Title */}
+        {/* Title */}
         <h1 className="text-3xl font-bold mb-4 text-center">{note.title}</h1>
 
-        {/* 🧾 Notes Viewer */}
+        {/* Notes Viewer */}
         <div className="flex justify-center mb-6">
           {note.fileUrl ? (
             <iframe
@@ -82,19 +75,19 @@ export default function ViewNotes() {
           )}
         </div>
 
-        {/* 🧠 Details Grid */}
+        {/* Details Grid */}
         <div className="grid grid-cols-2 gap-4 mb-6 text-gray-300">
-          <p><strong>🌱 Group:</strong> {note.group}</p>
-          <p><strong>🎓 Standard:</strong> {note.standard}</p>
-          <p><strong>🏫 Board:</strong> {note.board}</p>
-          <p><strong>🌐 Language:</strong> {note.language}</p>
-          <p><strong>📘 Subject:</strong> {note.subject}</p>
-          <p><strong>🧩 Lesson:</strong> {note.lesson}</p>
-          <p><strong>📂 Category:</strong> {note.category}</p>
-          <p><strong>🆔 Note Number:</strong> {note.noteNumber || "—"}</p>
+          <p><strong> Group:</strong> {note.group}</p>
+          <p><strong> Standard:</strong> {note.standard}</p>
+          <p><strong> Board:</strong> {note.board}</p>
+          <p><strong> Language:</strong> {note.language}</p>
+          <p><strong> Subject:</strong> {note.subject}</p>
+          <p><strong> Lesson:</strong> {note.lesson}</p>
+          <p><strong> Category:</strong> {note.category}</p>
+          <p><strong> Note Number:</strong> {note.noteNumber || "—"}</p>
         </div>
 
-        {/* 📝 Description */}
+        {/* Description */}
         <div className="mt-4">
           <h2 className="text-2xl font-semibold mb-2 text-pink-400">📝 Description</h2>
           <p className="text-gray-300 leading-relaxed">
@@ -102,7 +95,7 @@ export default function ViewNotes() {
           </p>
         </div>
 
-        {/* 🖼️ Thumbnail Preview */}
+        {/* Thumbnail Preview */}
         {note.thumbnailUrl && (
           <div className="mt-6 text-center">
             <h3 className="text-xl font-semibold mb-2 text-blue-400">

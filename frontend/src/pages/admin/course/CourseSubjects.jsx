@@ -6,7 +6,7 @@ export default function CourseSubjects() {
   const { groupId } = useParams();
   const navigate = useNavigate();
 
-  // 🧠 Group-wise Subjects Mapping
+  // Group-wise Subjects Mapping
   const subjectsByGroup = {
     ROOT: ["Tamil", "English", "Maths", "Science", "Social Science"],
     STEM: ["Tamil", "English", "Maths", "Science", "Social Science"],
@@ -50,7 +50,7 @@ export default function CourseSubjects() {
 
   return (
     <div className="p-8 bg-gray-900 text-white min-h-screen">
-      {/* 🔹 Header */}
+      {/* Header */}
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold mb-2 capitalize">
           {groupId} Group — Subjects
@@ -58,7 +58,7 @@ export default function CourseSubjects() {
         <p className="text-gray-400">Select a subject to explore categories</p>
       </div>
 
-      {/* 🔹 Subject Cards */}
+      {/* Subject Cards */}
       {subjects.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {subjects.map((subject) => (

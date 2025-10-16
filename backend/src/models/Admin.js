@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 
 const adminSchema = new mongoose.Schema(
   {
-    // 🧑 Personal Info
+    // Personal Info
     firstName: { type: String, required: true },
     lastName: { type: String },
     dob: { type: Date, required: true },
@@ -13,7 +13,7 @@ const adminSchema = new mongoose.Schema(
     blood: { type: String },
     handicap: { type: String, enum: ["Yes", "No"], default: "No" },
 
-    // 📍 Location & Contact
+    // Location & Contact
     address: { type: String },
     district: { type: String },
     state: { type: String },
@@ -22,7 +22,7 @@ const adminSchema = new mongoose.Schema(
     phone: { type: String, required: true },
     altPhone: { type: String },
 
-    // 💼 Work Info
+    // Work Info
     branchName: { type: String },
     branchNo: { type: String },
     department: { type: String },
@@ -38,25 +38,23 @@ const adminSchema = new mongoose.Schema(
       enum: ["Single", "Married", "Divorced", "Widowed"],
     },
 
-    // 🔑 Login Credentials
+    // Login Credentials
     userId: { type: String, required: true, unique: true },
     password: { type: String, required: true }, // will be auto-hashed
 
-    // 🖼️ Profile
+    // Profile
     photo: { type: String },
 
-    // ⚙️ Permissions / Flags
+    // Permissions / Flags
     isSuperAdmin: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
 
-// 🧹 Clean up any old unique index that used to exist on "username"
+// Clean up any old unique index that used to exist on "username"
 adminSchema.index({ username: 1 }, { unique: false });
 
-/* ======================================
-   🔒 Auto-hash password before saving
-====================================== */
+// Auto-hash password before saving
 adminSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next(); // skip if unchanged
   try {
@@ -68,9 +66,7 @@ adminSchema.pre("save", async function (next) {
   }
 });
 
-/* ======================================
-   🔑 Compare entered password with hash
-====================================== */
+// Compare entered password with hash
 adminSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };

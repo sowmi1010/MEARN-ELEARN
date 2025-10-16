@@ -4,7 +4,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const auth = require("../middlewares/auth");
-const checkPermission = require("../middlewares/permission"); // ✅ added
+const checkPermission = require("../middlewares/permission"); 
 const {
   addTest,
   getTests,
@@ -13,13 +13,13 @@ const {
   deleteTest,
 } = require("../controllers/testController");
 
-// 📂 Ensure upload folders exist
+// Ensure upload folders exist
 const testDir = path.join(__dirname, "../../uploads/tests");
 const thumbDir = path.join(__dirname, "../../uploads/thumbnails");
 if (!fs.existsSync(testDir)) fs.mkdirSync(testDir, { recursive: true });
 if (!fs.existsSync(thumbDir)) fs.mkdirSync(thumbDir, { recursive: true });
 
-// 📸 Multer storage config
+// Multer storage config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (file.fieldname === "thumbnail") cb(null, thumbDir);
@@ -31,9 +31,9 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// 🧩 Routes
 
-// ➕ Add new test (Admin or Mentor with “tests” permission)
+
+// Add new test (Admin or Mentor with “tests” permission)
 router.post(
   "/upload",
   auth,
@@ -45,13 +45,13 @@ router.post(
   addTest
 );
 
-// 📄 Get all tests (Everyone with valid token)
+//  Get all tests (Everyone with valid token)
 router.get("/", auth, getTests);
 
-// 🔍 Get single test by ID
+// Get single test by ID
 router.get("/:id", auth, getTestById);
 
-// ✏️ Update test (Admin or Mentor with “tests” permission)
+// Update test (Admin or Mentor with “tests” permission)
 router.put(
   "/:id",
   auth,
@@ -63,7 +63,7 @@ router.put(
   updateTest
 );
 
-// 🗑️ Delete test (Admin or Mentor with “tests” permission)
+// Delete test (Admin or Mentor with “tests” permission)
 router.delete("/:id", auth, checkPermission("tests"), deleteTest);
 
 module.exports = router;

@@ -14,7 +14,7 @@ export default function ForgotPassword() {
       setLoading(true);
       const res = await api.post("/auth/forgot-password", { email });
       alert(res.data.message);
-      navigate("/verify-code", { state: { email } }); // pass email to next step
+      navigate("/verify-code", { state: { email } }); 
     } catch (err) {
       alert(err.response?.data?.message || "Something went wrong");
     } finally {

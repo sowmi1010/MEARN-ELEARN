@@ -8,11 +8,11 @@ const ManageTests = React.lazy(() => import("./manage/ManageTests"));
 
 export default function CourseContents() {
   const { groupId, subject, category } = useParams();
-  // ✅ Normalize to match "Unit Test" even if URL has "unit-test"
+  // Normalize to match "Unit Test" even if URL has "unit-test"
   const normalized = category.trim().toLowerCase().replace(/-/g, " ");
 
   const renderContent = () => {
-    // 🎥 Video categories
+    // Video categories
     if (
       [
         "videos",
@@ -26,7 +26,7 @@ export default function CourseContents() {
       return <ManageVideos />;
     }
 
-    // 📘 Notes categories
+    // Notes categories
     if (
       [
         "lesson notes",
@@ -41,31 +41,30 @@ export default function CourseContents() {
       return <ManageNotes />;
     }
 
-    // 🧪 Test categories
+    // Test categories
     if (
-  [
-    "exam paper",
-    "unit test",
-    "model paper",
-    "revision test",
-    "practice test",
-    "test paper",
-    "lesson test", // ✅ present and correct
-    "weekly test",
-    "monthly test",
-    "quarterly exam",
-    "half-yearly exam",
-    "annual exam",
-  ].includes(normalized)
-) {
-  return <ManageTests />;
-}
+      [
+        "exam paper",
+        "unit test",
+        "model paper",
+        "revision test",
+        "practice test",
+        "test paper",
+        "lesson test", 
+        "weekly test",
+        "monthly test",
+        "quarterly exam",
+        "half-yearly exam",
+        "annual exam",
+      ].includes(normalized)
+    ) {
+      return <ManageTests />;
+    }
 
-
-    // 🟥 Default (unknown)
+    // Default (unknown)
     return (
       <div className="flex justify-center items-center min-h-screen text-gray-400">
-        ⚠️ Unknown category type — No matching content manager found.
+        Unknown category type — No matching content manager found.
       </div>
     );
   };

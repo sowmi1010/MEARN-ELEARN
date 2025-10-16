@@ -17,7 +17,7 @@ export default function AdminPayments() {
     async function fetchData() {
       if (!(user.role === "admin" || user.permissions?.includes("payments"))) {
         setLoading(false);
-        return; // ❌ no access
+        return; 
       }
       try {
         const token = localStorage.getItem("token");
@@ -30,7 +30,7 @@ export default function AdminPayments() {
         const res2 = await api.get("/courses", { headers });
         setCourses(res2.data);
       } catch (err) {
-        console.error("❌ Fetch payments error:", err.response?.data || err.message);
+        console.error("Fetch payments error:", err.response?.data || err.message);
       } finally {
         setLoading(false);
       }
@@ -38,7 +38,7 @@ export default function AdminPayments() {
     fetchData();
   }, [user.role, user.permissions]);
 
-  // ✅ Filter by course
+  // Filter by course
   function handleFilter(courseId) {
     setCourseFilter(courseId);
     setFiltered(
@@ -46,7 +46,7 @@ export default function AdminPayments() {
     );
   }
 
-  // ✅ Export Excel
+  // Export Excel
   function exportExcel() {
     if (filtered.length === 0) return alert("No payments to export!");
     const ws = XLSX.utils.json_to_sheet(
@@ -64,7 +64,7 @@ export default function AdminPayments() {
     XLSX.writeFile(wb, "payments_report.xlsx");
   }
 
-  // ✅ Export PDF
+  // Export PDF
   function exportPDF() {
     if (filtered.length === 0) return alert("No payments to export!");
     const doc = new jsPDF();
@@ -91,17 +91,17 @@ export default function AdminPayments() {
   if (!(user.role === "admin" || user.permissions?.includes("payments"))) {
     return (
       <div className="p-8 min-h-screen bg-gray-100 dark:bg-darkBg text-red-500 text-xl font-semibold flex items-center justify-center">
-        🚫 You do not have permission to view payment data.
+        You do not have permission to view payment data.
       </div>
     );
   }
 
   return (
     <div className="p-6 min-h-screen bg-gray-100 dark:bg-darkBg transition-colors duration-300">
-      {/* 🔹 Page Title */}
+      {/* Page Title */}
       <h1 className="text-3xl font-extrabold text-accent mb-8">💳 Payments</h1>
 
-      {/* 🔹 Filters + Export */}
+      {/* Filters + Export */}
       <div className="flex flex-wrap gap-4 mb-8">
         <select
           value={courseFilter}
@@ -120,25 +120,25 @@ export default function AdminPayments() {
           onClick={exportExcel}
           className="px-5 py-2 bg-gradient-to-r from-green-400 to-emerald-500 text-white font-semibold rounded-lg shadow hover:scale-105 transition-transform duration-300"
         >
-          📊 Export Excel
+          Export Excel
         </button>
 
         <button
           onClick={exportPDF}
           className="px-5 py-2 bg-gradient-to-r from-red-400 to-red-600 text-white font-semibold rounded-lg shadow hover:scale-105 transition-transform duration-300"
         >
-          📄 Export PDF
+          Export PDF
         </button>
       </div>
 
-      {/* 🔹 Summary Cards */}
+      {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
         <SummaryCard title="Total Income" value={`₹${totalIncome}`} color="from-green-400 to-emerald-600" />
         <SummaryCard title="Transactions" value={filtered.length} color="from-purple-400 to-pink-500" />
         <SummaryCard title="Courses" value={courses.length} color="from-cyan-400 to-blue-500" />
       </div>
 
-      {/* 🔹 Payments Table */}
+      {/* Payments Table */}
       <div className="bg-white dark:bg-darkCard p-6 rounded-xl shadow-xl overflow-x-auto border border-gray-200 dark:border-gray-700">
         {filtered.length === 0 ? (
           <p className="text-gray-500 dark:text-gray-400">No payments found</p>
@@ -190,7 +190,7 @@ export default function AdminPayments() {
   );
 }
 
-// 🔹 Summary Card Component
+// Summary Card Component
 function SummaryCard({ title, value, color }) {
   return (
     <div

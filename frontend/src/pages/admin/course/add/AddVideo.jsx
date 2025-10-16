@@ -97,7 +97,7 @@ export default function AddVideo() {
         },
       });
 
-      setMessage("✅ Video uploaded successfully!");
+      setMessage("Video uploaded successfully!");
       setTimeout(() => navigate("/admin/courses"), 1200);
 
       setFormData({
@@ -115,8 +115,8 @@ export default function AddVideo() {
       setThumbnail(null);
       setFile(null);
     } catch (err) {
-      console.error("❌ Upload Error:", err.response?.data || err);
-      setMessage("❌ Upload failed. Try again.");
+      console.error("Upload Error:", err.response?.data || err);
+      setMessage("Upload failed. Try again.");
     } finally {
       setLoading(false);
       setTimeout(() => setMessage(""), 4000);

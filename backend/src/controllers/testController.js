@@ -2,9 +2,7 @@ const Test = require("../models/Test");
 const fs = require("fs");
 const path = require("path");
 
-/* ==========================
-   ✅ Add Test
-========================== */
+// Add Test
 exports.addTest = async (req, res) => {
   try {
     const { group, standard, board, language, subject, category, title } = req.body;
@@ -37,7 +35,7 @@ exports.addTest = async (req, res) => {
     });
 
     res.status(201).json({
-      message: "✅ Test added successfully",
+      message: "Test added successfully",
       test: {
         ...newTest._doc,
         thumbnail: newTest.thumbnail.replace(/\\/g, "/"),
@@ -45,14 +43,12 @@ exports.addTest = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("❌ addTest error:", err);
+    console.error("addTest error:", err);
     res.status(500).json({ message: "Failed to add test", error: err.message });
   }
 };
 
-/* ==========================
-   📋 Get All Tests
-========================== */
+// Get All Tests
 exports.getTests = async (req, res) => {
   try {
     const { group, standard, board, language, subject, category } = req.query;
@@ -75,14 +71,12 @@ exports.getTests = async (req, res) => {
 
     res.json(formatted);
   } catch (err) {
-    console.error("❌ getTests error:", err);
+    console.error("getTests error:", err);
     res.status(500).json({ message: "Failed to fetch tests", error: err.message });
   }
 };
 
-/* ==========================
-   🔍 Get Single Test
-========================== */
+// Get Single Test
 exports.getTestById = async (req, res) => {
   try {
     const test = await Test.findById(req.params.id).lean();
@@ -93,17 +87,15 @@ exports.getTestById = async (req, res) => {
 
     res.json(test);
   } catch (err) {
-    console.error("❌ getTestById error:", err);
+    console.error("getTestById error:", err);
     res.status(500).json({ message: "Failed to fetch test", error: err.message });
   }
 };
 
-/* ==========================
-   ✏️ Update Test
-========================== */
+// Update Test
 exports.updateTest = async (req, res) => {
   try {
-    console.log("🧠 PUT /tests/:id", req.params.id);
+    console.log("PUT /tests/:id", req.params.id);
     console.log("Body:", req.body);
     console.log("Files:", req.files);
 
@@ -112,16 +104,16 @@ exports.updateTest = async (req, res) => {
 
     const updates = { ...req.body };
 
-    // ✅ Handle new thumbnail upload safely
+    // Handle new thumbnail upload safely
     if (req.files?.thumbnail?.[0]) {
       try {
         const oldThumbPath = path.join(__dirname, "../../", test.thumbnail || "");
         if (test.thumbnail && fs.existsSync(oldThumbPath)) {
           fs.unlinkSync(oldThumbPath);
-          console.log("🗑️ Old thumbnail deleted");
+          console.log("Old thumbnail deleted");
         }
       } catch (e) {
-        console.warn("⚠️ Skipped thumbnail delete:", e.message);
+        console.warn("Skipped thumbnail delete:", e.message);
       }
 
       updates.thumbnail = path.join(
@@ -131,16 +123,16 @@ exports.updateTest = async (req, res) => {
       );
     }
 
-    // ✅ Handle new file upload safely
+    // Handle new file upload safely
     if (req.files?.file?.[0]) {
       try {
         const oldFilePath = path.join(__dirname, "../../", test.file || "");
         if (test.file && fs.existsSync(oldFilePath)) {
           fs.unlinkSync(oldFilePath);
-          console.log("🗑️ Old test file deleted");
+          console.log("Old test file deleted");
         }
       } catch (e) {
-        console.warn("⚠️ Skipped test file delete:", e.message);
+        console.warn("Skipped test file delete:", e.message);
       }
 
       updates.file = path.join("uploads", "tests", req.files.file[0].filename);
@@ -154,7 +146,7 @@ exports.updateTest = async (req, res) => {
       return res.status(404).json({ message: "Failed to update test" });
 
     res.json({
-      message: "✅ Test updated successfully",
+      message: "Test updated successfully",
       test: {
         ...updatedTest._doc,
         thumbnail: updatedTest.thumbnail?.replace(/\\/g, "/"),
@@ -162,7 +154,7 @@ exports.updateTest = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("❌ updateTest error:", err);
+    console.error("updateTest error:", err);
     res.status(500).json({
       message: "Failed to update test",
       error: err.message,
@@ -171,9 +163,7 @@ exports.updateTest = async (req, res) => {
   }
 };
 
-/* ==========================
-   🗑️ Delete Test
-========================== */
+// Delete Test
 exports.deleteTest = async (req, res) => {
   try {
     const test = await Test.findById(req.params.id);
@@ -187,9 +177,9 @@ exports.deleteTest = async (req, res) => {
 
     await test.deleteOne();
 
-    res.json({ message: "🗑️ Test deleted successfully" });
+    res.json({ message: "Test deleted successfully" });
   } catch (err) {
-    console.error("❌ deleteTest error:", err);
+    console.error("deleteTest error:", err);
     res.status(500).json({ message: "Failed to delete test", error: err.message });
   }
 };

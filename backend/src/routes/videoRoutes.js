@@ -13,11 +13,9 @@ const {
 } = require("../controllers/videoController");
 
 const auth = require("../middlewares/auth");
-const checkPermission = require("../middlewares/permission"); // ✅ Added
+const checkPermission = require("../middlewares/permission");
 
-// ====================================================
-// ✅ Ensure upload folders exist
-// ====================================================
+// Ensure upload folders exist
 const baseUploadDir = path.join(__dirname, "../../uploads");
 const uploadDir = path.join(baseUploadDir, "videos");
 const thumbDir = path.join(baseUploadDir, "thumbnails");
@@ -25,13 +23,11 @@ const thumbDir = path.join(baseUploadDir, "thumbnails");
 [uploadDir, thumbDir].forEach((dir) => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
-    console.log(`📂 Created folder: ${dir}`);
+    console.log(`Created folder: ${dir}`);
   }
 });
 
-// ====================================================
-// ✅ Configure multer storage
-// ====================================================
+// Configure multer storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (file.fieldname === "thumbnail") cb(null, thumbDir);
@@ -52,15 +48,13 @@ const fileFilter = (req, file, cb) => {
     "image/png",
   ];
   if (!allowed.includes(file.mimetype)) {
-    cb(new Error("❌ Invalid file type"), false);
+    cb(new Error("Invalid file type"), false);
   } else cb(null, true);
 };
 
 const upload = multer({ storage, fileFilter });
 
-// ====================================================
-// ✅ Normalize Uploaded Paths
-// ====================================================
+// Normalize Uploaded Paths
 const normalizePaths = (req, res, next) => {
   if (req.files?.thumbnail?.[0]) {
     req.files.thumbnail[0].path = "uploads/thumbnails/" + path.basename(req.files.thumbnail[0].path);
@@ -71,11 +65,8 @@ const normalizePaths = (req, res, next) => {
   next();
 };
 
-// ====================================================
-// ✅ ROUTES
-// ====================================================
 
-// ➕ Add Video (Admin or Mentor with “videos” permission)
+// Add Video (Admin or Mentor with “videos” permission)
 router.post(
   "/upload",
   auth,
@@ -88,16 +79,16 @@ router.post(
   addVideo
 );
 
-// 📊 Get total video count
+// Get total video count
 router.get("/count/total", auth, getVideoCount);
 
-// 📺 Get all videos (accessible to all authenticated users)
+// Get all videos (accessible to all authenticated users)
 router.get("/", auth, getVideos);
 
-// 🔍 Get single video
+// Get single video
 router.get("/:id", auth, getVideoById);
 
-// ✏️ Update Video (Admin or Mentor with “videos” permission)
+// Update Video (Admin or Mentor with “videos” permission)
 router.put(
   "/:id",
   auth,
@@ -110,7 +101,7 @@ router.put(
   updateVideo
 );
 
-// 🗑️ Delete Video (Admin or Mentor with “videos” permission)
+// Delete Video (Admin or Mentor with “videos” permission)
 router.delete("/:id", auth, checkPermission("videos"), deleteVideo);
 
 module.exports = router;

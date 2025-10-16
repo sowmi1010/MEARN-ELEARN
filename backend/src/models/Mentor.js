@@ -13,7 +13,7 @@ const mentorSchema = new mongoose.Schema(
 
     branchName: { type: String },
     branchNumber: { type: String },
-    role: { type: String, default: "mentor" }, // ✅ default role
+    role: { type: String, default: "mentor" }, 
 
     email: { type: String, required: true, unique: true },
     phone: { type: String, required: true },
@@ -39,14 +39,14 @@ const mentorSchema = new mongoose.Schema(
 
     photo: { type: String },
 
-    // 🔹 Mentor access permissions
+    // Mentor access permissions
     permissions: { type: [String], default: [] },
 
   },
   { timestamps: true }
 );
 
-// ✅ Hash password before save
+// Hash password before save
 mentorSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   try {
@@ -58,7 +58,7 @@ mentorSchema.pre("save", async function (next) {
   }
 });
 
-// ✅ Compare password method
+// Compare password method
 mentorSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };

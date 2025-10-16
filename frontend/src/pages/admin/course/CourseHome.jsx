@@ -55,7 +55,7 @@ export default function CourseHome() {
   const [totalVideos, setTotalVideos] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // 🔹 Fetch total video count dynamically
+  // Fetch total video count dynamically
   useEffect(() => {
     const fetchVideoCount = async () => {
       try {
@@ -70,7 +70,7 @@ export default function CourseHome() {
         );
         setTotalVideos(data.total || 0);
       } catch (err) {
-        console.error("❌ Error fetching video count:", err);
+        console.error("Error fetching video count:", err);
       } finally {
         setLoading(false);
       }

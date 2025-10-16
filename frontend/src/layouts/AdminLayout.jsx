@@ -51,10 +51,10 @@ export default function AdminLayout() {
 ];
 
 
-  // ✅ Normalize permission key (handle singular/plural or case mismatch)
+  // Normalize permission key (handle singular/plural or case mismatch)
   const normalize = (key) => key?.toLowerCase()?.replace(/s$/, "");
 
-  // ✅ Determine visible sidebar links based on permissions
+  // Determine visible sidebar links based on permissions
   const visibleLinks =
     user?.role === "admin"
       ? allNavLinks
@@ -62,7 +62,7 @@ export default function AdminLayout() {
           (user?.permissions || []).includes(link.key)
         );
 
-  // ✅ Optional: Keep modules in same order as selected in permission panel
+  // Optional: Keep modules in same order as selected in permission panel
   const sortedLinks = visibleLinks.sort((a, b) => {
     const order = user?.permissions || [];
     return order.indexOf(a.key) - order.indexOf(b.key);

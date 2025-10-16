@@ -46,18 +46,18 @@ const studentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-/**
- * 🔐 Middleware to hash password before saving
- */
+
+ // Middleware to hash password before saving
+
 studentSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
-/**
- * 🔑 Helper method to compare password
- */
+
+//  Helper method to compare password
+
 studentSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };

@@ -9,22 +9,18 @@ const role = require("../middlewares/role");
 
 const User = require("../models/User"); // Login (super admin / students)
 const Admin = require("../models/Admin"); // Branch admin full details
-const Student = require("../models/Student"); // ✅ Student full profile
+const Student = require("../models/Student"); // Student full profile
 
 const router = express.Router();
 
-/* ==============================
-      🔧 FIX: Ensure Upload Folders Exist
-============================== */
+// FIX: Ensure Upload Folders Exist
 const ensureDir = (dir) => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 };
 ensureDir("uploads/admins");
 ensureDir("uploads/students");
 
-/* ==============================
-      MULTER CONFIG
-============================== */
+// MULTER CONFIG
 
 // Admin photo
 const adminStorage = multer.diskStorage({
@@ -42,12 +38,10 @@ const studentStorage = multer.diskStorage({
 });
 const uploadStudent = multer({ storage: studentStorage });
 
-/* ==============================
-      DETAILED ADMIN CRUD
-============================== */
+// DETAILED ADMIN CRUD
 
-// ➕ Create Admin
-// ➕ Create Admin (Fixed)
+// Create Admin
+// Create Admin (Fixed)
 router.post(
   "/detailed-admin",
   auth,
@@ -86,17 +80,17 @@ router.post(
       } = req.body;
 
       if (!firstName || !email || !phone || !userId || !password) {
-        return res.status(400).json({ message: "⚠️ Required fields missing" });
+        return res.status(400).json({ message: "Required fields missing" });
       }
 
       // Check duplicates
       const existing = await Admin.findOne({ $or: [{ email }, { userId }] });
       if (existing)
-        return res.status(400).json({ message: "❌ Email or UserId already exists" });
+        return res.status(400).json({ message: "Email or UserId already exists" });
 
       const hashed = await bcrypt.hash(password, 10);
 
-      // ✅ Create Admin Profile
+      // Create Admin Profile
       const newAdmin = await Admin.create({
         firstName,
         lastName,
@@ -128,7 +122,7 @@ router.post(
         photo: req.file ? `/uploads/admins/${req.file.filename}` : null,
       });
 
-      // ✅ Create Login Account in User collection
+      // Create Login Account in User collection
       await User.create({
         name: `${firstName} ${lastName || ""}`.trim(),
         userId,
@@ -138,38 +132,38 @@ router.post(
         role: "admin",
       });
 
-      res.json({ message: "🎉 Admin created successfully", admin: newAdmin });
+      res.json({ message: "Admin created successfully", admin: newAdmin });
     } catch (err) {
-      console.error("❌ Add Admin Error:", err);
+      console.error("Add Admin Error:", err);
       res.status(500).json({ message: "Failed to create admin", error: err.message });
     }
   }
 );
 
-// 📋 Get All Admins
+// Get All Admins
 router.get("/detailed-admins", auth, role("admin"), async (req, res) => {
   try {
     const admins = await Admin.find().sort({ createdAt: -1 });
     res.json(admins);
   } catch (err) {
-    console.error("❌ Fetch Admins Error:", err.stack);
+    console.error("Fetch Admins Error:", err.stack);
     res.status(500).json({ message: "Failed to fetch admins" });
   }
 });
 
-// 👁️ Get One Admin
+// Get One Admin
 router.get("/detailed-admins/:id", auth, role("admin"), async (req, res) => {
   try {
     const admin = await Admin.findById(req.params.id);
     if (!admin) return res.status(404).json({ message: "Admin not found" });
     res.json(admin);
   } catch (err) {
-    console.error("❌ Fetch Admin Error:", err.stack);
+    console.error("Fetch Admin Error:", err.stack);
     res.status(500).json({ message: "Failed to fetch admin" });
   }
 });
 
-// ✏️ Update Admin
+// Update Admin
 router.put(
   "/detailed-admins/:id",
   auth,
@@ -185,9 +179,9 @@ router.put(
       const updated = await Admin.findByIdAndUpdate(req.params.id, updates, {
         new: true,
       });
-      res.json({ message: "✅ Admin updated", admin: updated });
+      res.json({ message: "Admin updated", admin: updated });
     } catch (err) {
-      console.error("❌ Update Admin Error:", err.stack);
+      console.error("Update Admin Error:", err.stack);
       res
         .status(500)
         .json({ message: "Failed to update admin", error: err.message });
@@ -195,22 +189,20 @@ router.put(
   }
 );
 
-// 🗑️ Delete Admin
+// Delete Admin
 router.delete("/detailed-admins/:id", auth, role("admin"), async (req, res) => {
   try {
     await Admin.findByIdAndDelete(req.params.id);
-    res.json({ message: "🗑️ Admin deleted" });
+    res.json({ message: "Admin deleted" });
   } catch (err) {
-    console.error("❌ Delete Admin Error:", err.stack);
+    console.error("Delete Admin Error:", err.stack);
     res.status(500).json({ message: "Failed to delete admin" });
   }
 });
 
-/* ==============================
-      STUDENT CRUD
-============================== */
+// STUDENT CRUD
 
-// ➕ Add Student
+// Add Student
 router.post(
   "/students",
   auth,
@@ -249,12 +241,12 @@ router.post(
       } = req.body;
 
       if (!firstName || !email || !userId || !password) {
-        return res.status(400).json({ message: "⚠️ Required fields missing" });
+        return res.status(400).json({ message: "Required fields missing" });
       }
 
       const exists = await Student.findOne({ $or: [{ email }, { userId }] });
       if (exists)
-        return res.status(400).json({ message: "❌ Email/UserId already in use" });
+        return res.status(400).json({ message: "Email/UserId already in use" });
 
       const newStudent = await Student.create({
         firstName,
@@ -297,9 +289,9 @@ router.post(
         role: "student",
       });
 
-      res.json({ message: "🎉 Student added successfully", student: newStudent });
+      res.json({ message: "Student added successfully", student: newStudent });
     } catch (err) {
-      console.error("❌ Add Student Error:", err.stack);
+      console.error("Add Student Error:", err.stack);
       res
         .status(500)
         .json({ message: "Failed to create student", error: err.message });
@@ -307,30 +299,30 @@ router.post(
   }
 );
 
-// 📋 Get All Students
+// Get All Students
 router.get("/students", auth, role("admin"), async (req, res) => {
   try {
     const students = await Student.find().sort({ createdAt: -1 });
     res.json(students);
   } catch (err) {
-    console.error("❌ Fetch Students Error:", err.stack);
+    console.error("Fetch Students Error:", err.stack);
     res.status(500).json({ message: "Failed to fetch students" });
   }
 });
 
-// 👁️ Get One Student
+// Get One Student
 router.get("/students/:id", auth, role("admin"), async (req, res) => {
   try {
     const student = await Student.findById(req.params.id);
     if (!student) return res.status(404).json({ message: "Student not found" });
     res.json(student);
   } catch (err) {
-    console.error("❌ Fetch Student Error:", err.stack);
+    console.error("Fetch Student Error:", err.stack);
     res.status(500).json({ message: "Failed to fetch student" });
   }
 });
 
-// ✏️ Update Student
+// Update Student
 router.put(
   "/students/:id",
   auth,
@@ -357,9 +349,9 @@ router.put(
         }
       );
 
-      res.json({ message: "✅ Student updated", student: updated });
+      res.json({ message: "Student updated", student: updated });
     } catch (err) {
-      console.error("❌ Update Student Error:", err.stack);
+      console.error("Update Student Error:", err.stack);
       res
         .status(500)
         .json({ message: "Failed to update student", error: err.message });
@@ -367,7 +359,7 @@ router.put(
   }
 );
 
-// 🗑️ Delete Student
+// Delete Student
 router.delete("/students/:id", auth, role("admin"), async (req, res) => {
   try {
     const student = await Student.findById(req.params.id);
@@ -376,9 +368,9 @@ router.delete("/students/:id", auth, role("admin"), async (req, res) => {
     await User.findOneAndDelete({ userId: student.userId });
     await Student.findByIdAndDelete(req.params.id);
 
-    res.json({ message: "🗑️ Student deleted" });
+    res.json({ message: "Student deleted" });
   } catch (err) {
-    console.error("❌ Delete Student Error:", err.stack);
+    console.error("Delete Student Error:", err.stack);
     res.status(500).json({ message: "Failed to delete student" });
   }
 });

@@ -21,7 +21,7 @@ export default function TeacherUpload() {
   const apiBase = import.meta.env.VITE_API_URL || "http://localhost:4000";
   const token = localStorage.getItem("token");
 
-  // ✅ Fetch teachers
+  // Fetch teachers
   useEffect(() => {
     fetchTeachers();
   }, []);
@@ -31,7 +31,7 @@ export default function TeacherUpload() {
       const res = await axios.get(`${apiBase}/api/teachers`);
       setTeachers(res.data);
     } catch {
-      toast.error("❌ Failed to fetch teachers");
+      toast.error("Failed to fetch teachers");
     }
   }
 
@@ -54,18 +54,18 @@ export default function TeacherUpload() {
         await axios.put(`${apiBase}/api/teachers/${editingId}`, formData, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        toast.success("✅ Teacher updated!");
+        toast.success("Teacher updated!");
       } else {
         await axios.post(`${apiBase}/api/teachers`, formData, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        toast.success("🎉 Teacher added!");
+        toast.success("Teacher added!");
       }
       setForm({ name: "", subject: "", description: "", photo: null });
       setEditingId(null);
       fetchTeachers();
     } catch {
-      toast.error("⚠️ Failed to save teacher");
+      toast.error("Failed to save teacher");
     } finally {
       setLoading(false);
     }
@@ -80,7 +80,7 @@ export default function TeacherUpload() {
       photo: null,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
-    toast("✏️ Edit mode enabled", { icon: "📝" });
+    toast("Edit mode enabled", { icon: "📝" });
   }
 
   function confirmDelete(id) {
@@ -93,10 +93,10 @@ export default function TeacherUpload() {
       await axios.delete(`${apiBase}/api/teachers/${deleteId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      toast.success("🗑️ Teacher deleted!");
+      toast.success("Teacher deleted!");
       fetchTeachers();
     } catch {
-      toast.error("⚠️ Failed to delete teacher");
+      toast.error("Failed to delete teacher");
     }
     setShowModal(false);
   }
@@ -114,7 +114,7 @@ export default function TeacherUpload() {
       {/* Header */}
       <div className="bg-gradient-to-r from-teal-500 to-blue-500 text-white py-8 shadow-md">
         <h1 className="text-center text-4xl font-extrabold tracking-wide">
-          👩‍🏫 Teacher Management
+          Teacher Management
         </h1>
       </div>
 
@@ -122,13 +122,13 @@ export default function TeacherUpload() {
         {/* Teacher Form */}
         <div className="bg-white/80 dark:bg-gray-800/60 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition">
           <h2 className="text-3xl font-bold text-center bg-gradient-to-r from-teal-400 to-blue-400 bg-clip-text text-transparent mb-5">
-            {editingId ? "✏️ Edit Teacher" : "➕ Add Teacher"}
+            {editingId ? "Edit Teacher" : "Add Teacher"}
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
               type="text"
               name="name"
-              placeholder="👩‍🏫 Teacher Name"
+              placeholder="Teacher Name"
               value={form.name}
               onChange={handleChange}
               required
@@ -137,7 +137,7 @@ export default function TeacherUpload() {
             <input
               type="text"
               name="subject"
-              placeholder="📘 Subject"
+              placeholder="Subject"
               value={form.subject}
               onChange={handleChange}
               required
@@ -145,7 +145,7 @@ export default function TeacherUpload() {
             />
             <textarea
               name="description"
-              placeholder="📝 Description"
+              placeholder="Description"
               value={form.description}
               onChange={handleChange}
               rows="3"
@@ -176,10 +176,10 @@ export default function TeacherUpload() {
               className="w-full py-3 bg-gradient-to-r from-teal-500 to-blue-500 text-white font-semibold rounded-lg shadow-lg hover:scale-105 transition disabled:opacity-50"
             >
               {loading
-                ? "⏳ Saving..."
+                ? "Saving..."
                 : editingId
-                ? "✅ Update Teacher"
-                : "➕ Add Teacher"}
+                ? "Update Teacher"
+                : "Add Teacher"}
             </button>
           </form>
         </div>
@@ -199,14 +199,14 @@ export default function TeacherUpload() {
         {/* Teacher List */}
         <div className="bg-white/90 dark:bg-gray-800/50 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
           <h2 className="text-2xl font-semibold text-teal-500 mb-4">
-            👩‍🏫 Teacher List
+            Teacher List
             <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
               ({filtered.length})
             </span>
           </h2>
           {filtered.length === 0 ? (
             <p className="text-gray-500 dark:text-gray-400 text-center py-6">
-              🚫 No teachers found.
+              No teachers found.
             </p>
           ) : (
             <div className="space-y-4">

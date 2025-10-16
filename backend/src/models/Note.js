@@ -17,7 +17,7 @@ const noteSchema = new mongoose.Schema(
     title: { type: String, required: true, trim: true },
     description: { type: String, trim: true },
 
-    // ✅ Always store only relative paths (no D:/ or C:/)
+    // Always store only relative paths (no D:/ or C:/)
     thumbnail: {
       type: String,
       required: true,
@@ -32,7 +32,7 @@ const noteSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ✅ Virtual field to return full URLs for frontend
+// Virtual field to return full URLs for frontend
 noteSchema.virtual("thumbnailUrl").get(function () {
   return this.thumbnail ? `http://localhost:4000/${this.thumbnail}` : null;
 });

@@ -81,15 +81,15 @@ export default function AddStudent() {
 
       if (id) {
         await api.put(`/student/detailed-students/${id}`, data, { headers });
-        alert("✅ Student updated successfully!");
+        alert("Student updated successfully!");
       } else {
         await api.post("/student/detailed-student", data, { headers });
-        alert("🎉 Student added successfully!");
+        alert("Student added successfully!");
       }
       navigate("/admin/students");
     } catch (err) {
       console.error("Save error:", err.response?.data || err.message);
-      alert("❌ " + (err.response?.data?.message || "Failed to save student"));
+      alert((err.response?.data?.message || "Failed to save student"));
     } finally {
       setLoading(false);
     }

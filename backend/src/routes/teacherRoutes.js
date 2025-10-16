@@ -6,16 +6,16 @@ const path = require("path");
 
 const Teacher = require("../models/Teacher");
 const auth = require("../middlewares/auth");
-const checkPermission = require("../middlewares/permission"); // ✅ Added
+const checkPermission = require("../middlewares/permission"); 
 
-// 📂 Ensure uploads/teachers folder exists
+// Ensure uploads/teachers folder exists
 const uploadDir = path.join(__dirname, "../../uploads/teachers");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
-  console.log("📂 Created folder: uploads/teachers");
+  console.log("Created folder: uploads/teachers");
 }
 
-// 📂 Multer config
+// Multer config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) =>
@@ -23,9 +23,9 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-/**
- * ✅ Add Teacher (Admin or Mentor with "teachers" permission)
- */
+
+ // Add Teacher (Admin or Mentor with "teachers" permission)
+
 router.post("/", auth, checkPermission("teachers"), upload.single("photo"), async (req, res) => {
   try {
     const { name, subject, description } = req.body;
@@ -41,29 +41,28 @@ router.post("/", auth, checkPermission("teachers"), upload.single("photo"), asyn
       photo: req.file ? `/uploads/teachers/${req.file.filename}` : null,
     });
 
-    res.json({ message: "✅ Teacher added successfully", teacher });
+    res.json({ message: "Teacher added successfully", teacher });
   } catch (err) {
-    console.error("❌ Add teacher error:", err);
+    console.error("Add teacher error:", err);
     res.status(500).json({ message: "Failed to add teacher" });
   }
 });
 
-/**
- * ✅ Get All Teachers (Public)
- */
+
+// Get All Teachers (Public)
+
 router.get("/", async (req, res) => {
   try {
     const teachers = await Teacher.find().sort({ createdAt: -1 });
     res.json(teachers);
   } catch (err) {
-    console.error("❌ Fetch teachers error:", err);
+    console.error("Fetch teachers error:", err);
     res.status(500).json({ message: "Failed to fetch teachers" });
   }
 });
 
-/**
- * ✅ Delete Teacher (Admin or Mentor with "teachers" permission)
- */
+// Delete Teacher (Admin or Mentor with "teachers" permission)
+
 router.delete("/:id", auth, checkPermission("teachers"), async (req, res) => {
   try {
     const teacher = await Teacher.findById(req.params.id);
@@ -74,9 +73,9 @@ router.delete("/:id", auth, checkPermission("teachers"), async (req, res) => {
     }
 
     await teacher.deleteOne();
-    res.json({ message: "🗑️ Teacher deleted successfully" });
+    res.json({ message: "Teacher deleted successfully" });
   } catch (err) {
-    console.error("❌ Delete teacher error:", err);
+    console.error("Delete teacher error:", err);
     res.status(500).json({ message: "Failed to delete teacher" });
   }
 });

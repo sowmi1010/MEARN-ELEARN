@@ -33,7 +33,7 @@ export default function LandingPage() {
               to="/courses"
               className="px-8 py-3 rounded-xl font-semibold text-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg hover:scale-[1.05] hover:shadow-2xl transition-all duration-300"
             >
-              🚀 Explore Courses
+              Explore Courses
             </Link>
             <Link
               to="/register"
@@ -80,7 +80,7 @@ export default function LandingPage() {
               exams, careers, and beyond.
             </p>
             <div className="mt-6 text-lg font-semibold text-cyan-600">
-              🌟 17,000+ Creators — Yesterday’s kids, tomorrow’s leaders
+               17,000+ Creators — Yesterday’s kids, tomorrow’s leaders
             </div>
           </div>
 

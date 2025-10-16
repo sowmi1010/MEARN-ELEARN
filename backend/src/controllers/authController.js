@@ -9,7 +9,7 @@ const Student = require("../models/Student");
 const { isValidEmail, isValidPassword } = require("../utils/validators");
 
 // =========================
-// ✅ Email Transporter
+// Email Transporter
 // =========================
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || "smtp.gmail.com",
@@ -23,8 +23,8 @@ const transporter = nodemailer.createTransport({
 });
 
 transporter.verify((err) => {
-  if (err) console.error("❌ Mail setup failed:", err.message);
-  else console.log("✅ Mail server ready");
+  if (err) console.error("Mail setup failed:", err.message);
+  else console.log("Mail server ready");
 });
 
 function normalizePermissions(perms = []) {
@@ -37,7 +37,7 @@ function normalizePermissions(perms = []) {
 }
 
 // =========================
-// ✅ REGISTER (Fixed)
+// REGISTER (Fixed)
 // =========================
 exports.register = async (req, res) => {
   try {
@@ -57,13 +57,13 @@ exports.register = async (req, res) => {
         message: "Email or User ID already exists",
       });
 
-    // ❌ No manual hashing — User model handles hashing safely
+    // No manual hashing — User model handles hashing safely
     const user = await User.create({
       name,
       userId,
       email,
       phone,
-      password, // plain text → auto-hash via pre("save")
+      password, 
       role: role || "student",
       isSuperAdmin: isSuperAdmin || false,
     });
@@ -90,13 +90,13 @@ exports.register = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("❌ Register error:", err);
+    console.error("Register error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
 // =========================
-// ✅ LOGIN (Fixed)
+// LOGIN (Fixed)
 // =========================
 exports.login = async (req, res) => {
   try {
@@ -111,11 +111,7 @@ exports.login = async (req, res) => {
     let permissions = [];
     let isSuperAdmin = false;
 
-    // =========================
-    // 1️⃣ Try Mentor First
-    // =========================
-// 3️⃣ Try Mentor
-console.log("🔍 Checking Mentor...");
+// 3 Try Mentor
 const mentor = await Mentor.findOne({
   $or: [
     { email: emailOrUserId.trim().toLowerCase() },
@@ -124,11 +120,11 @@ const mentor = await Mentor.findOne({
 });
 
 if (mentor) {
-  console.log("✅ Mentor found:", mentor.email);
+  console.log("Mentor found:", mentor.email);
   role = "mentor";
   profilePic = mentor.photo || "";
 
-  // ✅ Use real permissions from DB
+  // Use real permissions from DB
   const permissions = mentor.permissions || [];
 
   const isMatch = await mentor.comparePassword(password.trim());
@@ -148,16 +144,16 @@ if (mentor) {
       role,
       isSuperAdmin: false,
       profilePic,
-      permissions, // ✅ use the actual array
+      permissions,
     },
   });
 }
 
 
     // =========================
-    // 2️⃣ Try Admin
+    // 2️ Try Admin
     // =========================
-    console.log("🔍 Checking Admin...");
+
     const admin = await Admin.findOne({
       $or: [
         { email: emailOrUserId.trim().toLowerCase() },
@@ -212,9 +208,8 @@ if (mentor) {
     }
 
     // =========================
-    // 3️⃣ Try Student
+    // 3️ Try Student
     // =========================
-    console.log("🔍 Checking Student...");
     const student = await Student.findOne({
       $or: [
         { email: emailOrUserId.trim().toLowerCase() },
@@ -259,9 +254,8 @@ if (mentor) {
     }
 
     // =========================
-    // 4️⃣ Try User
+    // 4️ Try User
     // =========================
-    console.log("🔍 Checking User...");
     const user = await User.findOne({
       $or: [
         { email: emailOrUserId.trim().toLowerCase() },
@@ -295,10 +289,10 @@ if (mentor) {
       });
     }
 
-    // ❌ Not found
+    // Not found
     return res.status(400).json({ message: "Invalid credentials" });
   } catch (err) {
-    console.error("❌ Login error:", err);
+    console.error("Login error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
@@ -320,13 +314,13 @@ exports.forgotPassword = async (req, res) => {
     await transporter.sendMail({
       from: `"Last Try Academy" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: "🔑 Password Reset Code",
+      subject: "Password Reset Code",
       html: `<h2>Your Reset Code</h2><p><b>${code}</b></p><p>Valid for 10 minutes.</p>`,
     });
 
     res.json({ message: "Reset code sent to your email" });
   } catch (err) {
-    console.error("❌ Forgot password error:", err);
+    console.error("Forgot password error:", err);
     res.status(500).json({ message: "Email send failed", error: err.message });
   }
 };
@@ -362,7 +356,7 @@ exports.resetPassword = async (req, res) => {
     user.resetPasswordExpires = null;
     await user.save();
 
-    res.json({ message: "✅ Password reset successful" });
+    res.json({ message: "Password reset successful" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

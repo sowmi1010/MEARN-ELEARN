@@ -2,9 +2,7 @@ const Note = require("../models/Note");
 const fs = require("fs");
 const path = require("path");
 
-/* ======================================================
-   ✅ Add New Note
-====================================================== */
+//Add New Note
 exports.addNote = async (req, res) => {
   try {
     const {
@@ -32,7 +30,7 @@ exports.addNote = async (req, res) => {
       return res.status(400).json({ message: "Please fill all required fields" });
     }
 
-    // ✅ Save only relative paths
+    // Save only relative paths
     const thumbnail = req.files?.thumbnail?.[0]
       ? path.posix.join("uploads/thumbnails", req.files.thumbnail[0].filename)
       : null;
@@ -60,7 +58,7 @@ exports.addNote = async (req, res) => {
     });
 
     res.status(201).json({
-      message: "✅ Note added successfully",
+      message: "Note added successfully",
       note: {
         ...newNote._doc,
         thumbnail: newNote.thumbnail.replace(/\\/g, "/"),
@@ -68,14 +66,12 @@ exports.addNote = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("❌ addNote error:", err);
+    console.error("addNote error:", err);
     res.status(500).json({ message: "Failed to add note", error: err.message });
   }
 };
 
-/* ======================================================
-   ✅ Get All Notes
-====================================================== */
+//Get All Notes
 exports.getNotes = async (req, res) => {
   try {
     const { group, standard, board, language, subject, lesson, category } = req.query;
@@ -99,14 +95,12 @@ exports.getNotes = async (req, res) => {
 
     res.json(formatted);
   } catch (err) {
-    console.error("❌ getNotes error:", err);
+    console.error("getNotes error:", err);
     res.status(500).json({ message: "Failed to fetch notes", error: err.message });
   }
 };
 
-/* ======================================================
-   ✅ Get Note by ID
-====================================================== */
+// Get Note by ID
 exports.getNoteById = async (req, res) => {
   try {
     const note = await Note.findById(req.params.id).lean();
@@ -117,14 +111,12 @@ exports.getNoteById = async (req, res) => {
 
     res.json(note);
   } catch (err) {
-    console.error("❌ getNoteById error:", err);
+    console.error("getNoteById error:", err);
     res.status(500).json({ message: "Failed to fetch note", error: err.message });
   }
 };
 
-/* ======================================================
-   ✅ Update Note
-====================================================== */
+//Update Note
 exports.updateNote = async (req, res) => {
   try {
     const note = await Note.findById(req.params.id);
@@ -132,7 +124,7 @@ exports.updateNote = async (req, res) => {
 
     const updates = req.body;
 
-    // ✅ Handle new thumbnail
+    // Handle new thumbnail
     if (req.files?.thumbnail?.[0]) {
       const oldThumb = path.resolve(__dirname, "../../", note.thumbnail || "");
       if (note.thumbnail && fs.existsSync(oldThumb)) fs.unlinkSync(oldThumb);
@@ -140,7 +132,7 @@ exports.updateNote = async (req, res) => {
       updates.thumbnail = path.posix.join("uploads/thumbnails", req.files.thumbnail[0].filename);
     }
 
-    // ✅ Handle new file
+    // Handle new file
     if (req.files?.file?.[0]) {
       const oldFile = path.resolve(__dirname, "../../", note.file || "");
       if (note.file && fs.existsSync(oldFile)) fs.unlinkSync(oldFile);
@@ -151,7 +143,7 @@ exports.updateNote = async (req, res) => {
     const updatedNote = await Note.findByIdAndUpdate(req.params.id, updates, { new: true });
 
     res.json({
-      message: "✅ Note updated successfully",
+      message: "Note updated successfully",
       note: {
         ...updatedNote._doc,
         thumbnail: updatedNote.thumbnail?.replace(/\\/g, "/"),
@@ -159,14 +151,12 @@ exports.updateNote = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("❌ updateNote error:", err);
+    console.error("updateNote error:", err);
     res.status(500).json({ message: "Failed to update note", error: err.message });
   }
 };
 
-/* ======================================================
-   ✅ Delete Note
-====================================================== */
+//Delete Note
 exports.deleteNote = async (req, res) => {
   try {
     const note = await Note.findById(req.params.id);
@@ -182,7 +172,7 @@ exports.deleteNote = async (req, res) => {
 
     res.json({ message: "🗑️ Note deleted successfully" });
   } catch (err) {
-    console.error("❌ deleteNote error:", err);
+    console.error("deleteNote error:", err);
     res.status(500).json({ message: "Failed to delete note", error: err.message });
   }
 };

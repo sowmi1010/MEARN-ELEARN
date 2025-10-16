@@ -46,7 +46,7 @@ export default function EditNotes() {
     "Others",
   ];
 
-  /* ✅ Fetch existing note details */
+  /* Fetch existing note details */
   useEffect(() => {
     const fetchNote = async () => {
       try {
@@ -66,7 +66,7 @@ export default function EditNotes() {
           description: note.description || "",
         });
 
-        // ✅ Use backend-provided URLs if available
+        // Use backend-provided URLs if available
         if (note.thumbnailUrl) {
           setThumbnailPreview(note.thumbnailUrl);
         } else if (note.thumbnail) {
@@ -81,21 +81,21 @@ export default function EditNotes() {
           setFilePreview(`${fileBase}/${cleaned}`);
         }
       } catch (err) {
-        console.error("❌ Failed to fetch note:", err);
-        setMessage("❌ Failed to load note data.");
+        console.error("Failed to fetch note:", err);
+        setMessage("Failed to load note data.");
       }
     };
 
     fetchNote();
   }, [id]);
 
-  /* 🧠 Handle input changes */
+  /* Handle input changes */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  /* 🧠 Handle file selection */
+  /* Handle file selection */
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (e.target.name === "thumbnail") {
@@ -107,7 +107,7 @@ export default function EditNotes() {
     }
   };
 
-  /* 🚀 Update note */
+  /* Update note */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -128,33 +128,27 @@ export default function EditNotes() {
         },
       });
 
-      setMessage("✅ Note updated successfully!");
+      setMessage("Note updated successfully!");
       setTimeout(() => navigate(-1), 1500);
     } catch (err) {
-      console.error("❌ Update error:", err.response?.data || err);
-      setMessage("❌ Failed to update note.");
+      console.error("Update error:", err.response?.data || err);
+      setMessage("Failed to update note.");
     } finally {
       setLoading(false);
     }
   };
 
-  /* 🎨 UI */
+  /* UI */
   return (
     <div className="p-8 bg-gray-900 text-white min-h-screen">
-      <button
-        onClick={() => navigate(-1)}
-        className="mb-4 bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded"
-      >
-        ⬅ Back
-      </button>
 
-      <h1 className="text-3xl font-bold mb-6 text-center">✏️ Edit Note</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center">Edit Note</h1>
 
       <form
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700"
       >
-        {/* 🔹 Dropdowns */}
+        {/* Dropdowns */}
         <Dropdown label="Group" name="group" value={formData.group} options={groupOptions} onChange={handleChange} required />
         <Dropdown label="Standard" name="standard" value={formData.standard} options={standardOptions[formData.group] || []} onChange={handleChange} required />
         <Dropdown label="Board" name="board" value={formData.board} options={boardOptions} onChange={handleChange} required />
@@ -163,7 +157,7 @@ export default function EditNotes() {
         <Dropdown label="Lesson" name="lesson" value={formData.lesson} options={lessonOptions} onChange={handleChange} required />
         <Dropdown label="Category" name="category" value={formData.category} options={categoryOptions} onChange={handleChange} required />
 
-        {/* 🔹 Text Inputs */}
+        {/* Text Inputs */}
         <input
           type="text"
           name="noteNumber"
@@ -192,7 +186,7 @@ export default function EditNotes() {
           className="p-2 rounded bg-gray-700 border border-gray-600 col-span-2"
         ></textarea>
 
-        {/* 🔹 File Uploads */}
+        {/* File Uploads */}
         <div>
           <label className="block mb-2 text-gray-300">Change Thumbnail</label>
           <input

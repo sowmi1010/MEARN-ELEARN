@@ -5,14 +5,14 @@ export default function PrivateRoute({ children, requiredRole, requiredRoles }) 
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
-  // 🔒 Not logged in
+  // Not logged in
   if (!token || !user) {
     return <Navigate to="/login" replace />;
   }
 
   const role = user.role?.toLowerCase();
 
-  // ✅ Allow multiple roles if provided
+  // Allow multiple roles if provided
   if (requiredRoles && Array.isArray(requiredRoles)) {
     const allowed = requiredRoles.map((r) => r.toLowerCase());
     if (!allowed.includes(role)) {
@@ -20,17 +20,17 @@ export default function PrivateRoute({ children, requiredRole, requiredRoles }) 
     }
   }
 
-  // 🔑 Admin area → allow both admin and mentor
+  // Admin area → allow both admin and mentor
   if (requiredRole === "admin" && !["admin", "mentor"].includes(role)) {
     return <Navigate to="/login" replace />;
   }
 
-  // 🔑 Mentor area
+  // Mentor area
   if (requiredRole === "mentor" && role !== "mentor") {
     return <Navigate to="/login" replace />;
   }
 
-  // 🔑 Student area → allow both student and user
+  // Student area → allow both student and user
   if (requiredRole === "student" && !["student", "user"].includes(role)) {
     if (["admin", "mentor"].includes(role)) {
       return <Navigate to="/admin/dashboard" replace />;
@@ -38,6 +38,6 @@ export default function PrivateRoute({ children, requiredRole, requiredRoles }) 
     return <Navigate to="/login" replace />;
   }
 
-  // ✅ Everything OK → render the page
+  // Everything OK → render the page
   return children;
 }

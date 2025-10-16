@@ -52,7 +52,7 @@ export default function EditTests() {
     "Others",
   ];
 
-  // ✅ Fetch existing test
+  // Fetch existing test
   useEffect(() => {
     const fetchTest = async () => {
       try {
@@ -74,8 +74,8 @@ export default function EditTests() {
         if (test.thumbnail) setThumbnailPreview(normalizePath(test.thumbnail));
         if (test.file) setFilePreview(normalizePath(test.file));
       } catch (err) {
-        console.error("❌ Failed to fetch test:", err);
-        setMessage("❌ Failed to load test data.");
+        console.error(" Failed to fetch test:", err);
+        setMessage(" Failed to load test data.");
       }
     };
     fetchTest();
@@ -114,11 +114,11 @@ export default function EditTests() {
         },
       });
 
-      setMessage("✅ Test updated successfully!");
+      setMessage("Test updated successfully!");
       setTimeout(() => navigate(-1), 1500);
     } catch (err) {
-      console.error("❌ Update error:", err);
-      setMessage("❌ Failed to update test.");
+      console.error(" Update error:", err);
+      setMessage("Failed to update test.");
     } finally {
       setLoading(false);
     }
@@ -133,7 +133,7 @@ export default function EditTests() {
         ⬅ Back
       </button>
 
-      <h1 className="text-3xl font-bold mb-6 text-center">✏️ Edit Test</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center"> Edit Test</h1>
 
       <form
         onSubmit={handleSubmit}

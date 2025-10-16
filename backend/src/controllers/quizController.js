@@ -1,8 +1,6 @@
 const Quiz = require("../models/Quiz");
 
-/* ================================
-   ✅ Add Quiz
-================================ */
+//Add Quiz
 exports.addQuiz = async (req, res) => {
   try {
     const {
@@ -38,29 +36,25 @@ exports.addQuiz = async (req, res) => {
       correctAnswerIndex,
     });
 
-    res.status(201).json({ message: "✅ Quiz added successfully", quiz });
+    res.status(201).json({ message: "Quiz added successfully", quiz });
   } catch (err) {
-    console.error("❌ addQuiz error:", err);
+    console.error("addQuiz error:", err);
     res.status(500).json({ message: "Failed to add quiz", error: err.message });
   }
 };
 
-/* ================================
-   📋 Get All Quizzes
-================================ */
+//Get All Quizzes
 exports.getQuizzes = async (req, res) => {
   try {
     const quizzes = await Quiz.find().sort({ createdAt: -1 });
     res.json(quizzes);
   } catch (err) {
-    console.error("❌ getQuizzes error:", err);
+    console.error("getQuizzes error:", err);
     res.status(500).json({ message: "Failed to fetch quizzes" });
   }
 };
 
-/* ================================
-   🔍 Get Single Quiz
-================================ */
+//Get Single Quiz
 exports.getQuizById = async (req, res) => {
   try {
     const quiz = await Quiz.findById(req.params.id);
@@ -72,9 +66,7 @@ exports.getQuizById = async (req, res) => {
   }
 };
 
-/* ================================
-   ✏️ Update Quiz
-================================ */
+//Update Quiz
 exports.updateQuiz = async (req, res) => {
   try {
     const updates = req.body;
@@ -85,16 +77,14 @@ exports.updateQuiz = async (req, res) => {
     const quiz = await Quiz.findByIdAndUpdate(req.params.id, updates, { new: true });
     if (!quiz) return res.status(404).json({ message: "Quiz not found" });
 
-    res.json({ message: "✏️ Quiz updated successfully", quiz });
+    res.json({ message: "Quiz updated successfully", quiz });
   } catch (err) {
-    console.error("❌ updateQuiz error:", err);
+    console.error("updateQuiz error:", err);
     res.status(500).json({ message: "Failed to update quiz" });
   }
 };
 
-/* ================================
-   🗑️ Delete Quiz
-================================ */
+// Delete Quiz
 exports.deleteQuiz = async (req, res) => {
   try {
     const quiz = await Quiz.findById(req.params.id);

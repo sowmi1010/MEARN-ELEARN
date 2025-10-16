@@ -3,11 +3,7 @@ const Course = require("../models/Course");
 const fs = require("fs");
 const path = require("path");
 
-/**
- * ==========================
- * ✅ Add New Video
- * ==========================
- */
+ // Add New Video
 exports.addVideo = async (req, res) => {
   try {
     const {
@@ -28,7 +24,7 @@ exports.addVideo = async (req, res) => {
       return res.status(400).json({ message: "Please fill all required fields" });
     }
 
-    // ✅ Always store relative paths (not absolute Windows paths)
+    // Always store relative paths (not absolute Windows paths)
     const thumbnail = req.files?.thumbnail?.[0]
       ? path.relative(path.join(__dirname, ".."), req.files.thumbnail[0].path).replace(/\\/g, "/")
       : null;
@@ -62,24 +58,21 @@ exports.addVideo = async (req, res) => {
       await Course.findByIdAndUpdate(course, { $push: { videos: newVideo._id } });
     }
 
-    res.status(201).json({ message: "✅ Video added successfully", video: newVideo });
+    res.status(201).json({ message: "Video added successfully", video: newVideo });
   } catch (err) {
-    console.error("❌ addVideo error:", err);
+    console.error("addVideo error:", err);
     res.status(500).json({ message: "Failed to add video", error: err.message });
   }
 };
 
-/**
- * ==========================
- * 📋 Get All Videos (Smart Filtering)
- * ==========================
- */
+ // Get All Videos (Smart Filtering)
+
 exports.getVideos = async (req, res) => {
   try {
     const { group, standard, board, language, subject, lesson, category, search } = req.query;
     const filter = {};
 
-    // ✅ Match base fields case-insensitively
+    // Match base fields case-insensitively
     if (group) filter.group = new RegExp(`^${group}$`, "i");
     if (standard) filter.standard = new RegExp(`^${standard}$`, "i");
     if (board) filter.board = new RegExp(`^${board}$`, "i");
@@ -88,7 +81,7 @@ exports.getVideos = async (req, res) => {
     if (lesson) filter.lesson = new RegExp(`^${lesson}$`, "i");
 
     /**
-     * ✅ Smarter Category Logic
+     * Smarter Category Logic
      * - If category = "videos" → fetch all categories (Lesson, One Word, etc.)
      * - Else → filter by specific category (Lesson, One Word, etc.)
      */
@@ -102,7 +95,7 @@ exports.getVideos = async (req, res) => {
       }
     }
 
-    // ✅ Optional text search (title/aboutCourse)
+    // Optional text search (title/aboutCourse)
     if (search) {
       filter.$or = [
         { title: new RegExp(search, "i") },
@@ -110,22 +103,20 @@ exports.getVideos = async (req, res) => {
       ];
     }
 
-    console.log("🎯 Final Video Filter:", filter);
+    console.log("Final Video Filter:", filter);
 
     const videos = await Video.find(filter).sort({ createdAt: -1 });
 
     res.status(200).json(videos);
   } catch (err) {
-    console.error("❌ getVideos error:", err);
+    console.error("getVideos error:", err);
     res.status(500).json({ message: "Failed to fetch videos", error: err.message });
   }
 };
 
-/**
- * ==========================
- * 🔍 Get Single Video by ID
- * ==========================
- */
+
+// Get Single Video by ID
+
 exports.getVideoById = async (req, res) => {
   try {
     const video = await Video.findById(req.params.id).populate("course", "title").lean();
@@ -134,16 +125,14 @@ exports.getVideoById = async (req, res) => {
 
     res.json(video);
   } catch (err) {
-    console.error("❌ getVideoById error:", err);
+    console.error("getVideoById error:", err);
     res.status(500).json({ message: "Failed to fetch video", error: err.message });
   }
 };
 
-/**
- * ==========================
- * ✏️ Update Video
- * ==========================
- */
+
+// Update Video
+
 exports.updateVideo = async (req, res) => {
   try {
     const video = await Video.findById(req.params.id);
@@ -151,7 +140,7 @@ exports.updateVideo = async (req, res) => {
 
     const updates = req.body;
 
-    // ✅ Replace files if new ones are uploaded
+    // Replace files if new ones are uploaded
     if (req.files?.thumbnail?.[0]) {
       if (video.thumbnail && fs.existsSync(video.thumbnail)) fs.unlinkSync(video.thumbnail);
       updates.thumbnail = req.files.thumbnail[0].path;
@@ -163,18 +152,16 @@ exports.updateVideo = async (req, res) => {
     }
 
     const updatedVideo = await Video.findByIdAndUpdate(req.params.id, updates, { new: true });
-    res.json({ message: "✏️ Video updated successfully", video: updatedVideo });
+    res.json({ message: "Video updated successfully", video: updatedVideo });
   } catch (err) {
-    console.error("❌ updateVideo error:", err);
+    console.error("updateVideo error:", err);
     res.status(500).json({ message: "Failed to update video", error: err.message });
   }
 };
 
-/**
- * ==========================
- * 🗑️ Delete Video
- * ==========================
- */
+
+//  Delete Video
+
 exports.deleteVideo = async (req, res) => {
   try {
     const video = await Video.findById(req.params.id);
@@ -188,24 +175,22 @@ exports.deleteVideo = async (req, res) => {
     }
 
     await video.deleteOne();
-    res.json({ message: "🗑️ Video deleted successfully" });
+    res.json({ message: "Video deleted successfully" });
   } catch (err) {
-    console.error("❌ deleteVideo error:", err);
+    console.error("deleteVideo error:", err);
     res.status(500).json({ message: "Failed to delete video", error: err.message });
   }
 };
 
-/**
- * ==========================
- * 🔢 Get Total Video Count
- * ==========================
- */
+
+// Get Total Video Count
+
 exports.getVideoCount = async (req, res) => {
   try {
     const total = await Video.countDocuments({});
     res.status(200).json({ total });
   } catch (err) {
-    console.error("❌ getVideoCount error:", err);
+    console.error("getVideoCount error:", err);
     res.status(500).json({ message: "Failed to fetch video count", error: err.message });
   }
 };

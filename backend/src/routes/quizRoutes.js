@@ -8,21 +8,21 @@ const {
   deleteQuiz,
 } = require("../controllers/quizController");
 const auth = require("../middlewares/auth");
-const checkPermission = require("../middlewares/permission"); // ✅ Added
+const checkPermission = require("../middlewares/permission"); 
 
-// 🧩 Add new quiz
+// Add new quiz
 router.post("/upload", auth, checkPermission("quizzes"), addQuiz);
 
-// 📋 Get all quizzes (students, mentors, admins)
+// Get all quizzes (students, mentors, admins)
 router.get("/", auth, getQuizzes);
 
-// 🔍 Get single quiz
+// Get single quiz
 router.get("/:id", auth, getQuizById);
 
-// ✏️ Update quiz
+// Update quiz
 router.put("/:id", auth, checkPermission("quizzes"), updateQuiz);
 
-// 🗑️ Delete quiz
+// Delete quiz
 router.delete("/:id", auth, checkPermission("quizzes"), deleteQuiz);
 
 module.exports = router;

@@ -67,7 +67,7 @@ const ManageNotes = React.lazy(() =>
 const EditTests = React.lazy(() => import("./pages/admin/course/edit/EditTests"));
 const ViewTest = React.lazy(() => import("./pages/admin/course/view/ViewTests"));
 
-// ✅ Smooth page transition
+// Smooth page transition
 function PageWrapper({ children }) {
   return (
     <motion.div
@@ -230,7 +230,7 @@ export default function App() {
     return stored ? JSON.parse(stored) : null;
   });
 
-  // ✅ Listen for login/logout events (Navbar syncs instantly)
+  // Listen for login/logout events (Navbar syncs instantly)
 useEffect(() => {
   const syncUser = () => {
     const stored = localStorage.getItem("user");

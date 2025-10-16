@@ -3,7 +3,7 @@ import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 const categories = [
-  // 🧩 Lesson & Notes
+  // Lesson & Notes
   { name: "Lesson", icon: "📚", color: "bg-blue-600" },
   { name: "Lesson Notes", icon: "🗒️", color: "bg-indigo-600" },
   { name: "One Word", icon: "💬", color: "bg-teal-600" },
@@ -13,7 +13,7 @@ const categories = [
   { name: "Practical", icon: "⚗️", color: "bg-red-600" },
   { name: "Important", icon: "⭐", color: "bg-green-600" },
 
-  // 🧪 Tests / Exams
+  // Tests / Exams
   { name: "Lesson Test", icon: "🧠", color: "bg-cyan-600" }, // ✅ added here
   { name: "Unit Test", icon: "🧮", color: "bg-yellow-500 text-black" },
   { name: "Revision Test", icon: "♻️", color: "bg-yellow-600 text-black" },
@@ -21,7 +21,7 @@ const categories = [
   { name: "Practice Test", icon: "🧩", color: "bg-yellow-800 text-white" },
   { name: "Exam Paper", icon: "📄", color: "bg-yellow-600 text-black" },
 
-  // 🗂️ Miscellaneous
+  //  Miscellaneous
   { name: "Others", icon: "📂", color: "bg-gray-600" },
 ];
 
@@ -31,7 +31,7 @@ export default function CourseCategories() {
 
   return (
     <div className="p-8 bg-gray-900 text-white min-h-screen">
-      {/* 🔹 Header */}
+      {/* Header */}
       <div className="text-center mb-10">
         <h1 className="text-3xl font-bold capitalize">
           {groupId} → {subject} — Categories
@@ -39,7 +39,7 @@ export default function CourseCategories() {
         <p className="text-gray-400 mt-2">Choose a category to view contents</p>
       </div>
 
-      {/* 🔹 Category Grid */}
+      {/* Category Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
         {categories.map((cat) => (
           <div

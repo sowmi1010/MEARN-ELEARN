@@ -4,8 +4,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const auth = require("../middlewares/auth");
-const checkPermission = require("../middlewares/permission"); // ✅ Added
-
+const checkPermission = require("../middlewares/permission"); 
 const {
   addNote,
   getNotes,
@@ -14,9 +13,7 @@ const {
   deleteNote,
 } = require("../controllers/noteController");
 
-/* ======================================================
-   ✅ Ensure upload folders exist
-====================================================== */
+//  Ensure upload folders exist
 const rootUploadDir = path.resolve(__dirname, "../../uploads");
 const noteDir = path.join(rootUploadDir, "notes");
 const thumbDir = path.join(rootUploadDir, "thumbnails");
@@ -24,13 +21,11 @@ const thumbDir = path.join(rootUploadDir, "thumbnails");
 [noteDir, thumbDir].forEach((dir) => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
-    console.log(`📂 Created: ${dir}`);
+    console.log(`Created: ${dir}`);
   }
 });
 
-/* ======================================================
-   ✅ Configure multer for file uploads
-====================================================== */
+// Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (file.fieldname === "thumbnail") cb(null, thumbDir);
@@ -44,15 +39,13 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-/* ======================================================
-   ✅ Routes
-====================================================== */
+// Routes
 
-// ➕ Add new note
+// Add new note
 router.post(
   "/upload",
   auth,
-  checkPermission("notes"), // ✅ Changed
+  checkPermission("notes"), 
   upload.fields([
     { name: "thumbnail", maxCount: 1 },
     { name: "file", maxCount: 1 },
@@ -60,17 +53,17 @@ router.post(
   addNote
 );
 
-// 📄 Get all notes
-router.get("/", auth, getNotes); // ✅ Accessible to all authenticated users (students/mentors/admins)
+// Get all notes
+router.get("/", auth, getNotes); // Accessible to all authenticated users (students/mentors/admins)
 
-// 🔍 Get single note
+// Get single note
 router.get("/:id", auth, getNoteById);
 
-// ✏️ Update note
+// Update note
 router.put(
   "/:id",
   auth,
-  checkPermission("notes"), // ✅ Changed
+  checkPermission("notes"), 
   upload.fields([
     { name: "thumbnail", maxCount: 1 },
     { name: "file", maxCount: 1 },
@@ -78,7 +71,7 @@ router.put(
   updateNote
 );
 
-// 🗑️ Delete note
-router.delete("/:id", auth, checkPermission("notes"), deleteNote); // ✅ Changed
+// Delete note
+router.delete("/:id", auth, checkPermission("notes"), deleteNote); 
 
 module.exports = router;

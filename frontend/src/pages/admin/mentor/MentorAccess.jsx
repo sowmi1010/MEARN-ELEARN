@@ -17,7 +17,7 @@ import {
   HiShieldCheck,
 } from "react-icons/hi2";
 
-// 🟦 Full Access Modules (same as sidebar)
+//  Full Access Modules (same as sidebar)
 const availablePermissions = [
   { key: "dashboard", label: "Dashboard", icon: <HiOutlineChartBar /> },
   { key: "home", label: "Home Page", icon: <HiOutlineHome /> },
@@ -67,11 +67,11 @@ export default function MentorAccess() {
         { permissions: selected },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert("✅ Mentor access permissions updated successfully!");
+      alert("Mentor access permissions updated successfully!");
       navigate("/admin/mentors");
     } catch (err) {
       console.error("Update permissions error:", err);
-      alert("❌ Failed to update permissions");
+      alert("Failed to update permissions");
     } finally {
       setLoading(false);
     }

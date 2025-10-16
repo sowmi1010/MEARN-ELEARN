@@ -3,7 +3,7 @@ const Course = require("../models/Course");
 
 /**
  * ========================
- * ✅ Get all courses (Public)
+ * Get all courses (Public)
  * ========================
  */
 exports.listCourses = async (req, res) => {
@@ -15,14 +15,14 @@ exports.listCourses = async (req, res) => {
 
     res.json(courses);
   } catch (err) {
-    console.error("❌ listCourses error:", err.message);
+    console.error("listCourses error:", err.message);
     res.status(500).json({ message: "Failed to fetch courses" });
   }
 };
 
 /**
  * ========================
- * ✅ Get a single course
+ * Get a single course
  *    - All logged-in users can view details
  *    - Videos still require enrollment
  * ========================
@@ -37,17 +37,17 @@ exports.getCourse = async (req, res) => {
       return res.status(404).json({ message: "Course not found" });
     }
 
-    // 🟢 Allow all authenticated users to view course details
+    // Allow all authenticated users to view course details
     res.json(course);
   } catch (err) {
-    console.error("❌ getCourse error:", err.message);
+    console.error("getCourse error:", err.message);
     res.status(500).json({ message: "Failed to fetch course" });
   }
 };
 
 /**
  * ========================
- * ✅ Create a new course
+ * Create a new course
  * ========================
  */
 exports.createCourse = async (req, res) => {
@@ -63,19 +63,19 @@ exports.createCourse = async (req, res) => {
       description,
       category,
       price,
-      teacher: req.user.id, // logged-in admin
+      teacher: req.user.id, 
     });
 
-    res.json({ message: "🎉 Course created successfully", course });
+    res.json({ message: "Course created successfully", course });
   } catch (err) {
-    console.error("❌ createCourse error:", err.message);
+    console.error("createCourse error:", err.message);
     res.status(500).json({ message: "Failed to create course" });
   }
 };
 
 /**
  * ========================
- * ✅ Update course
+ * Update course
  * ========================
  */
 exports.updateCourse = async (req, res) => {
@@ -90,16 +90,16 @@ exports.updateCourse = async (req, res) => {
 
     if (!updated) return res.status(404).json({ message: "Course not found" });
 
-    res.json({ message: "✅ Course updated successfully", course: updated });
+    res.json({ message: "Course updated successfully", course: updated });
   } catch (err) {
-    console.error("❌ updateCourse error:", err.message);
+    console.error("updateCourse error:", err.message);
     res.status(500).json({ message: "Failed to update course" });
   }
 };
 
 /**
  * ========================
- * ✅ Delete course
+ * Delete course
  * ========================
  */
 exports.deleteCourse = async (req, res) => {
@@ -107,9 +107,9 @@ exports.deleteCourse = async (req, res) => {
     const deleted = await Course.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ message: "Course not found" });
 
-    res.json({ message: "🗑️ Course deleted successfully" });
+    res.json({ message: "Course deleted successfully" });
   } catch (err) {
-    console.error("❌ deleteCourse error:", err.message);
+    console.error("deleteCourse error:", err.message);
     res.status(500).json({ message: "Failed to delete course" });
   }
 };

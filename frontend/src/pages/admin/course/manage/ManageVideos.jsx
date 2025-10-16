@@ -8,7 +8,7 @@ export default function ManageVideos() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // 🧩 Optional group mapping (IDs → names)
+  // Optional group mapping (IDs → names)
   const groupMap = {
     "68e776aaa084762b3d385c1c": "ROOT",
     "68e777aaa084762b3d385c1d": "STEM",
@@ -18,7 +18,7 @@ export default function ManageVideos() {
     "68e77baaa084762b3d385c21": "SEED",
   };
 
-  // 🧠 Category Configs
+  // Category Configs
   const categoryConfig = {
     videos: { title: "🎥 All Videos", color: "bg-blue-700" },
     lesson: { title: "📘 Lessons", color: "bg-blue-700" },
@@ -42,7 +42,7 @@ export default function ManageVideos() {
     fetchVideos();
   }, [groupId, subject, category]);
 
-  // 🧾 Fetch Videos
+  // Fetch Videos
   const fetchVideos = async () => {
     try {
       setLoading(true);
@@ -56,22 +56,22 @@ export default function ManageVideos() {
       );
       setVideos(res.data || []);
     } catch (err) {
-      console.error("❌ Failed to fetch videos:", err);
+      console.error("Failed to fetch videos:", err);
       setVideos([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // 🗑️ Delete Video
+  // Delete Video
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this video?")) return;
     try {
       await api.delete(`/videos/${id}`);
       setVideos(videos.filter((v) => v._id !== id));
-      alert("🗑️ Video deleted successfully!");
+      alert("Video deleted successfully!");
     } catch (err) {
-      console.error("❌ Delete failed:", err);
+      console.error("Delete failed:", err);
       alert("Delete failed. Try again.");
     }
   };
@@ -80,7 +80,7 @@ export default function ManageVideos() {
 
   return (
     <div className="p-8 bg-gray-900 text-white min-h-screen">
-      {/* 🔹 Header */}
+      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold capitalize mb-2">
           {groupMap[groupId] || groupId} → {subject} → {category}
@@ -90,7 +90,7 @@ export default function ManageVideos() {
         </p>
       </div>
 
-      {/* 🔹 Video List */}
+      {/* Video List */}
       {loading ? (
         <p className="text-center text-gray-400">Loading videos...</p>
       ) : videos.length > 0 ? (
@@ -122,7 +122,7 @@ export default function ManageVideos() {
               )}
               {video.category && (
                 <p className="text-sm text-gray-300 mb-1">
-                  📂 {video.category}
+                  {video.category}
                 </p>
               )}
               {video.aboutCourse && (
@@ -139,31 +139,31 @@ export default function ManageVideos() {
                   rel="noreferrer"
                   className="inline-block mt-3 bg-gray-900 hover:bg-gray-800 text-white px-3 py-2 rounded text-sm font-medium"
                 >
-                  ▶️ Watch Video
+                  Watch Video
                 </a>
               )}
 
-              {/* 🛠️ Admin Controls */}
+              {/* Admin Controls */}
               <div className="flex justify-between mt-4">
                 <button
                   onClick={() => navigate(`/admin/courses/edit/video/${video._id}`)}
                   className="bg-yellow-400 text-black px-3 py-1 rounded hover:bg-yellow-500 text-sm font-semibold"
                 >
-                  ✏️ Edit
+                 Edit
                 </button>
 
                 <button
                   onClick={() => navigate(`/admin/courses/view/video/${video._id}`)}
                   className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm font-semibold"
                 >
-                  👁 View
+                  View
                 </button>
 
                 <button
                   onClick={() => handleDelete(video._id)}
                   className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm font-semibold"
                 >
-                  🗑️ Delete
+                  Delete
                 </button>
               </div>
             </div>

@@ -5,11 +5,11 @@ const path = require("path");
 const fs = require("fs");
 const Mentor = require("../models/Mentor");
 
-// 📂 Ensure upload directory exists
+// Ensure upload directory exists
 const uploadDir = path.join(__dirname, "../../uploads/mentors");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
-// 📦 File upload configuration
+// File upload configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) =>
@@ -17,13 +17,13 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// 🟢 GET all mentors
+// GET all mentors
 router.get("/", async (req, res) => {
   try {
     const mentors = await Mentor.find().select("-password");
     res.json(mentors);
   } catch (err) {
-    console.error("❌ GET /api/mentor error:", err);
+    console.error("GET /api/mentor error:", err);
     res.status(500).json({
       message: "Server error while fetching mentors",
       error: err.message,
@@ -31,19 +31,19 @@ router.get("/", async (req, res) => {
   }
 });
 
-// 🟢 GET mentor by ID
+// GET mentor by ID
 router.get("/:id", async (req, res) => {
   try {
     const mentor = await Mentor.findById(req.params.id).select("-password");
     if (!mentor) return res.status(404).json({ message: "Mentor not found" });
     res.json(mentor);
   } catch (err) {
-    console.error("❌ GET mentor error:", err);
+    console.error("GET mentor error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 });
 
-// 🟢 POST: Create mentor
+// POST: Create mentor
 router.post("/", upload.single("photo"), async (req, res) => {
   try {
     const { firstName, email, phone, userId, password } = req.body;
@@ -58,7 +58,7 @@ router.post("/", upload.single("photo"), async (req, res) => {
     await mentor.save();
     res.status(201).json({ message: "Mentor created successfully", mentor });
   } catch (err) {
-    console.error("❌ Mentor creation error:", err);
+    console.error("Mentor creation error:", err);
     res.status(400).json({
       message: "Failed to create mentor",
       error: err.message,
@@ -66,7 +66,7 @@ router.post("/", upload.single("photo"), async (req, res) => {
   }
 });
 
-// 🟢 PUT: Update mentor
+// PUT: Update mentor
 router.put("/:id", upload.single("photo"), async (req, res) => {
   try {
     const updateData = { ...req.body };
@@ -80,7 +80,7 @@ router.put("/:id", upload.single("photo"), async (req, res) => {
 
     res.json({ message: "Mentor updated successfully", mentor });
   } catch (err) {
-    console.error("❌ Mentor update error:", err);
+    console.error("Mentor update error:", err);
     res.status(400).json({
       message: "Failed to update mentor",
       error: err.message,
@@ -88,12 +88,11 @@ router.put("/:id", upload.single("photo"), async (req, res) => {
   }
 });
 
-// 🟢 PUT: Update Mentor Permissions (fixed)
+//PUT: Update Mentor Permissions (fixed)
 router.put("/:id/permissions", async (req, res) => {
   try {
     let { permissions } = req.body;
 
-    // 🧩 Convert if JSON or comma-separated string
     if (typeof permissions === "string") {
       try {
         permissions = JSON.parse(permissions);
@@ -102,10 +101,8 @@ router.put("/:id/permissions", async (req, res) => {
       }
     }
 
-    // 🧩 Default empty array
     if (!Array.isArray(permissions)) permissions = [];
 
-    // 🧩 Normalize + filter
     const validModules = [
       "dashboard",
       "home",
@@ -121,7 +118,7 @@ router.put("/:id/permissions", async (req, res) => {
         .filter((p) => validModules.includes(p))
     )];
 
-    // ✅ Update mentor and return latest doc
+    // Update mentor and return latest doc
     const updatedMentor = await Mentor.findByIdAndUpdate(
       req.params.id,
       { permissions: cleanPermissions },
@@ -132,11 +129,11 @@ router.put("/:id/permissions", async (req, res) => {
       return res.status(404).json({ message: "Mentor not found" });
 
     res.json({
-      message: "✅ Mentor permissions updated successfully",
+      message: "Mentor permissions updated successfully",
       mentor: updatedMentor,
     });
   } catch (err) {
-    console.error("❌ Permission update error:", err);
+    console.error("Permission update error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 });

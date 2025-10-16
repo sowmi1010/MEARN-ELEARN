@@ -11,7 +11,7 @@ export default function Navbar() {
   const fileInputRef = useRef(null);
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
 
-  // 🌓 Theme Toggle
+  // Theme Toggle
   useEffect(() => {
     if (theme === "dark") document.documentElement.classList.add("dark");
     else document.documentElement.classList.remove("dark");
@@ -20,7 +20,7 @@ export default function Navbar() {
 
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
-  // 🧠 Load user and listen for login/logout changes
+  // Load user and listen for login/logout changes
   useEffect(() => {
     const syncUser = () => {
       const stored = localStorage.getItem("user");
@@ -30,7 +30,7 @@ export default function Navbar() {
     // Initial load
     syncUser();
 
-    // ✅ Listen for all login/logout events across app
+    // Listen for all login/logout events across app
     window.addEventListener("storage", syncUser);
     window.addEventListener("user-login", syncUser);
     window.addEventListener("user-logout", syncUser);
@@ -45,13 +45,13 @@ export default function Navbar() {
   // Hide Navbar on admin pages
   if (location.pathname.startsWith("/admin")) return null;
 
-  // 🧭 Logout handler
+  // Logout handler
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
 
-    // ✅ Trigger instant logout update everywhere
+    // Trigger instant logout update everywhere
     window.dispatchEvent(new Event("user-logout"));
     navigate("/login");
   };

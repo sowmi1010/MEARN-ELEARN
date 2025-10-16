@@ -6,7 +6,7 @@ import api from "../../../utils/api";
 export default function MentorList() {
   const [mentors, setMentors] = useState([]);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
-  const navigate = useNavigate(); // ✅ Add navigate hook
+  const navigate = useNavigate(); 
 
   useEffect(() => {
     fetchMentors();
@@ -37,7 +37,7 @@ export default function MentorList() {
     }
   }
 
-  // 🟢 Access Button → Navigate to Mentor Access Page
+  // Access Button → Navigate to Mentor Access Page
   function handleAccess(mentor) {
     navigate(`/admin/mentor-access/${mentor._id}`);
   }
@@ -145,7 +145,7 @@ export default function MentorList() {
                   <td className="py-3 px-4 text-gray-400">{m.type || "—"}</td>
                   <td className="py-3 px-4 text-gray-400">{m.phone || "—"}</td>
 
-                  {/* 🟢 Access Button */}
+                  {/* Access Button */}
                   <td className="py-3 px-4 text-center">
                     <button
                       onClick={() => handleAccess(m)}
@@ -155,7 +155,7 @@ export default function MentorList() {
                     </button>
                   </td>
 
-                  {/* 🟦 Edit Button */}
+                  {/*  Edit Button */}
                   <td className="py-3 px-4 text-center">
                     <Link
                       to={`/admin/mentors/edit/${m._id}`}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-// 👉 Swiper for Carousel
+// Swiper for Carousel
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination } from "swiper/modules";
 import "swiper/css";
@@ -20,7 +20,7 @@ export default function StudentFeedbacks() {
         const res = await axios.get(`${apiBase}/api/feedbacks`);
         setFeedbacks(res.data || []);
       } catch (err) {
-        console.error("❌ Fetch feedbacks error:", err);
+        console.error("Fetch feedbacks error:", err);
       } finally {
         setLoading(false);
       }

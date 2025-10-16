@@ -26,7 +26,7 @@ export default function AddQuiz() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  /* 🧠 Handle Input Changes */
+  /* Handle Input Changes */
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -42,14 +42,14 @@ export default function AddQuiz() {
     }
   };
 
-  /* 🧩 Update Options Dynamically */
+  /* Update Options Dynamically */
   const handleOptionChange = (index, value) => {
     const updatedOptions = [...formData.options];
     updatedOptions[index] = value;
     setFormData({ ...formData, options: updatedOptions });
   };
 
-  /* 🚀 Submit Quiz Form */
+  /* Submit Quiz Form */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -62,7 +62,7 @@ export default function AddQuiz() {
       };
 
       await api.post("/quizzes/upload", payload);
-      setMessage("✅ Quiz added successfully!");
+      setMessage("Quiz added successfully!");
 
       // Reset form
       setFormData({
@@ -77,15 +77,15 @@ export default function AddQuiz() {
         correctAnswerIndex: "",
       });
     } catch (err) {
-      console.error("❌ Upload Error:", err);
-      setMessage("❌ Failed to add quiz. Try again.");
+      console.error(" Upload Error:", err);
+      setMessage("Failed to add quiz. Try again.");
     } finally {
       setLoading(false);
       setTimeout(() => setMessage(""), 4000);
     }
   };
 
-  /* 🎨 UI */
+  /* UI */
   return (
     <div className="p-8 bg-gray-900 text-white min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-center">❓ Add Quiz Question</h1>

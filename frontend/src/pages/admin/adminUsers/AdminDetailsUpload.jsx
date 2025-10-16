@@ -41,7 +41,7 @@ export default function AddAdmin() {
   const [existingPhoto, setExistingPhoto] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // 🧠 Edit mode load
+  // Edit mode load
   useEffect(() => {
     if (id) loadAdmin();
   }, [id]);
@@ -78,15 +78,15 @@ export default function AddAdmin() {
 
       if (id) {
         await api.put(`/admin/detailed-admins/${id}`, data, { headers });
-        alert("✅ Admin updated successfully!");
+        alert("Admin updated successfully!");
       } else {
         await api.post("/admin/detailed-admin", data, { headers });
-        alert("🎉 Admin added successfully!");
+        alert("Admin added successfully!");
       }
       navigate("/admin/admins");
     } catch (err) {
       console.error("Save error:", err);
-      alert("❌ Failed to save admin");
+      alert("Failed to save admin");
     } finally {
       setLoading(false);
     }
@@ -192,7 +192,7 @@ export default function AddAdmin() {
   );
 }
 
-/* 🔹 Reusable Input */
+/* Reusable Input */
 function Input({ className = "", ...props }) {
   return (
     <input
@@ -202,7 +202,7 @@ function Input({ className = "", ...props }) {
   );
 }
 
-/* 🔹 Reusable Select */
+/* Reusable Select */
 function Select({ name, value, onChange, options, placeholder, className = "" }) {
   return (
     <select

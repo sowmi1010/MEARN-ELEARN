@@ -3,7 +3,7 @@ const express = require("express");
 const router = express.Router();
 
 const auth = require("../middlewares/auth");
-const checkPermission = require("../middlewares/permission"); // ✅ Added
+const checkPermission = require("../middlewares/permission"); 
 
 const {
   createCourse,
@@ -17,18 +17,14 @@ const Course = require("../models/Course");
 const User = require("../models/User");
 const Student = require("../models/Student");
 
-/**
- * ==========================
- * ✅ Public: List all courses
- * ==========================
- */
+
+// Public: List all courses
+
 router.get("/", listCourses);
 
-/**
- * ==========================================================
- * ✅ Admin or Mentor(with "students" permission): View enrolled students
- * ==========================================================
- */
+
+// Admin or Mentor(with "students" permission): View enrolled students
+
 router.get("/:id/students", auth, async (req, res) => {
   try {
     const user = req.user;
@@ -49,44 +45,34 @@ router.get("/:id/students", auth, async (req, res) => {
 
     res.json(course.enrolledStudents);
   } catch (err) {
-    console.error("❌ Fetch students error:", err);
+    console.error("Fetch students error:", err);
     res.status(500).json({ message: err.message });
   }
 });
 
-/**
- * ==========================
- * ✅ Authenticated: Get single course details
- * ==========================
- */
+
+//  Authenticated: Get single course details
+
 router.get("/:id", auth, getCourse);
 
-/**
- * ==========================
- * ✅ Admin or Mentor(with "courses" permission): Create a course
- * ==========================
- */
+
+//  Admin or Mentor(with "courses" permission): Create a course
+
 router.post("/", auth, checkPermission("courses"), createCourse);
 
-/**
- * ==========================
- * ✅ Admin or Mentor(with "courses" permission): Update a course
- * ==========================
- */
+
+// Admin or Mentor(with "courses" permission): Update a course
+
 router.put("/:id", auth, checkPermission("courses"), updateCourse);
 
-/**
- * ==========================
- * ✅ Admin or Mentor(with "courses" permission): Delete a course
- * ==========================
- */
+
+// Admin or Mentor(with "courses" permission): Delete a course
+
 router.delete("/:id", auth, checkPermission("courses"), deleteCourse);
 
-/**
- * ==========================================================
- * ✅ Student: Enroll in a course (works for both User + Student)
- * ==========================================================
- */
+
+//  Student: Enroll in a course (works for both User + Student)
+
 router.post("/:id/enroll", auth, async (req, res) => {
   try {
     const courseId = req.params.id;
@@ -129,9 +115,9 @@ router.post("/:id/enroll", auth, async (req, res) => {
         .json({ message: "User/Student not found to update enrollment" });
     }
 
-    res.json({ message: "✅ Enrolled successfully!", courseId });
+    res.json({ message: "Enrolled successfully!", courseId });
   } catch (err) {
-    console.error("❌ ENROLL SERVER ERROR >>>", err);
+    console.error("ENROLL SERVER ERROR >>>", err);
     res.status(500).json({ message: "Failed to enroll", error: err.message });
   }
 });

@@ -2,11 +2,11 @@
 const mongoose = require("mongoose");
 
 const courseGroupSchema = new mongoose.Schema({
-  name: { type: String, required: true, unique: true }, // Root, Stem, Leaf, etc.
+  name: { type: String, required: true, unique: true }, 
   description: { type: String },
-  range: { type: String }, // "1st to 4th Standard"
-  category: { type: String }, // Foundation, Government Exam, etc.
-  image: { type: String }, // Group thumbnail
+  range: { type: String },
+  category: { type: String }, 
+  image: { type: String }, 
 }, { timestamps: true });
 
 module.exports = mongoose.model("CourseGroup", courseGroupSchema);

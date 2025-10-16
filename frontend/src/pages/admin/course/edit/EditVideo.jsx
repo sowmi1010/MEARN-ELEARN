@@ -49,7 +49,7 @@ export default function EditVideo() {
     "Others",
   ];
 
-  // ✅ Clean up absolute paths
+  // Clean up absolute paths
   const cleanPath = (p) => {
     if (!p) return "";
     let normalized = p.replace(/\\/g, "/");
@@ -57,7 +57,7 @@ export default function EditVideo() {
     return idx !== -1 ? `${BASE_URL}/${normalized.substring(idx)}` : `${BASE_URL}/${normalized}`;
   };
 
-  // ✅ Fetch existing video data
+  // Fetch existing video data
   useEffect(() => {
     const fetchVideo = async () => {
       try {
@@ -80,8 +80,8 @@ export default function EditVideo() {
         setThumbnailPreview(cleanPath(video.thumbnail));
         setFilePreview(cleanPath(video.file));
       } catch (err) {
-        console.error("❌ Failed to fetch video:", err);
-        setMessage("❌ Failed to load video data.");
+        console.error("Failed to fetch video:", err);
+        setMessage("Failed to load video data.");
       }
     };
 
@@ -98,7 +98,7 @@ export default function EditVideo() {
     else setFile(e.target.files[0]);
   };
 
-  // ✅ Update video
+  // Update video
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -118,14 +118,14 @@ export default function EditVideo() {
         },
       });
 
-      console.log("✅ Update Response:", res.data);
-      setMessage("✅ Video updated successfully!");
+      console.log("Update Response:", res.data);
+      setMessage("Video updated successfully!");
 
-      // ✅ Redirect to admin/courses after success
+      // Redirect to admin/courses after success
       setTimeout(() => navigate("/admin/courses"), 1200);
     } catch (err) {
-      console.error("❌ Update error:", err.response?.data || err);
-      setMessage("❌ Failed to update video.");
+      console.error("Update error:", err.response?.data || err);
+      setMessage("Failed to update video.");
     } finally {
       setLoading(false);
     }
@@ -133,15 +133,7 @@ export default function EditVideo() {
 
   return (
     <div className="p-8 bg-gray-900 text-white min-h-screen">
-      {/* 🡄 Back Button */}
-      <button
-        onClick={() => navigate(-1)}
-        className="mb-4 bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded"
-      >
-        ⬅ Back
-      </button>
-
-      <h1 className="text-3xl font-bold mb-6 text-center">✏️ Edit Video</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center"> Edit Video</h1>
 
       <form
         onSubmit={handleSubmit}

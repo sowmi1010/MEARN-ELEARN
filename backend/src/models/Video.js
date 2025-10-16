@@ -3,81 +3,81 @@ const mongoose = require("mongoose");
 
 const videoSchema = new mongoose.Schema(
   {
-    // 1️⃣ Group (Root, Stem, Leaf, etc.)
+    // 1️ Group (Root, Stem, Leaf, etc.)
     group: {
       type: String,
       required: true,
       enum: ["ROOT", "STEM", "LEAF", "FLOWER", "FRUIT", "SEED"],
     },
 
-    // 2️⃣ Standard (e.g., 1st to 4th)
+    // 2️ Standard (e.g., 1st to 4th)
     standard: {
       type: String,
       required: true,
       trim: true,
     },
 
-    // 3️⃣ Board (e.g., CBSE, State)
+    // 3️ Board (e.g., CBSE, State)
     board: {
       type: String,
       required: true,
       trim: true,
     },
 
-    // 4️⃣ Language (e.g., English, Tamil)
+    // 4️ Language (e.g., English, Tamil)
     language: {
       type: String,
       required: true,
       trim: true,
     },
 
-    // 5️⃣ Subject (e.g., Maths, Science)
+    // 5️ Subject (e.g., Maths, Science)
     subject: {
       type: String,
       required: true,
       trim: true,
     },
 
-    // 6️⃣ Lesson (e.g., Chapter 1: Numbers)
+    // 6️ Lesson (e.g., Chapter 1: Numbers)
     lesson: {
       type: String,
       required: true,
       trim: true,
     },
 
-    // 7️⃣ Category (e.g., Foundation, Revision)
+    // 7️ Category (e.g., Foundation, Revision)
     category: {
       type: String,
       required: true,
       trim: true,
     },
 
-    // 8️⃣ Video Number (like V-001)
+    // 8️ Video Number (like V-001)
     videoNumber: {
       type: String,
       trim: true,
     },
 
-    // 9️⃣ Title of the video
+    // 9️ Title of the video
     title: {
       type: String,
       required: true,
       trim: true,
     },
 
-    // 🔟 About Course (short video description)
+    // 10 About Course (short video description)
     aboutCourse: {
       type: String,
       trim: true,
     },
 
-    // 11️⃣ Thumbnail (image file path or URL)
+    // 11️ Thumbnail (image file path or URL)
     thumbnail: {
       type: String,
       required: true,
     },
 
-    // 12️⃣ Video file path
+    // 12️ Video file path
     file: {
       type: String,
       required: true,

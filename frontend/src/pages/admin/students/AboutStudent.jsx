@@ -21,7 +21,7 @@ export default function AboutStudent() {
       setStudent(res.data);
     } catch (err) {
       console.error(
-        "❌ Fetch student error:",
+        "Fetch student error:",
         err.response?.data || err.message
       );
     }
@@ -80,7 +80,7 @@ export default function AboutStudent() {
               {student.firstName} {student.lastName}
             </h2>
             <p className="text-gray-400 text-sm">{student.email}</p>
-            <p className="text-teal-400 mt-1 text-sm">📞 {student.phone}</p>
+            <p className="text-teal-400 mt-1 text-sm">{student.phone}</p>
 
             <div className="mt-4 bg-teal-500/10 border border-teal-400 rounded-lg px-4 py-2 text-teal-300 text-sm font-medium">
               User ID: {student.userId}
@@ -90,7 +90,7 @@ export default function AboutStudent() {
 
         {/* === Info Details === */}
         <div className="lg:w-2/3 space-y-8">
-          <InfoSection title="🎓 Academic Information">
+          <InfoSection title="Academic Information">
             <InfoGrid
               data={{
                 Institution: student.institutionName,
@@ -103,7 +103,7 @@ export default function AboutStudent() {
             />
           </InfoSection>
 
-          <InfoSection title="👤 Personal Information">
+          <InfoSection title="Personal Information">
             <InfoGrid
               data={{
                 "Date of Birth": student.dob?.substring(0, 10),
@@ -115,7 +115,7 @@ export default function AboutStudent() {
             />
           </InfoSection>
 
-          <InfoSection title="👪 Parent Information">
+          <InfoSection title="Parent Information">
             <InfoGrid
               data={{
                 Father: student.father,
@@ -126,7 +126,7 @@ export default function AboutStudent() {
             />
           </InfoSection>
 
-          <InfoSection title="📍 Contact Information">
+          <InfoSection title="Contact Information">
             <InfoGrid
               data={{
                 "Alt Phone": student.altPhone,

@@ -14,7 +14,7 @@ export default function Dropdown({ label, name, value, options, onChange, requir
         <option value="">Select {label}</option>
 
         {options.map((opt, index) => {
-          // ✅ Support both ["Maths", "Science"] and [{label, value}] formats
+          // Support both ["Maths", "Science"] and [{label, value}] formats
           const key = typeof opt === "object" ? opt.value : opt;
           const labelText = typeof opt === "object" ? opt.label : opt;
 

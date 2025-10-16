@@ -8,7 +8,7 @@ export default function ManageNotes() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // 🧩 Group Mapping (ObjectId → Name)
+  // Group Mapping (ObjectId → Name)
   const groupMap = {
     "68e776aaa084762b3d385c1c": "ROOT",
     "68e777aaa084762b3d385c1d": "STEM",
@@ -18,7 +18,7 @@ export default function ManageNotes() {
     "68e77baaa084762b3d385c21": "SEED",
   };
 
-  // 🎨 Category Color Mapping
+  //  Category Color Mapping
   const categoryColors = {
     "lesson notes": "bg-blue-700",
     summary: "bg-green-700",
@@ -28,7 +28,7 @@ export default function ManageNotes() {
     others: "bg-gray-700",
   };
 
-  // ✅ Helper to clean backend paths
+  // Helper to clean backend paths
   const normalizePath = (path) => {
     if (!path) return "";
     return path.replace(/^.*uploads[\\/]/, "uploads/").replace(/\\/g, "/");
@@ -38,7 +38,7 @@ export default function ManageNotes() {
     fetchNotes();
   }, [groupId, subject, category]);
 
-  // 🧾 Fetch Notes from Backend
+  // Fetch Notes from Backend
   const fetchNotes = async () => {
     try {
       setLoading(true);
@@ -56,7 +56,7 @@ export default function ManageNotes() {
         )}`
       );
 
-      // ✅ Ensure clean URLs (supports both virtual URLs and raw paths)
+      // Ensure clean URLs (supports both virtual URLs and raw paths)
       const formattedNotes = (res.data || []).map((note) => ({
         ...note,
         thumbnailUrl: note.thumbnailUrl
@@ -76,15 +76,15 @@ export default function ManageNotes() {
     }
   };
 
-  // 🗑️ Delete Note
+  // Delete Note
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this note?")) return;
     try {
       await api.delete(`/notes/${id}`);
       setNotes((prev) => prev.filter((n) => n._id !== id));
-      alert("🗑️ Note deleted successfully!");
+      alert("Note deleted successfully!");
     } catch (err) {
-      console.error("❌ Delete failed:", err);
+      console.error("Delete failed:", err);
       alert("Delete failed. Try again.");
     }
   };
@@ -93,7 +93,6 @@ export default function ManageNotes() {
 
   return (
     <div className="p-8 bg-gray-900 text-white min-h-screen">
-      {/* 🔙 Back Button + Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold capitalize mb-2">
@@ -103,15 +102,9 @@ export default function ManageNotes() {
             Showing all uploaded {category.toLowerCase()} notes for this subject.
           </p>
         </div>
-        <button
-          onClick={() => navigate(-1)}
-          className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded text-sm font-semibold"
-        >
-          ⬅ Back
-        </button>
       </div>
 
-      {/* 🔹 Notes List */}
+      {/* Notes List */}
       {loading ? (
         <p className="text-center text-gray-400">Loading notes...</p>
       ) : notes.length > 0 ? (
@@ -136,9 +129,7 @@ export default function ManageNotes() {
   );
 }
 
-/* ------------------------------------------
-   🧩 Single Note Card Component
------------------------------------------- */
+// Single Note Card Component
 function NoteCard({ note, color, onEdit, onView, onDelete }) {
   return (
     <div
@@ -160,7 +151,7 @@ function NoteCard({ note, color, onEdit, onView, onDelete }) {
       {/* Title & Info */}
       <h3 className="text-lg font-semibold mb-1 truncate">{note.title}</h3>
       {note.language && <p className="text-sm text-gray-300">🌐 {note.language}</p>}
-      {note.category && <p className="text-sm text-gray-300 mb-1">📂 {note.category}</p>}
+      {note.category && <p className="text-sm text-gray-300 mb-1">{note.category}</p>}
       {note.description && (
         <p className="text-sm text-gray-200 mt-2 line-clamp-2">
           {note.description}
@@ -175,31 +166,31 @@ function NoteCard({ note, color, onEdit, onView, onDelete }) {
           rel="noreferrer"
           className="inline-block mt-3 bg-gray-900 hover:bg-gray-800 text-white px-3 py-2 rounded text-sm font-medium"
         >
-          📖 View File
+          View File
         </a>
       )}
 
-      {/* 🛠️ Admin Controls */}
+      {/* Admin Controls */}
       <div className="flex justify-between mt-4">
         <button
           onClick={onEdit}
           className="bg-yellow-400 text-black px-3 py-1 rounded hover:bg-yellow-500 text-sm font-semibold"
         >
-          ✏️ Edit
+           Edit
         </button>
 
         <button
           onClick={onView}
           className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm font-semibold"
         >
-          👁 View
+          View
         </button>
 
         <button
           onClick={onDelete}
           className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm font-semibold"
         >
-          🗑️ Delete
+           Delete
         </button>
       </div>
     </div>

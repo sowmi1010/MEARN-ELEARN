@@ -2,61 +2,61 @@ const mongoose = require("mongoose");
 
 const quizSchema = new mongoose.Schema(
   {
-    // 1️⃣ Group
+    // 1️ Group
     group: {
       type: String,
       required: true,
       enum: ["ROOT", "STEM", "LEAF", "FLOWER", "FRUIT", "SEED"],
     },
 
-    // 2️⃣ Standard
+    // 2️ Standard
     standard: {
       type: String,
       required: true,
       trim: true,
     },
 
-    // 3️⃣ Board
+    // 3️ Board
     board: {
       type: String,
       required: true,
       trim: true,
     },
 
-    // 4️⃣ Language
+    // 4️ Language
     language: {
       type: String,
       required: true,
       trim: true,
     },
 
-    // 5️⃣ Subject
+    // 5️ Subject
     subject: {
       type: String,
       required: true,
       trim: true,
     },
 
-    // 6️⃣ Lesson
+    // 6️ Lesson
     lesson: {
       type: String,
       trim: true,
     },
 
-    // 7️⃣ Question
+    // 7️ Question
     question: {
       type: String,
       required: true,
       trim: true,
     },
 
-    // ➕ 4 options
+    // 4 options
     options: {
       type: [String],
       validate: [(val) => val.length === 4, "Exactly 4 options required"],
     },
 
-    // ✅ Correct Answer Index
+    // Correct Answer Index
     correctAnswerIndex: {
       type: Number,
       required: true,

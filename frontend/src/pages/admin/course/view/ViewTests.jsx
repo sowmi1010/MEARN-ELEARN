@@ -15,7 +15,7 @@ export default function ViewTest() {
         const res = await api.get(`/tests/${id}`);
         setTest(res.data);
       } catch (err) {
-        console.error("❌ Failed to fetch test:", err);
+        console.error(" Failed to fetch test:", err);
       } finally {
         setLoading(false);
       }
@@ -62,12 +62,12 @@ export default function ViewTest() {
         </div>
 
         <div className="grid grid-cols-2 gap-4 mb-6 text-gray-300">
-          <p><strong>🌱 Group:</strong> {test.group}</p>
-          <p><strong>🎓 Standard:</strong> {test.standard}</p>
-          <p><strong>🏫 Board:</strong> {test.board}</p>
-          <p><strong>🌐 Language:</strong> {test.language}</p>
-          <p><strong>📘 Subject:</strong> {test.subject}</p>
-          <p><strong>📂 Category:</strong> {test.category}</p>
+          <p><strong>Group:</strong> {test.group}</p>
+          <p><strong>Standard:</strong> {test.standard}</p>
+          <p><strong>Board:</strong> {test.board}</p>
+          <p><strong>Language:</strong> {test.language}</p>
+          <p><strong>Subject:</strong> {test.subject}</p>
+          <p><strong>Category:</strong> {test.category}</p>
         </div>
 
         {test.thumbnail && (

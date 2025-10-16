@@ -8,7 +8,7 @@ export default function ManageTests() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // 🧩 Optional Group Mapping (ObjectId → Name)
+  // Optional Group Mapping (ObjectId → Name)
   const groupMap = {
     "68e776aaa084762b3d385c1c": "ROOT",
     "68e777aaa084762b3d385c1d": "STEM",
@@ -18,7 +18,7 @@ export default function ManageTests() {
     "68e77baaa084762b3d385c21": "SEED",
   };
 
-  // 🎨 Category Colors
+  // Category Colors
   const categoryColors = {
     lesson: "bg-blue-700",
     "lesson notes": "bg-indigo-700",
@@ -32,9 +32,7 @@ export default function ManageTests() {
     others: "bg-gray-700",
   };
 
-  /* ==========================
-     🧾 Fetch Tests
-  ========================== */
+  // Fetch Tests
   useEffect(() => {
     fetchTests();
   }, [groupId, subject, category]);
@@ -59,33 +57,29 @@ export default function ManageTests() {
 
       setTests(res.data || []);
     } catch (err) {
-      console.error("❌ Failed to fetch tests:", err);
+      console.error("Failed to fetch tests:", err);
       setTests([]);
     } finally {
       setLoading(false);
     }
   };
 
-  /* ==========================
-     🗑️ Delete Test
-  ========================== */
+  // Delete Test
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this test?")) return;
     try {
       await api.delete(`/tests/${id}`);
       setTests((prev) => prev.filter((t) => t._id !== id));
-      alert("🗑️ Test deleted successfully!");
+      alert("Test deleted successfully!");
     } catch (err) {
-      console.error("❌ Delete failed:", err);
+      console.error("Delete failed:", err);
       alert("Delete failed. Try again.");
     }
   };
 
   const color = categoryColors[category.toLowerCase()] || "bg-gray-700";
 
-  /* ==========================
-     🎨 Render UI
-  ========================== */
+  // Render UI
   return (
     <div className="p-8 bg-gray-900 text-white min-h-screen">
       {/* 🔙 Header */}
@@ -106,7 +100,7 @@ export default function ManageTests() {
         </button>
       </div>
 
-      {/* 🔹 Test List */}
+      {/* Test List */}
       {loading ? (
         <p className="text-center text-gray-400">Loading tests...</p>
       ) : tests.length > 0 ? (
@@ -131,9 +125,7 @@ export default function ManageTests() {
   );
 }
 
-/* ------------------------------------------
-   🧩 Single Test Card Component
------------------------------------------- */
+// Single Test Card Component
 function TestCard({ test, color, onEdit, onView, onDelete }) {
   const fileBase = "http://localhost:4000";
 
@@ -158,9 +150,9 @@ function TestCard({ test, color, onEdit, onView, onDelete }) {
 
       {/* Info */}
       <h3 className="text-lg font-semibold mb-1 truncate">{test.title}</h3>
-      {test.language && <p className="text-sm text-gray-300">🌐 {test.language}</p>}
+      {test.language && <p className="text-sm text-gray-300"> {test.language}</p>}
       {test.category && (
-        <p className="text-sm text-gray-300 mb-1">📂 {test.category}</p>
+        <p className="text-sm text-gray-300 mb-1"> {test.category}</p>
       )}
 
       {/* File Link */}
@@ -171,31 +163,31 @@ function TestCard({ test, color, onEdit, onView, onDelete }) {
           rel="noreferrer"
           className="inline-block mt-3 bg-gray-900 hover:bg-gray-800 text-white px-3 py-2 rounded text-sm font-medium"
         >
-          📖 View Test File
+          View Test File
         </a>
       )}
 
-      {/* 🛠️ Admin Controls */}
+      {/*  Admin Controls */}
       <div className="flex justify-between mt-4">
         <button
           onClick={onEdit}
           className="bg-yellow-400 text-black px-3 py-1 rounded hover:bg-yellow-500 text-sm font-semibold"
         >
-          ✏️ Edit
+          Edit
         </button>
 
         <button
           onClick={onView}
           className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm font-semibold"
         >
-          👁 View
+          View
         </button>
 
         <button
           onClick={onDelete}
           className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm font-semibold"
         >
-          🗑️ Delete
+          Delete
         </button>
       </div>
     </div>

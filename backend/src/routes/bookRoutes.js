@@ -13,15 +13,15 @@ const {
 } = require("../controllers/bookController");
 
 const auth = require("../middlewares/auth");
-const checkPermission = require("../middlewares/permission"); // ✅ Replaced role() with permission-based access
+const checkPermission = require("../middlewares/permission"); // Replaced role() with permission-based access
 
-// 📂 Ensure folders exist
+// Ensure folders exist
 const uploadDir = path.join(__dirname, "../../uploads/books");
 const thumbDir = path.join(__dirname, "../../uploads/thumbnails");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 if (!fs.existsSync(thumbDir)) fs.mkdirSync(thumbDir, { recursive: true });
 
-// 📦 Multer setup
+// Multer setup
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (file.fieldname === "thumbnail") cb(null, thumbDir);
@@ -33,9 +33,8 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// ✅ ROUTES
 
-// ➕ Upload Book (Admin or Mentor with “books” permission)
+// Upload Book (Admin or Mentor with “books” permission)
 router.post(
   "/upload",
   auth,
@@ -47,13 +46,13 @@ router.post(
   addBook
 );
 
-// 📚 Get all Books (All logged-in users)
+// Get all Books (All logged-in users)
 router.get("/", auth, getBooks);
 
-// 🔍 Get one Book
+// Get one Book
 router.get("/:id", auth, getBookById);
 
-// ✏️ Update Book (Admin or Mentor with “books” permission)
+// Update Book (Admin or Mentor with “books” permission)
 router.put(
   "/:id",
   auth,
@@ -65,7 +64,7 @@ router.put(
   updateBook
 );
 
-// 🗑️ Delete Book (Admin or Mentor with “books” permission)
+// Delete Book (Admin or Mentor with “books” permission)
 router.delete("/:id", auth, checkPermission("books"), deleteBook);
 
 module.exports = router;

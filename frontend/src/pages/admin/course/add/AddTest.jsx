@@ -40,7 +40,7 @@ export default function AddTest() {
     "Annual Exam",
   ];
 
-  /* 🧠 Handle Input */
+  /* Handle Input */
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "group") {
@@ -55,7 +55,7 @@ export default function AddTest() {
     }
   };
 
-  /* 🧠 Handle File Uploads */
+  /* Handle File Uploads */
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (e.target.name === "thumbnail") {
@@ -66,7 +66,7 @@ export default function AddTest() {
     }
   };
 
-  /* 🚀 Submit Handler */
+  /*  Submit Handler */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -88,7 +88,7 @@ export default function AddTest() {
         },
       });
 
-      setMessage("✅ Test uploaded successfully!");
+      setMessage("Test uploaded successfully!");
 
       // reset form
       setFormData({
@@ -104,26 +104,26 @@ export default function AddTest() {
       setFile(null);
       setThumbnailPreview("");
     } catch (err) {
-      console.error("❌ Upload Error:", err);
-      setMessage("❌ Upload failed. Try again.");
+      console.error("Upload Error:", err);
+      setMessage("Upload failed. Try again.");
     } finally {
       setLoading(false);
       setTimeout(() => setMessage(""), 4000);
     }
   };
 
-  /* 🎨 UI */
+  /* UI */
   return (
     <div className="p-8 bg-gray-900 text-white min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-center">
-        🧪 Add New Test Paper
+        Add New Test Paper
       </h1>
 
       <form
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700"
       >
-        {/* 🔹 Dropdowns */}
+        {/* Dropdowns */}
         <Dropdown
           label="Group"
           name="group"
@@ -173,7 +173,7 @@ export default function AddTest() {
           required
         />
 
-        {/* 🔹 Title */}
+        {/* Title */}
         <input
           type="text"
           name="title"
@@ -184,7 +184,7 @@ export default function AddTest() {
           className="p-2 rounded bg-gray-700 border border-gray-600 col-span-2"
         />
 
-        {/* 🔹 File Uploads */}
+        {/* File Uploads */}
         <div>
           <label className="block mb-2 text-gray-300">Upload Thumbnail</label>
           <input
@@ -216,7 +216,7 @@ export default function AddTest() {
           />
         </div>
 
-        {/* 🔹 Submit */}
+        {/* Submit */}
         <button
           type="submit"
           disabled={loading}
@@ -225,7 +225,7 @@ export default function AddTest() {
           {loading ? "Uploading..." : "Upload Test"}
         </button>
 
-        {/* 🔹 Status */}
+        {/* Status */}
         {message && (
           <p
             className={`col-span-2 text-center mt-4 text-lg font-medium ${

@@ -5,17 +5,17 @@ const fs = require("fs");
 const multer = require("multer");
 
 const auth = require("../middlewares/auth");
-const checkPermission = require("../middlewares/permission"); // ✅ Added
+const checkPermission = require("../middlewares/permission");
 const Feedback = require("../models/Feedback");
 
-// 📂 Ensure upload dir exists
+// Ensure upload dir exists
 const uploadDir = path.join(__dirname, "../../uploads/feedback");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
-  console.log("📂 Created folder: uploads/feedback");
+  console.log("Created folder: uploads/feedback");
 }
 
-// 📤 Multer
+// Multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) =>
@@ -23,13 +23,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-/**
- * ============================
- * PUBLIC: list feedbacks
- * GET /api/feedbacks
- * Query support: ?active=true&featured=true&limit=6
- * ============================
- */
+
 router.get("/", async (req, res) => {
   try {
     const query = {};
@@ -43,20 +37,18 @@ router.get("/", async (req, res) => {
 
     res.json(docs);
   } catch (err) {
-    console.error("❌ feedback list error:", err);
+    console.error("feedback list error:", err);
     res.status(500).json({ message: "Failed to fetch feedbacks" });
   }
 });
 
-/**
- * ============================
- * ADMIN / MENTOR (with access): create feedback
- * ============================
- */
+
+// ADMIN / MENTOR (with access): create feedback
+
 router.post(
   "/",
   auth,
-  checkPermission("feedbacks"), // ✅ Changed
+  checkPermission("feedbacks"),
   upload.single("photo"),
   async (req, res) => {
     try {
@@ -77,23 +69,19 @@ router.post(
         photo: req.file ? `/uploads/feedback/${req.file.filename}` : "",
       });
 
-      res.json({ message: "✅ Feedback created", feedback: doc });
+      res.json({ message: "Feedback created", feedback: doc });
     } catch (err) {
-      console.error("❌ feedback create error:", err);
+      console.error("feedback create error:", err);
       res.status(500).json({ message: "Failed to create feedback" });
     }
   }
 );
 
-/**
- * ============================
- * ADMIN / MENTOR (with access): update feedback
- * ============================
- */
+// ADMIN / MENTOR (with access): update feedback
 router.put(
   "/:id",
   auth,
-  checkPermission("feedbacks"), // ✅ Changed
+  checkPermission("feedbacks"),
   upload.single("photo"),
   async (req, res) => {
     try {
@@ -123,23 +111,21 @@ router.put(
         updates,
         { new: true }
       );
-      res.json({ message: "✅ Feedback updated", feedback: updated });
+      res.json({ message: "Feedback updated", feedback: updated });
     } catch (err) {
-      console.error("❌ feedback update error:", err);
+      console.error("feedback update error:", err);
       res.status(500).json({ message: "Failed to update feedback" });
     }
   }
 );
 
-/**
- * ============================
- * ADMIN / MENTOR (with access): delete feedback
- * ============================
- */
+
+// ADMIN / MENTOR (with access): delete feedback
+
 router.delete(
   "/:id",
   auth,
-  checkPermission("feedbacks"), // ✅ Changed
+  checkPermission("feedbacks"),
   async (req, res) => {
     try {
       const doc = await Feedback.findById(req.params.id);
@@ -151,9 +137,9 @@ router.delete(
       }
 
       await doc.deleteOne();
-      res.json({ message: "🗑️ Feedback deleted" });
+      res.json({ message: "Feedback deleted" });
     } catch (err) {
-      console.error("❌ feedback delete error:", err);
+      console.error("feedback delete error:", err);
       res.status(500).json({ message: "Failed to delete feedback" });
     }
   }

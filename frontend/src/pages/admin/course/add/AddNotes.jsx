@@ -32,7 +32,7 @@ export default function AddNotes() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  /* 🧩 Category Options */
+  /* Category Options */
   const categoryOptions = [
     "Lesson",
     "Lesson Notes",
@@ -46,7 +46,7 @@ export default function AddNotes() {
     "Others",
   ];
 
-  /* 🧠 Handle Input Changes */
+  /* Handle Input Changes */
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "group") {
@@ -62,13 +62,13 @@ export default function AddNotes() {
     }
   };
 
-  /* 🧠 Handle File Uploads */
+  /* Handle File Uploads */
   const handleFileChange = (e) => {
     if (e.target.name === "thumbnail") setThumbnail(e.target.files[0]);
     else setFile(e.target.files[0]);
   };
 
-  /* 🚀 Submit Notes Upload */
+  /* Submit Notes Upload */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -89,37 +89,37 @@ export default function AddNotes() {
         },
       });
 
-      setMessage("✅ Notes uploaded successfully!");
+      setMessage("Notes uploaded successfully!");
 
       // Redirect to courses page after short success delay
       setTimeout(() => navigate("/admin/courses"), 1200);
     } catch (err) {
-      console.error("❌ Upload Error:", err);
-      setMessage("❌ Upload failed. Try again.");
+      console.error("Upload Error:", err);
+      setMessage("Upload failed. Try again.");
     } finally {
       setLoading(false);
       setTimeout(() => setMessage(""), 4000);
     }
   };
 
-  /* 🎨 UI */
+  /* UI */
   return (
     <div className="p-8 bg-gray-900 text-white min-h-screen">
-      {/* 🔙 Back Button */}
+      {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
         className="mb-4 bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded"
       >
-        ⬅ Back
+       Back
       </button>
 
-      <h1 className="text-3xl font-bold mb-6 text-center">📝 Add New Notes</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center">Add New Notes</h1>
 
       <form
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700"
       >
-        {/* 🔹 Dropdowns */}
+        {/* Dropdowns */}
         <Dropdown
           label="Group"
           name="group"
@@ -177,7 +177,7 @@ export default function AddNotes() {
           required
         />
 
-        {/* 🔹 Text Inputs */}
+        {/* Text Inputs */}
         <input
           type="text"
           name="noteNumber"
@@ -206,7 +206,7 @@ export default function AddNotes() {
           className="p-2 rounded bg-gray-700 border border-gray-600 col-span-2"
         ></textarea>
 
-        {/* 🔹 File Uploads */}
+        {/* File Uploads */}
         <div>
           <label className="block mb-2 text-gray-300">Upload Thumbnail</label>
           <input
@@ -231,7 +231,7 @@ export default function AddNotes() {
           />
         </div>
 
-        {/* 🔹 Submit */}
+        {/* Submit */}
         <button
           type="submit"
           disabled={loading}

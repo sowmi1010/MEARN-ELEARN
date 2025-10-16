@@ -133,9 +133,9 @@ exports.deleteBook = async (req, res) => {
     if (book.file && fs.existsSync(book.file)) fs.unlinkSync(book.file);
 
     await book.deleteOne();
-    res.json({ message: "🗑️ Book deleted successfully" });
+    res.json({ message: "Book deleted successfully" });
   } catch (err) {
-    console.error("❌ deleteBook error:", err);
+    console.error("deleteBook error:", err);
     res.status(500).json({ message: "Failed to delete book", error: err.message });
   }
 };

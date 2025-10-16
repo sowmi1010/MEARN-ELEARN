@@ -5,26 +5,26 @@ import api from "../../utils/api";
 export default function Login() {
   const [emailOrUserId, setEmailOrUserId] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(""); // 🔴 store error message
+  const [error, setError] = useState(""); 
   const navigate = useNavigate();
 
   async function handleLogin(e) {
     e.preventDefault();
-    setError(""); // clear previous errors
+    setError(""); 
 
     try {
       const res = await api.post("/auth/login", { emailOrUserId, password });
 
-      // ✅ Save login data
+      // Save login data
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
-      // ✅ Trigger app update
+      // Trigger app update
       window.dispatchEvent(new Event("user-login"));
 
       const { role, permissions = [], isSuperAdmin } = res.data.user;
 
-      // ✅ Redirect by role
+      // Redirect by role
       if (isSuperAdmin || role === "admin") {
         navigate("/admin/dashboard", { replace: true });
       } else if (role === "mentor") {
@@ -38,9 +38,9 @@ export default function Login() {
         navigate("/", { replace: true });
       }
     } catch (err) {
-      console.error("❌ Login failed:", err.response?.data || err.message);
+      console.error("Login failed:", err.response?.data || err.message);
 
-      // 🟥 Show user-friendly message (instead of alert)
+      // Show user-friendly message (instead of alert)
       setError(err.response?.data?.message || "Incorrect password");
     }
   }
@@ -52,7 +52,7 @@ export default function Login() {
         className="w-96 p-8 rounded-2xl bg-white dark:bg-darkCard shadow-lg border border-gray-200 dark:border-gray-700"
       >
         <h2 className="text-3xl font-extrabold text-center text-accent mb-8">
-          🔐 Login to Last Try Academy
+          Login to Last Try Academy
         </h2>
 
         <label className="block mb-3">
@@ -90,7 +90,7 @@ export default function Login() {
           Login
         </button>
 
-        {/* 🔴 Error message shown here */}
+        {/* Error message shown here */}
         {error && (
           <p className="text-red-600 text-sm text-center mt-3 font-medium">
             {error}

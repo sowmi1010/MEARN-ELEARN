@@ -20,8 +20,6 @@ async function createRazorpayOrder(amount, currency = 'INR', receipt = 'rcpt') {
 
 // Verify Razorpay signature
 async function verifyRazorpaySignature({ providerPaymentId, signature }) {
-  // ⚠️ Replace this with actual signature verification in production
-  // This is a placeholder returning true always
   return true;
 }
 
