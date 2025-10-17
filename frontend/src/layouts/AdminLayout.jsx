@@ -1,5 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
+// src/layouts/AdminLayout.jsx
+import React, { useState, useEffect, useRef } from "react";
+import {
+  NavLink as RouterNavLink,
+  Outlet,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
+import api from "../utils/api";
 import {
   FaMoon,
   FaSun,
@@ -15,54 +22,97 @@ import {
   HiOutlineChartBar,
   HiOutlineUser,
   HiOutlineCurrencyRupee,
-  HiOutlineChatAlt2,
   HiOutlineAcademicCap,
+  HiOutlineHome
 } from "react-icons/hi";
 
 export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const fileInputRef = useRef(null);
 
+  // ✅ Sync user from localStorage across app (same as Navbar)
+  const [user, setUser] = useState(null);
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
-  const [user, setUser] = useState(
-    JSON.parse(localStorage.getItem("user") || "{}")
-  );
 
+  // ✅ Theme Toggle
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("theme", theme);
   }, [theme]);
 
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
+
+  // ✅ Load user and keep it synced
+  useEffect(() => {
+    const syncUser = () => {
+      const stored = localStorage.getItem("user");
+      setUser(stored ? JSON.parse(stored) : null);
+    };
+
+    syncUser();
+    window.addEventListener("storage", syncUser);
+    window.addEventListener("user-login", syncUser);
+    window.addEventListener("user-logout", syncUser);
+
+    return () => {
+      window.removeEventListener("storage", syncUser);
+      window.removeEventListener("user-login", syncUser);
+      window.removeEventListener("user-logout", syncUser);
+    };
+  }, []);
+
+  // ✅ Logout handler
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    setUser(null);
+    window.dispatchEvent(new Event("user-logout"));
     navigate("/login");
   };
 
-  // 🔹 All possible admin modules
+  // ✅ Handle profile upload (works for all roles)
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("profilePic", file);
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await api.post("/auth/upload-profile", formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const updatedUser = { ...user, profilePic: res.data.profilePic };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setUser(updatedUser);
+
+      // 🔄 Inform other tabs/components instantly
+      window.dispatchEvent(new Event("user-login"));
+    } catch (err) {
+      console.error("Profile upload error:", err);
+      alert("Failed to update profile picture");
+    }
+  };
+
+  // ✅ Sidebar links (dynamic)
   const allNavLinks = [
-  { key: "dashboard", to: "dashboard", label: "Dashboard", icon: <HiOutlineChartBar /> },
-  { key: "courses", to: "courses", label: "Courses", icon: <HiOutlineBookOpen /> },
-  { key: "admin", to: "admins", label: "Admins", icon: <HiOutlineUser /> },
-  { key: "mentor", to: "mentors", label: "Mentors", icon: <HiOutlineAcademicCap /> },
-  { key: "students", to: "students", label: "Students", icon: <HiOutlineUserGroup /> },
-  { key: "payments", to: "payments", label: "Payments", icon: <HiOutlineCurrencyRupee /> },
-];
+    { key: "dashboard", to: "dashboard", label: "Dashboard", icon: <HiOutlineChartBar /> },
+      { key: "home", to: "home", label: "Home", icon: <HiOutlineHome /> }, 
+    { key: "courses", to: "courses", label: "Courses", icon: <HiOutlineBookOpen /> },
+    { key: "admin", to: "admins", label: "Admins", icon: <HiOutlineUser /> },
+    { key: "mentor", to: "mentors", label: "Mentors", icon: <HiOutlineAcademicCap /> },
+    { key: "students", to: "students", label: "Students", icon: <HiOutlineUserGroup /> },
+    { key: "payments", to: "payments", label: "Payments", icon: <HiOutlineCurrencyRupee /> },
+  ];
 
-
-  // Normalize permission key (handle singular/plural or case mismatch)
-  const normalize = (key) => key?.toLowerCase()?.replace(/s$/, "");
-
-  // Determine visible sidebar links based on permissions
   const visibleLinks =
     user?.role === "admin"
       ? allNavLinks
-      : allNavLinks.filter((link) =>
-          (user?.permissions || []).includes(link.key)
-        );
+      : allNavLinks.filter((link) => (user?.permissions || []).includes(link.key));
 
-  // Optional: Keep modules in same order as selected in permission panel
   const sortedLinks = visibleLinks.sort((a, b) => {
     const order = user?.permissions || [];
     return order.indexOf(a.key) - order.indexOf(b.key);
@@ -75,28 +125,47 @@ export default function AdminLayout() {
     <div className="flex h-screen w-full bg-gray-100 dark:bg-[#0b0f19] text-gray-900 dark:text-gray-100">
       {/* ===== Sidebar ===== */}
       <aside className="w-64 fixed left-0 top-0 h-full bg-gradient-to-b from-[#0c1633] to-[#091025] shadow-xl border-r border-gray-800 flex flex-col">
-        {/* Logo + User Info */}
+        {/* ✅ Logo + User Info + Upload */}
         <div className="p-6 flex flex-col items-center border-b border-gray-700">
-          <img
-            src="/logo.png"
-            alt="Logo"
-            className="w-12 h-12 mb-2 rounded-full shadow-lg"
+          <div
+            onClick={() => fileInputRef.current.click()}
+            className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-blue-500 cursor-pointer hover:scale-105 transition"
+          >
+            <img
+              src={
+                user?.profilePic
+                  ? `http://localhost:4000${user.profilePic}`
+                  : "/default-avatar.png"
+              }
+              alt="Profile"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute bottom-0 bg-black/50 text-white text-xs w-full text-center py-1">
+              Change
+            </div>
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
           />
-          <h1 className="text-lg font-extrabold text-white">
+
+          <h1 className="text-lg font-extrabold text-white mt-2">
             Last Try Academy
           </h1>
-          <p className="text-sm text-gray-400 mt-2">
-            Role: {user.role || "Admin"}
+          <p className="text-sm text-gray-400 mt-1">
+            Role: {user?.role || "User"}
           </p>
-          <p className="text-xs text-gray-500">
-            Name: {user.name || "Super Admin"}
-          </p>
+          <p className="text-xs text-gray-500">{user?.name || "User"}</p>
         </div>
 
-        {/* Navigation */}
+        {/* ===== Navigation Links ===== */}
         <nav className="flex-1 mt-4 space-y-2 overflow-y-auto">
           {sortedLinks.map((link) => (
-            <NavLink
+            <RouterNavLink
               key={link.to}
               to={`/admin/${link.to}`}
               className={({ isActive }) =>
@@ -109,11 +178,11 @@ export default function AdminLayout() {
             >
               <span className="text-lg">{link.icon}</span>
               {link.label}
-            </NavLink>
+            </RouterNavLink>
           ))}
         </nav>
 
-        {/* Theme + Logout */}
+        {/* ===== Theme + Logout ===== */}
         <div className="p-5 border-t border-gray-700 mt-auto">
           <button
             onClick={toggleTheme}

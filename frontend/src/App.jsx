@@ -27,19 +27,38 @@ const LandingPage = React.lazy(() => import("./pages/landing/LandingPage"));
 // Admin layout + pages
 const AdminLayout = React.lazy(() => import("./layouts/AdminLayout"));
 const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
-const AdminPayments = React.lazy(() => import("./pages/admin/payment/AdminPayments"));
-const AdminList = React.lazy(() => import("./pages/admin/adminUsers/AdminList"));
+const AdminPayments = React.lazy(() =>
+  import("./pages/admin/payment/AdminPayments")
+);
+const AdminList = React.lazy(() =>
+  import("./pages/admin/adminUsers/AdminList")
+);
 const AdminDetailsUpload = React.lazy(() =>
   import("./pages/admin/adminUsers/AdminDetailsUpload")
 );
-const StudentList = React.lazy(() => import("./pages/admin/students/StudentList"));
-const AddStudent = React.lazy(() => import("./pages/admin/students/AddStudent"));
-const AboutStudent = React.lazy(() => import("./pages/admin/students/AboutStudent"));
-const TeacherUpload = React.lazy(() => import("./pages/admin/teachers/TeacherUpload"));
-const FeedbackUpload = React.lazy(() => import("./pages/admin/feedbacks/FeedbackUpload"));
+const StudentList = React.lazy(() =>
+  import("./pages/admin/students/StudentList")
+);
+const AddStudent = React.lazy(() =>
+  import("./pages/admin/students/AddStudent")
+);
+const AboutStudent = React.lazy(() =>
+  import("./pages/admin/students/AboutStudent")
+);
+const AdminHomePage = React.lazy(() => import("./pages/admin/AdminHomePage"));
+const TeacherUpload = React.lazy(() =>
+  import("./pages/admin/teachers/TeacherUpload")
+);
+const FeedbackUpload = React.lazy(() =>
+  import("./pages/admin/feedbacks/FeedbackUpload")
+);
 const MentorList = React.lazy(() => import("./pages/admin/mentor/MentorList"));
-const MentorUpload = React.lazy(() => import("./pages/admin/mentor/MentorUpload"));
-const MentorAccess = React.lazy(() => import("./pages/admin/mentor/MentorAccess"));
+const MentorUpload = React.lazy(() =>
+  import("./pages/admin/mentor/MentorUpload")
+);
+const MentorAccess = React.lazy(() =>
+  import("./pages/admin/mentor/MentorAccess")
+);
 
 // Course management (admin)
 const CourseHome = React.lazy(() => import("./pages/admin/course/CourseHome"));
@@ -54,18 +73,30 @@ const AddBook = React.lazy(() => import("./pages/admin/course/add/AddBook"));
 const AddNotes = React.lazy(() => import("./pages/admin/course/add/AddNotes"));
 const AddTest = React.lazy(() => import("./pages/admin/course/add/AddTest"));
 const AddQuiz = React.lazy(() => import("./pages/admin/course/add/AddQuiz"));
-const ViewNotes = React.lazy(() => import("./pages/admin/course/view/ViewNotes"));
-const EditVideo = React.lazy(() => import("./pages/admin/course/edit/EditVideo"));
+const ViewNotes = React.lazy(() =>
+  import("./pages/admin/course/view/ViewNotes")
+);
+const EditVideo = React.lazy(() =>
+  import("./pages/admin/course/edit/EditVideo")
+);
 const ManageVideos = React.lazy(() =>
   import("./pages/admin/course/manage/ManageVideos")
 );
-const EditNotes = React.lazy(() => import("./pages/admin/course/edit/EditNotes"));
-const ViewVideo = React.lazy(() => import("./pages/admin/course/view/ViewVideo"));
+const EditNotes = React.lazy(() =>
+  import("./pages/admin/course/edit/EditNotes")
+);
+const ViewVideo = React.lazy(() =>
+  import("./pages/admin/course/view/ViewVideo")
+);
 const ManageNotes = React.lazy(() =>
   import("./pages/admin/course/manage/ManageNotes")
 );
-const EditTests = React.lazy(() => import("./pages/admin/course/edit/EditTests"));
-const ViewTest = React.lazy(() => import("./pages/admin/course/view/ViewTests"));
+const EditTests = React.lazy(() =>
+  import("./pages/admin/course/edit/EditTests")
+);
+const ViewTest = React.lazy(() =>
+  import("./pages/admin/course/view/ViewTests")
+);
 
 // Smooth page transition
 function PageWrapper({ children }) {
@@ -170,6 +201,23 @@ function AnimatedRoutes() {
               </Suspense>
             }
           />
+          <Route
+            index
+            element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <AdminHomePage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="home"
+            element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <AdminHomePage />
+              </Suspense>
+            }
+          />
+
           <Route path="payments" element={<AdminPayments />} />
           <Route path="teachers" element={<TeacherUpload />} />
           <Route path="feedbacks" element={<FeedbackUpload />} />
@@ -184,7 +232,6 @@ function AnimatedRoutes() {
           <Route path="mentors/new" element={<MentorUpload />} />
           <Route path="mentors/edit/:id" element={<MentorUpload />} />
           <Route path="mentor-access/:id" element={<MentorAccess />} />
-
 
           {/* Course management */}
           <Route path="courses" element={<CourseHome />} />
@@ -231,18 +278,18 @@ export default function App() {
   });
 
   // Listen for login/logout events (Navbar syncs instantly)
-useEffect(() => {
-  const syncUser = () => {
-    const stored = localStorage.getItem("user");
-    setUser(stored ? JSON.parse(stored) : null);
-  };
-  window.addEventListener("user-login", syncUser);
-  window.addEventListener("user-logout", syncUser);
-  return () => {
-    window.removeEventListener("user-login", syncUser);
-    window.removeEventListener("user-logout", syncUser);
-  };
-}, []);
+  useEffect(() => {
+    const syncUser = () => {
+      const stored = localStorage.getItem("user");
+      setUser(stored ? JSON.parse(stored) : null);
+    };
+    window.addEventListener("user-login", syncUser);
+    window.addEventListener("user-logout", syncUser);
+    return () => {
+      window.removeEventListener("user-login", syncUser);
+      window.removeEventListener("user-logout", syncUser);
+    };
+  }, []);
 
   return (
     <Router>

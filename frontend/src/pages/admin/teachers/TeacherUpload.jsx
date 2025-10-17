@@ -1,4 +1,3 @@
-// src/pages/admin/TeacherUpload.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
@@ -21,7 +20,6 @@ export default function TeacherUpload() {
   const apiBase = import.meta.env.VITE_API_URL || "http://localhost:4000";
   const token = localStorage.getItem("token");
 
-  // Fetch teachers
   useEffect(() => {
     fetchTeachers();
   }, []);
@@ -54,18 +52,18 @@ export default function TeacherUpload() {
         await axios.put(`${apiBase}/api/teachers/${editingId}`, formData, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        toast.success("Teacher updated!");
+        toast.success("Teacher updated successfully!");
       } else {
         await axios.post(`${apiBase}/api/teachers`, formData, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        toast.success("Teacher added!");
+        toast.success("Teacher added successfully!");
       }
       setForm({ name: "", subject: "", description: "", photo: null });
       setEditingId(null);
       fetchTeachers();
     } catch {
-      toast.error("Failed to save teacher");
+      toast.error("Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -80,7 +78,7 @@ export default function TeacherUpload() {
       photo: null,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
-    toast("Edit mode enabled", { icon: "📝" });
+    toast("Edit mode enabled ✏️");
   }
 
   function confirmDelete(id) {
@@ -93,7 +91,7 @@ export default function TeacherUpload() {
       await axios.delete(`${apiBase}/api/teachers/${deleteId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      toast.success("Teacher deleted!");
+      toast.success("Teacher deleted successfully!");
       fetchTeachers();
     } catch {
       toast.error("Failed to delete teacher");
@@ -108,41 +106,42 @@ export default function TeacherUpload() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-darkBg text-gray-800 dark:text-gray-200 transition-colors duration-300">
+    <div className="min-h-screen bg-gray-50 dark:bg-darkBg text-gray-800 dark:text-gray-200">
       <Toaster position="top-right" />
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-teal-500 to-blue-500 text-white py-8 shadow-md">
-        <h1 className="text-center text-4xl font-extrabold tracking-wide">
-          Teacher Management
-        </h1>
-      </div>
+      <h1 className="text-center text-3xl font-bold py-8">
+        Teacher Management
+      </h1>
 
-      <div className="max-w-5xl mx-auto p-6 -mt-8 space-y-10">
-        {/* Teacher Form */}
-        <div className="bg-white/80 dark:bg-gray-800/60 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition">
-          <h2 className="text-3xl font-bold text-center bg-gradient-to-r from-teal-400 to-blue-400 bg-clip-text text-transparent mb-5">
+      <div className="max-w-5xl mx-auto p-6 space-y-10">
+        {/* Form Section */}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-semibold text-blue-600 dark:text-blue-400 mb-4 text-center">
             {editingId ? "Edit Teacher" : "Add Teacher"}
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              type="text"
-              name="name"
-              placeholder="Teacher Name"
-              value={form.name}
-              onChange={handleChange}
-              required
-              className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-teal-400 outline-none"
-            />
-            <input
-              type="text"
-              name="subject"
-              placeholder="Subject"
-              value={form.subject}
-              onChange={handleChange}
-              required
-              className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-teal-400 outline-none"
-            />
+            <div className="grid md:grid-cols-2 gap-4">
+              <input
+                type="text"
+                name="name"
+                placeholder="Teacher Name"
+                value={form.name}
+                onChange={handleChange}
+                required
+                className="w-full p-3 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-400 outline-none"
+              />
+              <input
+                type="text"
+                name="subject"
+                placeholder="Subject"
+                value={form.subject}
+                onChange={handleChange}
+                required
+                className="w-full p-3 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-400 outline-none"
+              />
+            </div>
+
             <textarea
               name="description"
               placeholder="Description"
@@ -150,30 +149,32 @@ export default function TeacherUpload() {
               onChange={handleChange}
               rows="3"
               required
-              className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-teal-400 outline-none"
+              className="w-full p-3 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-400 outline-none"
             ></textarea>
-            <div>
+
+            <div className="flex flex-col items-center justify-center">
               <input
                 type="file"
                 name="photo"
                 accept="image/*"
                 onChange={handleChange}
-                className="w-full text-gray-600 dark:text-gray-300"
+                className="text-gray-600 dark:text-gray-300"
               />
               {form.photo && (
-                <div className="mt-3 flex justify-center">
+                <div className="mt-3">
                   <img
                     src={URL.createObjectURL(form.photo)}
                     alt="Preview"
-                    className="w-24 h-24 rounded-full border-2 border-teal-400 shadow hover:scale-105 transition"
+                    className="w-24 h-24 rounded-full border-2 border-blue-400 shadow-md object-cover"
                   />
                 </div>
               )}
             </div>
+
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-teal-500 to-blue-500 text-white font-semibold rounded-lg shadow-lg hover:scale-105 transition disabled:opacity-50"
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md transition disabled:opacity-50"
             >
               {loading
                 ? "Saving..."
@@ -185,11 +186,11 @@ export default function TeacherUpload() {
         </div>
 
         {/* Search Bar */}
-        <div className="flex items-center gap-3 bg-white dark:bg-gray-800 p-3 rounded-xl shadow border border-gray-200 dark:border-gray-700">
-          <FaSearch className="text-teal-500" />
+        <div className="flex items-center gap-3 bg-white dark:bg-gray-800 p-3 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+          <FaSearch className="text-blue-500" />
           <input
             type="text"
-            placeholder="Search by teacher name or subject..."
+            placeholder="Search teacher by name or subject..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="flex-1 bg-transparent outline-none text-gray-700 dark:text-gray-200"
@@ -197,13 +198,11 @@ export default function TeacherUpload() {
         </div>
 
         {/* Teacher List */}
-        <div className="bg-white/90 dark:bg-gray-800/50 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-semibold text-teal-500 mb-4">
-            Teacher List
-            <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
-              ({filtered.length})
-            </span>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-semibold text-blue-600 dark:text-blue-400 mb-4">
+            Teacher List ({filtered.length})
           </h2>
+
           {filtered.length === 0 ? (
             <p className="text-gray-500 dark:text-gray-400 text-center py-6">
               No teachers found.
@@ -213,21 +212,23 @@ export default function TeacherUpload() {
               {filtered.map((t) => (
                 <div
                   key={t._id}
-                  className="flex items-center justify-between gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-xl shadow hover:shadow-teal-500/20 transition hover:scale-[1.01]"
+                  className="flex items-center justify-between gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-md border border-gray-100 dark:border-gray-600 hover:shadow-md transition"
                 >
                   <div className="flex items-center gap-4">
                     <img
                       src={
                         t.photo
-                          ? `${apiBase}${t.photo.startsWith("/") ? t.photo : "/" + t.photo}`
+                          ? `${apiBase}${
+                              t.photo.startsWith("/") ? t.photo : "/" + t.photo
+                            }`
                           : "https://via.placeholder.com/60"
                       }
                       alt={t.name}
-                      className="w-16 h-16 object-cover rounded-full border-2 border-teal-400 shadow hover:scale-110 transition"
+                      className="w-14 h-14 object-cover rounded-full border border-blue-400"
                     />
                     <div>
                       <h3 className="text-lg font-semibold">{t.name}</h3>
-                      <p className="text-sm text-teal-500">{t.subject}</p>
+                      <p className="text-sm text-blue-500">{t.subject}</p>
                       <p className="text-gray-600 dark:text-gray-300 text-sm">
                         {t.description}
                       </p>
@@ -236,13 +237,13 @@ export default function TeacherUpload() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleEdit(t)}
-                      className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow flex items-center gap-2 hover:scale-105 transition"
+                      className="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-md flex items-center gap-2"
                     >
                       <FaEdit /> Edit
                     </button>
                     <button
                       onClick={() => confirmDelete(t._id)}
-                      className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow flex items-center gap-2 hover:scale-105 transition"
+                      className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-sm rounded-md flex items-center gap-2"
                     >
                       <FaTrash /> Delete
                     </button>
@@ -256,10 +257,12 @@ export default function TeacherUpload() {
 
       {/* Delete Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg max-w-sm w-full">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-red-500">Confirm Delete</h3>
+              <h3 className="text-lg font-semibold text-red-500">
+                Confirm Delete
+              </h3>
               <button
                 onClick={() => setShowModal(false)}
                 className="text-gray-500 hover:text-gray-800 dark:hover:text-white"
@@ -273,13 +276,13 @@ export default function TeacherUpload() {
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 rounded-lg bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition"
+                className="px-4 py-2 rounded-md bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white shadow"
+                className="px-4 py-2 rounded-md bg-red-500 hover:bg-red-600 text-white"
               >
                 Delete
               </button>

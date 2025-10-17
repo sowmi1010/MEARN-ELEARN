@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
-import { FaEdit, FaTrash, FaSearch, FaTimes } from "react-icons/fa";
+import {
+  FaEdit,
+  FaTrash,
+  FaSearch,
+  FaTimes,
+  FaComments,
+  FaPlusCircle,
+} from "react-icons/fa";
 
 export default function FeedbackUpload() {
   const [form, setForm] = useState({
@@ -20,6 +27,7 @@ export default function FeedbackUpload() {
   const apiBase = import.meta.env.VITE_API_URL || "http://localhost:4000";
   const token = localStorage.getItem("token");
 
+  // Fetch all feedbacks on mount
   useEffect(() => {
     fetchFeedbacks();
   }, []);
@@ -29,13 +37,13 @@ export default function FeedbackUpload() {
       const res = await axios.get(`${apiBase}/api/feedbacks`);
       setFeedbacks(res.data);
     } catch {
-      toast.error("Failed to fetch feedbacks");
+      toast.error("❌ Failed to fetch feedbacks");
     }
   }
 
   function handleChange(e) {
     const { name, value, files } = e.target;
-    setForm({ ...form, [name]: files ? files[0] : value });
+    setForm((prev) => ({ ...prev, [name]: files ? files[0] : value }));
   }
 
   async function handleSubmit(e) {
@@ -52,18 +60,19 @@ export default function FeedbackUpload() {
         await axios.put(`${apiBase}/api/feedbacks/${editingId}`, formData, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        toast.success("Feedback updated!");
+        toast.success("✅ Feedback updated successfully!");
       } else {
         await axios.post(`${apiBase}/api/feedbacks`, formData, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        toast.success("Feedback added!");
+        toast.success("✅ Feedback added successfully!");
       }
+
       setForm({ name: "", course: "", comment: "", photo: null });
       setEditingId(null);
       fetchFeedbacks();
     } catch {
-      toast.error("Failed to save feedback");
+      toast.error("⚠️ Failed to save feedback");
     } finally {
       setLoading(false);
     }
@@ -78,7 +87,7 @@ export default function FeedbackUpload() {
       photo: null,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
-    toast("Edit mode enabled", { icon: "📝" });
+    toast("✏️ Edit mode enabled");
   }
 
   function confirmDelete(id) {
@@ -91,10 +100,10 @@ export default function FeedbackUpload() {
       await axios.delete(`${apiBase}/api/feedbacks/${deleteId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      toast.success("Feedback deleted!");
+      toast.success("🗑️ Feedback deleted successfully");
       fetchFeedbacks();
     } catch {
-      toast.error("Failed to delete feedback");
+      toast.error("❌ Failed to delete feedback");
     }
     setShowModal(false);
   }
@@ -106,23 +115,30 @@ export default function FeedbackUpload() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-darkBg text-gray-800 dark:text-gray-200 transition-colors duration-300">
+    <div className="min-h-screen bg-gray-100 dark:bg-[#0b0f19] text-gray-800 dark:text-gray-200 transition-colors duration-300">
       <Toaster position="top-right" />
 
-      {/* Header */}
-      <div className="bg-gradient-to-r from-teal-500 to-blue-500 text-white py-8 shadow-md">
-        <h1 className="text-center text-4xl font-extrabold tracking-wide">
-           Student Feedbacks
+      {/* ===== Header Section ===== */}
+        <h1 className="text-4xl  py-10 font-extrabold flex justify-center items-center gap-3">
+          <FaComments className="text-3xl" />
+          Student Feedback Management
         </h1>
-      </div>
 
-      <div className="max-w-5xl mx-auto p-6 -mt-8 space-y-10">
-        {/* Feedback Form */}
-        <div className="bg-white/80 dark:bg-gray-800/60 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition">
-          <h2 className="text-3xl font-bold text-center bg-gradient-to-r from-teal-400 to-blue-400 bg-clip-text text-transparent mb-5">
-            {editingId ? "✏️ Edit Feedback" : "➕ Add Feedback"}
-          </h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
+
+      <main className="max-w-6xl mx-auto px-6 py-10 space-y-10">
+        {/* ===== Feedback Form ===== */}
+        <section className="bg-white dark:bg-gray-800/70 backdrop-blur-md rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-teal-400 bg-clip-text text-transparent">
+              {editingId ? "✏️ Edit Feedback" : "➕ Add New Feedback"}
+            </h2>
+            <FaPlusCircle className="text-blue-500 text-3xl" />
+          </div>
+
+          <form
+            onSubmit={handleSubmit}
+            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+          >
             <input
               type="text"
               name="name"
@@ -130,7 +146,7 @@ export default function FeedbackUpload() {
               value={form.name}
               onChange={handleChange}
               required
-              className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-teal-400 outline-none"
+              className="col-span-1 p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-400 outline-none"
             />
             <input
               type="text"
@@ -139,18 +155,19 @@ export default function FeedbackUpload() {
               value={form.course}
               onChange={handleChange}
               required
-              className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-teal-400 outline-none"
+              className="col-span-1 p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-400 outline-none"
             />
             <textarea
               name="comment"
               placeholder="Feedback / Comment"
               value={form.comment}
               onChange={handleChange}
-              rows="3"
+              rows="4"
               required
-              className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-teal-400 outline-none"
+              className="col-span-2 p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-400 outline-none"
             ></textarea>
-            <div>
+
+            <div className="col-span-2 flex flex-col items-center justify-center">
               <input
                 type="file"
                 name="photo"
@@ -163,86 +180,90 @@ export default function FeedbackUpload() {
                   <img
                     src={URL.createObjectURL(form.photo)}
                     alt="Preview"
-                    className="w-24 h-24 rounded-full border-2 border-teal-400 shadow hover:scale-105 transition"
+                    className="w-24 h-24 rounded-full border-2 border-blue-400 shadow hover:scale-105 transition"
                   />
                 </div>
               )}
             </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-teal-500 to-blue-500 text-white font-semibold rounded-lg shadow-lg hover:scale-105 transition disabled:opacity-50"
-            >
-              {loading
-                ? "Saving..."
-                : editingId
-                ? "Update Feedback"
-                : "Add Feedback"}
-            </button>
-          </form>
-        </div>
 
-        {/* Search Bar */}
-        <div className="flex items-center gap-3 bg-white dark:bg-gray-800 p-3 rounded-xl shadow border border-gray-200 dark:border-gray-700">
-          <FaSearch className="text-teal-500" />
+            <div className="col-span-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-gradient-to-r from-blue-600 to-teal-500 text-white font-semibold rounded-lg shadow-lg hover:scale-[1.02] transition disabled:opacity-50"
+              >
+                {loading
+                  ? "Saving..."
+                  : editingId
+                  ? "Update Feedback"
+                  : "Add Feedback"}
+              </button>
+            </div>
+          </form>
+        </section>
+
+        {/* ===== Search Bar ===== */}
+        <div className="flex items-center gap-3 bg-white dark:bg-gray-800 px-5 py-3 rounded-2xl shadow border border-gray-200 dark:border-gray-700">
+          <FaSearch className="text-blue-500" />
           <input
             type="text"
-            placeholder="Search by name or course..."
+            placeholder="Search by student or course..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="flex-1 bg-transparent outline-none text-gray-700 dark:text-gray-200"
           />
         </div>
 
-        {/* Feedback List */}
-        <div className="bg-white/90 dark:bg-gray-800/50 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-semibold text-teal-500 mb-4">
-            🎓 Student Feedback List
+        {/* ===== Feedback List ===== */}
+        <section className="bg-white/90 dark:bg-gray-800/60 rounded-2xl p-8 shadow-lg border border-gray-200 dark:border-gray-700">
+          <h2 className="text-2xl font-semibold text-blue-600 mb-5 flex items-center gap-2">
+            Feedback List
             <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
               ({filtered.length})
             </span>
           </h2>
+
           {filtered.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-6">
-              No feedback available.
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+              No feedbacks found.
             </p>
           ) : (
-            <div className="space-y-4">
+            <div className="grid gap-6 md:grid-cols-2">
               {filtered.map((fb) => (
                 <div
                   key={fb._id}
-                  className="flex items-center justify-between gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-xl shadow hover:shadow-teal-500/20 transition hover:scale-[1.01]"
+                  className="p-5 bg-gray-50 dark:bg-gray-700 rounded-xl shadow hover:shadow-blue-400/20 transition-transform hover:scale-[1.02]"
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 mb-3">
                     <img
                       src={
                         fb.photo
                           ? `${apiBase}${
                               fb.photo.startsWith("/") ? fb.photo : "/" + fb.photo
                             }`
-                          : "https://via.placeholder.com/60"
+                          : "https://via.placeholder.com/80"
                       }
                       alt={fb.name}
-                      className="w-16 h-16 object-cover rounded-full border-2 border-teal-400 shadow hover:scale-110 transition"
+                      className="w-16 h-16 object-cover rounded-full border-2 border-blue-400 shadow"
                     />
                     <div>
-                      <h3 className="text-lg font-semibold">{fb.name}</h3>
-                      <p className="text-sm text-teal-500">{fb.course}</p>
-                      <p className="text-gray-600 dark:text-gray-300 text-sm">
-                        {fb.comment}
-                      </p>
+                      <h3 className="text-lg font-bold">{fb.name}</h3>
+                      <p className="text-blue-500 text-sm">{fb.course}</p>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <p className="text-gray-700 dark:text-gray-300 italic">
+                    “{fb.comment}”
+                  </p>
+                  <div className="flex justify-end gap-3 mt-4">
                     <button
                       onClick={() => handleEdit(fb)}
-                      className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow flex items-center gap-2 hover:scale-105 transition"
+                      className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center gap-2 text-sm transition"
                     >
                       <FaEdit /> Edit
                     </button>
                     <button
                       onClick={() => confirmDelete(fb._id)}
-                      className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow flex items-center gap-2 hover:scale-105 transition"
+                      className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg flex items-center gap-2 text-sm transition"
                     >
                       <FaTrash /> Delete
                     </button>
@@ -251,15 +272,17 @@ export default function FeedbackUpload() {
               ))}
             </div>
           )}
-        </div>
-      </div>
+        </section>
+      </main>
 
-      {/* Delete Modal */}
+      {/* ===== Delete Confirmation Modal ===== */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg max-w-sm w-full">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg w-[90%] max-w-sm">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-red-500">Confirm Delete</h3>
+              <h3 className="text-lg font-semibold text-red-500">
+                Confirm Delete
+              </h3>
               <button
                 onClick={() => setShowModal(false)}
                 className="text-gray-500 hover:text-gray-800 dark:hover:text-white"
