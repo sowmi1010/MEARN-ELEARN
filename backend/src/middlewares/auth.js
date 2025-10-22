@@ -6,16 +6,26 @@ const Student = require("../models/Student");
 
 module.exports = async (req, res, next) => {
   try {
+    // ✅ Get token from header
     const header = req.headers.authorization || "";
     const token = header.startsWith("Bearer ") ? header.split(" ")[1] : null;
-    if (!token) return res.status(401).json({ message: "Token missing" });
 
+    if (!token) {
+      return res.status(401).json({ message: "Token missing" });
+    }
+
+    // ✅ Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded?.id) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
 
+    // ✅ Lookup helper for any collection
     const lookup = async (Model, role) => {
       const doc = await Model.findById(decoded.id).select("-password");
       if (!doc) return null;
       return {
+        _id: doc._id, // ✅ Fixed: ensures req.user._id exists
         id: doc._id.toString(),
         role,
         name: doc.name || `${doc.firstName || ""} ${doc.lastName || ""}`.trim(),
@@ -26,14 +36,19 @@ module.exports = async (req, res, next) => {
       };
     };
 
+    // ✅ Try all models in priority order
     req.user =
       (await lookup(Admin, "admin")) ||
       (await lookup(User, "user")) ||
       (await lookup(Mentor, "mentor")) ||
       (await lookup(Student, "student"));
 
-    if (!req.user) return res.status(401).json({ message: "User not found" });
+    // ✅ Handle not found
+    if (!req.user) {
+      return res.status(401).json({ message: "User not found" });
+    }
 
+    // ✅ If superadmin or admin email, grant admin rights
     if (
       decoded.role === "admin" ||
       req.user.isSuperAdmin === true ||
@@ -43,6 +58,7 @@ module.exports = async (req, res, next) => {
       req.user.isSuperAdmin = true;
     }
 
+    // ✅ Continue
     next();
   } catch (err) {
     console.error("Auth Error:", err.message);

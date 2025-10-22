@@ -5,6 +5,9 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const path = require("path");
 const fs = require("fs");
+const http = require("http");              // ✅ Needed for socket.io server
+const { Server } = require("socket.io");   // ✅ Import socket.io
+const chatSocket = require("./socket/chatSocket"); // ✅ Your socket file
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -38,30 +41,34 @@ uploadDirs.forEach((dir) => {
 /* ======================================================
    ✅ 2. Middleware setup
 ====================================================== */
-app.use(cors({ origin: "*", credentials: true }));
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+    credentials: true,
+  })
+);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// ✅ Serve uploaded files correctly
+// ✅ Serve uploads (images, pdf, etc.)
 app.use(
   "/uploads",
   express.static(path.resolve(__dirname, "../uploads"), {
     setHeaders: (res) => {
-      // Enables PDF/image preview in React <iframe> and <img>
       res.set("Cross-Origin-Resource-Policy", "cross-origin");
     },
   })
 );
 
 /* ======================================================
-   3. MongoDB Connection
+   ✅ 3. MongoDB Connection
 ====================================================== */
 const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/elearn";
 
 mongoose
   .connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 /* ======================================================
    ✅ 4. Import all routes
@@ -80,6 +87,8 @@ const studentRoutes = require("./routes/studentRoutes");
 const mentorRoutes = require("./routes/mentorRoutes");
 const teacherRoutes = require("./routes/teacherRoutes");
 const feedbackRoutes = require("./routes/feedbackRoutes");
+const chatRoutes = require("./routes/chatRoutes");
+const userLookupRoutes = require("./routes/userLookupRoutes");
 
 /* ======================================================
    ✅ 5. Register API routes
@@ -98,6 +107,8 @@ app.use("/api/student", studentRoutes);
 app.use("/api/mentor", mentorRoutes);
 app.use("/api/teachers", teacherRoutes);
 app.use("/api/feedbacks", feedbackRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/chat/user", userLookupRoutes);
 
 /* ======================================================
    ✅ 6. Health check
@@ -136,11 +147,27 @@ if (fs.existsSync(frontendPath)) {
 }
 
 /* ======================================================
-   ✅ 10. Start Server
+   ✅ 10. Socket.io + Server Initialization
 ====================================================== */
-app.listen(PORT, () => {
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+    methods: ["GET", "POST"],
+  },
+});
+
+// ✅ Initialize Chat Socket Logic
+chatSocket(io);
+
+/* ======================================================
+   ✅ 11. Start Server
+====================================================== */
+server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 API available at http://localhost:${PORT}/api`);
+  console.log(`💬 WebSocket ready at ws://localhost:${PORT}`);
   console.log(`🖼️ Uploads available at http://localhost:${PORT}/uploads`);
 });
 

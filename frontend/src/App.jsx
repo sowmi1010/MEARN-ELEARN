@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { Suspense, useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
@@ -9,7 +8,6 @@ import {
 } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
-// Common
 import Navbar from "./components/common/Navbar";
 import PrivateRoute from "./components/auth/PrivateRoute";
 import LoadingSpinner from "./components/common/LoadingSpinner";
@@ -24,7 +22,7 @@ const ResetPassword = React.lazy(() => import("./pages/auth/ResetPassword"));
 // Landing
 const LandingPage = React.lazy(() => import("./pages/landing/LandingPage"));
 
-// Admin layout + pages
+// Admin
 const AdminLayout = React.lazy(() => import("./layouts/AdminLayout"));
 const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminPayments = React.lazy(() =>
@@ -60,7 +58,7 @@ const MentorAccess = React.lazy(() =>
   import("./pages/admin/mentor/MentorAccess")
 );
 
-// Course management (admin)
+// Courses
 const CourseHome = React.lazy(() => import("./pages/admin/course/CourseHome"));
 const CourseSubjects = React.lazy(() =>
   import("./pages/admin/course/CourseSubjects")
@@ -98,7 +96,11 @@ const ViewTest = React.lazy(() =>
   import("./pages/admin/course/view/ViewTests")
 );
 
-// Smooth page transition
+// ✅ Team Chat (non-lazy to avoid remount on animation)
+import ChatList from "./pages/admin/chat/ChatList";
+import ChatWindow from "./pages/admin/chat/ChatWindow";
+
+// Animation wrapper
 function PageWrapper({ children }) {
   return (
     <motion.div
@@ -115,11 +117,35 @@ function PageWrapper({ children }) {
 
 function AnimatedRoutes() {
   const location = useLocation();
+  const isChatRoute = location.pathname.startsWith("/admin/team");
 
+  // 🛑 Disable animation for chat routes to prevent remounting
+  if (isChatRoute) {
+    return (
+      <Routes location={location} key={location.pathname}>
+        <Route
+          path="/admin/*"
+          element={
+            <PrivateRoute requiredRole="admin">
+              <Suspense fallback={<LoadingSpinner />}>
+                <AdminLayout />
+              </Suspense>
+            </PrivateRoute>
+          }
+        >
+          <Route path="team" element={<ChatList />} />
+          <Route path="team/:userId" element={<ChatWindow />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
+  }
+
+  // ✅ Use AnimatePresence only for non-chat routes
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        {/* Public Routes */}
+        {/* Public routes */}
         <Route
           path="/"
           element={
@@ -130,7 +156,6 @@ function AnimatedRoutes() {
             </Suspense>
           }
         />
-
         <Route
           path="/login"
           element={
@@ -182,7 +207,7 @@ function AnimatedRoutes() {
           }
         />
 
-        {/* Admin */}
+        {/* Admin Section */}
         <Route
           path="/admin/*"
           element={
@@ -193,31 +218,9 @@ function AnimatedRoutes() {
             </PrivateRoute>
           }
         >
-          <Route
-            path="dashboard"
-            element={
-              <Suspense fallback={<LoadingSpinner />}>
-                <AdminDashboard />
-              </Suspense>
-            }
-          />
-          <Route
-            index
-            element={
-              <Suspense fallback={<LoadingSpinner />}>
-                <AdminHomePage />
-              </Suspense>
-            }
-          />
-          <Route
-            path="home"
-            element={
-              <Suspense fallback={<LoadingSpinner />}>
-                <AdminHomePage />
-              </Suspense>
-            }
-          />
-
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route index element={<AdminHomePage />} />
+          <Route path="home" element={<AdminHomePage />} />
           <Route path="payments" element={<AdminPayments />} />
           <Route path="teachers" element={<TeacherUpload />} />
           <Route path="feedbacks" element={<FeedbackUpload />} />
@@ -233,7 +236,7 @@ function AnimatedRoutes() {
           <Route path="mentors/edit/:id" element={<MentorUpload />} />
           <Route path="mentor-access/:id" element={<MentorAccess />} />
 
-          {/* Course management */}
+          {/* Other admin routes (courses etc.) */}
           <Route path="courses" element={<CourseHome />} />
           <Route
             path="courses/:groupId/subjects"
@@ -277,7 +280,6 @@ export default function App() {
     return stored ? JSON.parse(stored) : null;
   });
 
-  // Listen for login/logout events (Navbar syncs instantly)
   useEffect(() => {
     const syncUser = () => {
       const stored = localStorage.getItem("user");

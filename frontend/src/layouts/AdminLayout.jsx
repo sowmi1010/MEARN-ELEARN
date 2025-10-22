@@ -106,6 +106,8 @@ export default function AdminLayout() {
     { key: "mentor", to: "mentors", label: "Mentors", icon: <HiOutlineAcademicCap /> },
     { key: "students", to: "students", label: "Students", icon: <HiOutlineUserGroup /> },
     { key: "payments", to: "payments", label: "Payments", icon: <HiOutlineCurrencyRupee /> },
+      { key: "team", to: "team", label: "Team", icon: <HiOutlineUserGroup /> }, // ✅ Added this line
+
   ];
 
   const visibleLinks =
