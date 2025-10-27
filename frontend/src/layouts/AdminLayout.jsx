@@ -1,4 +1,3 @@
-// src/layouts/AdminLayout.jsx
 import React, { useState, useEffect, useRef } from "react";
 import {
   NavLink as RouterNavLink,
@@ -23,7 +22,7 @@ import {
   HiOutlineUser,
   HiOutlineCurrencyRupee,
   HiOutlineAcademicCap,
-  HiOutlineHome
+  HiOutlineHome,
 } from "react-icons/hi";
 
 export default function AdminLayout() {
@@ -31,11 +30,12 @@ export default function AdminLayout() {
   const location = useLocation();
   const fileInputRef = useRef(null);
 
-  // ✅ Sync user from localStorage across app (same as Navbar)
   const [user, setUser] = useState(null);
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
 
-  // ✅ Theme Toggle
+  /* ======================================================
+     ✅ Apply Theme
+  ====================================================== */
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("theme", theme);
@@ -43,26 +43,42 @@ export default function AdminLayout() {
 
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
-  // ✅ Load user and keep it synced
+  /* ======================================================
+     ✅ Fetch Current User Info
+  ====================================================== */
   useEffect(() => {
-    const syncUser = () => {
-      const stored = localStorage.getItem("user");
-      setUser(stored ? JSON.parse(stored) : null);
-    };
+    async function fetchCurrentUser() {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setUser(null);
+        return;
+      }
 
-    syncUser();
-    window.addEventListener("storage", syncUser);
-    window.addEventListener("user-login", syncUser);
-    window.addEventListener("user-logout", syncUser);
+      try {
+        const res = await api.get("/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        localStorage.setItem("user", JSON.stringify(res.data));
+        setUser(res.data);
+      } catch (err) {
+        console.error("User sync failed:", err.response?.data || err.message);
+        setUser(null);
+      }
+    }
+
+    fetchCurrentUser();
+    window.addEventListener("user-login", fetchCurrentUser);
+    window.addEventListener("user-logout", () => setUser(null));
 
     return () => {
-      window.removeEventListener("storage", syncUser);
-      window.removeEventListener("user-login", syncUser);
-      window.removeEventListener("user-logout", syncUser);
+      window.removeEventListener("user-login", fetchCurrentUser);
+      window.removeEventListener("user-logout", () => setUser(null));
     };
   }, []);
 
-  // ✅ Logout handler
+  /* ======================================================
+     ✅ Logout Handler
+  ====================================================== */
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -71,7 +87,9 @@ export default function AdminLayout() {
     navigate("/login");
   };
 
-  // ✅ Handle profile upload (works for all roles)
+  /* ======================================================
+     ✅ Profile Upload
+  ====================================================== */
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -88,8 +106,6 @@ export default function AdminLayout() {
       const updatedUser = { ...user, profilePic: res.data.profilePic };
       localStorage.setItem("user", JSON.stringify(updatedUser));
       setUser(updatedUser);
-
-      // 🔄 Inform other tabs/components instantly
       window.dispatchEvent(new Event("user-login"));
     } catch (err) {
       console.error("Profile upload error:", err);
@@ -97,23 +113,39 @@ export default function AdminLayout() {
     }
   };
 
-  // ✅ Sidebar links (dynamic)
+  /* ======================================================
+     ✅ Sidebar Navigation Links
+  ====================================================== */
   const allNavLinks = [
     { key: "dashboard", to: "dashboard", label: "Dashboard", icon: <HiOutlineChartBar /> },
-      { key: "home", to: "home", label: "Home", icon: <HiOutlineHome /> }, 
+    { key: "home", to: "home", label: "Home", icon: <HiOutlineHome /> },
     { key: "courses", to: "courses", label: "Courses", icon: <HiOutlineBookOpen /> },
-    { key: "admin", to: "admins", label: "Admins", icon: <HiOutlineUser /> },
-    { key: "mentor", to: "mentors", label: "Mentors", icon: <HiOutlineAcademicCap /> },
+    { key: "admins", to: "admins", label: "Admins", icon: <HiOutlineUser /> },
+    { key: "mentors", to: "mentors", label: "Mentors", icon: <HiOutlineAcademicCap /> },
     { key: "students", to: "students", label: "Students", icon: <HiOutlineUserGroup /> },
     { key: "payments", to: "payments", label: "Payments", icon: <HiOutlineCurrencyRupee /> },
-      { key: "team", to: "team", label: "Team", icon: <HiOutlineUserGroup /> }, // ✅ Added this line
-
+    { key: "team", to: "team", label: "Team", icon: <HiOutlineUserGroup /> },
   ];
 
-  const visibleLinks =
-    user?.role === "admin"
-      ? allNavLinks
-      : allNavLinks.filter((link) => (user?.permissions || []).includes(link.key));
+  const role = (user?.role || "").toLowerCase();
+  const isAdminLike = role === "admin" || user?.isSuperAdmin === true;
+
+  const defaultAdminLinks = [
+    "dashboard",
+    "home",
+    "courses",
+    "admins",
+    "mentors",
+    "students",
+    "payments",
+    "team",
+  ];
+
+  const visibleLinks = isAdminLike
+    ? allNavLinks
+    : allNavLinks.filter((link) =>
+        (user?.permissions || defaultAdminLinks).includes(link.key)
+      );
 
   const sortedLinks = visibleLinks.sort((a, b) => {
     const order = user?.permissions || [];
@@ -123,11 +155,14 @@ export default function AdminLayout() {
   const handleBack = () => navigate(-1);
   const handleForward = () => navigate(1);
 
+  /* ======================================================
+     ✅ JSX Layout
+  ====================================================== */
   return (
     <div className="flex h-screen w-full bg-gray-100 dark:bg-[#0b0f19] text-gray-900 dark:text-gray-100">
       {/* ===== Sidebar ===== */}
       <aside className="w-64 fixed left-0 top-0 h-full bg-gradient-to-b from-[#0c1633] to-[#091025] shadow-xl border-r border-gray-800 flex flex-col">
-        {/* ✅ Logo + User Info + Upload */}
+        {/* ✅ User Info + Upload */}
         <div className="p-6 flex flex-col items-center border-b border-gray-700">
           <div
             onClick={() => fileInputRef.current.click()}
@@ -161,10 +196,15 @@ export default function AdminLayout() {
           <p className="text-sm text-gray-400 mt-1">
             Role: {user?.role || "User"}
           </p>
+          {user?.isSuperAdmin && (
+            <p className="text-xs text-yellow-400 font-semibold">
+              Super Admin
+            </p>
+          )}
           <p className="text-xs text-gray-500">{user?.name || "User"}</p>
         </div>
 
-        {/* ===== Navigation Links ===== */}
+        {/* ===== Navigation ===== */}
         <nav className="flex-1 mt-4 space-y-2 overflow-y-auto">
           {sortedLinks.map((link) => (
             <RouterNavLink

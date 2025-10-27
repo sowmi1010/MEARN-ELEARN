@@ -12,17 +12,17 @@ import Navbar from "./components/common/Navbar";
 import PrivateRoute from "./components/auth/PrivateRoute";
 import LoadingSpinner from "./components/common/LoadingSpinner";
 
-// Auth pages
+// 🔹 Auth pages
 const Login = React.lazy(() => import("./pages/auth/Login"));
 const Register = React.lazy(() => import("./pages/auth/Register"));
 const ForgotPassword = React.lazy(() => import("./pages/auth/ForgotPassword"));
 const VerifyCode = React.lazy(() => import("./pages/auth/VerifyCode"));
 const ResetPassword = React.lazy(() => import("./pages/auth/ResetPassword"));
 
-// Landing
+// 🔹 Landing page
 const LandingPage = React.lazy(() => import("./pages/landing/LandingPage"));
 
-// Admin
+// 🔹 Admin Layout and Pages
 const AdminLayout = React.lazy(() => import("./layouts/AdminLayout"));
 const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminPayments = React.lazy(() =>
@@ -58,10 +58,13 @@ const MentorAccess = React.lazy(() =>
   import("./pages/admin/mentor/MentorAccess")
 );
 
-// Courses
+// 🔹 Course pages
 const CourseHome = React.lazy(() => import("./pages/admin/course/CourseHome"));
 const CourseSubjects = React.lazy(() =>
   import("./pages/admin/course/CourseSubjects")
+);
+const CourseCategories = React.lazy(() =>
+  import("./pages/admin/course/CourseCategories")
 );
 const CourseContents = React.lazy(() =>
   import("./pages/admin/course/CourseContents")
@@ -96,11 +99,11 @@ const ViewTest = React.lazy(() =>
   import("./pages/admin/course/view/ViewTests")
 );
 
-// ✅ Team Chat (non-lazy to avoid remount on animation)
+// ✅ Chat pages (non-lazy for stable rendering)
 import ChatList from "./pages/admin/chat/ChatList";
 import ChatWindow from "./pages/admin/chat/ChatWindow";
 
-// Animation wrapper
+// 🔹 Animation wrapper
 function PageWrapper({ children }) {
   return (
     <motion.div
@@ -119,14 +122,14 @@ function AnimatedRoutes() {
   const location = useLocation();
   const isChatRoute = location.pathname.startsWith("/admin/team");
 
-  // 🛑 Disable animation for chat routes to prevent remounting
+  // 🛑 Disable animation for chat routes (to prevent chat remount)
   if (isChatRoute) {
     return (
       <Routes location={location} key={location.pathname}>
         <Route
           path="/admin/*"
           element={
-            <PrivateRoute requiredRole="admin">
+            <PrivateRoute requiredRoles={["admin", "mentor"]}>
               <Suspense fallback={<LoadingSpinner />}>
                 <AdminLayout />
               </Suspense>
@@ -141,11 +144,11 @@ function AnimatedRoutes() {
     );
   }
 
-  // ✅ Use AnimatePresence only for non-chat routes
+  // ✅ Use AnimatePresence for normal routes
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        {/* Public routes */}
+        {/* 🌐 Public Routes */}
         <Route
           path="/"
           element={
@@ -207,11 +210,11 @@ function AnimatedRoutes() {
           }
         />
 
-        {/* Admin Section */}
+        {/* 🧭 Admin + Mentor Shared Dashboard */}
         <Route
           path="/admin/*"
           element={
-            <PrivateRoute requiredRole="admin">
+            <PrivateRoute requiredRoles={["admin", "mentor"]}>
               <Suspense fallback={<LoadingSpinner />}>
                 <AdminLayout />
               </Suspense>
@@ -236,11 +239,15 @@ function AnimatedRoutes() {
           <Route path="mentors/edit/:id" element={<MentorUpload />} />
           <Route path="mentor-access/:id" element={<MentorAccess />} />
 
-          {/* Other admin routes (courses etc.) */}
+          {/* 🎓 Courses */}
           <Route path="courses" element={<CourseHome />} />
           <Route
             path="courses/:groupId/subjects"
             element={<CourseSubjects />}
+          />
+          <Route
+            path="courses/:groupId/:subject/categories"
+            element={<CourseCategories />}
           />
           <Route
             path="courses/:groupId/:subject/:category/contents"
@@ -267,7 +274,7 @@ function AnimatedRoutes() {
           />
         </Route>
 
-        {/* Fallback */}
+        {/* 🧭 Default fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AnimatePresence>

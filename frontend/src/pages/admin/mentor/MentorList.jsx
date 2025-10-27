@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { HiPlusCircle, HiUser, HiUserGroup, HiPencil, HiKey } from "react-icons/hi2";
+import {
+  HiPlusCircle,
+  HiUser,
+  HiUserGroup,
+  HiPencil,
+  HiKey,
+  HiTrash,
+} from "react-icons/hi2";
 import api from "../../../utils/api";
 
 export default function MentorList() {
   const [mentors, setMentors] = useState([]);
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchMentors();
@@ -32,12 +39,14 @@ export default function MentorList() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMentors((prev) => prev.filter((m) => m._id !== id));
+      alert("Mentor deleted successfully ✅");
     } catch (err) {
       console.error("Delete error:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Failed to delete mentor");
     }
   }
 
-  // Access Button → Navigate to Mentor Access Page
+  // Navigate to Mentor Access Page
   function handleAccess(mentor) {
     navigate(`/admin/mentor-access/${mentor._id}`);
   }
@@ -68,7 +77,7 @@ export default function MentorList() {
               <HiUserGroup className="text-teal-400 text-2xl" />
               <div>
                 <p className="text-gray-400 text-sm">
-                  Total Mentor{" "}
+                  Total Mentors{" "}
                   <span className="ml-4 text-2xl font-bold text-white">
                     {mentors.length}
                   </span>
@@ -103,6 +112,7 @@ export default function MentorList() {
                 <th className="py-4 px-4">Phone</th>
                 <th className="py-4 px-4 text-center">Access</th>
                 <th className="py-4 px-4 text-center">Edit</th>
+                <th className="py-4 px-4 text-center">Delete</th>
               </tr>
             </thead>
 
@@ -155,7 +165,7 @@ export default function MentorList() {
                     </button>
                   </td>
 
-                  {/*  Edit Button */}
+                  {/* Edit Button */}
                   <td className="py-3 px-4 text-center">
                     <Link
                       to={`/admin/mentors/edit/${m._id}`}
@@ -164,12 +174,25 @@ export default function MentorList() {
                       <HiPencil className="text-sm" /> Edit
                     </Link>
                   </td>
+
+                  {/* Delete Button */}
+                  <td className="py-3 px-4 text-center">
+                    <button
+                      onClick={() => handleDelete(m._id)}
+                      className="px-4 py-1.5 bg-red-500 hover:bg-red-600 rounded-md text-white text-sm font-medium flex items-center gap-1 justify-center transition"
+                    >
+                      <HiTrash className="text-sm" /> Delete
+                    </button>
+                  </td>
                 </tr>
               ))}
 
               {mentors.length === 0 && (
                 <tr>
-                  <td colSpan="10" className="py-10 text-center text-gray-500 italic">
+                  <td
+                    colSpan="11"
+                    className="py-10 text-center text-gray-500 italic"
+                  >
                     No mentors found
                   </td>
                 </tr>

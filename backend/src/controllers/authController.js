@@ -9,7 +9,7 @@ const Student = require("../models/Student");
 const { isValidEmail, isValidPassword } = require("../utils/validators");
 
 // =========================
-// Email Transporter
+// Email Transporter Setup
 // =========================
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || "smtp.gmail.com",
@@ -24,20 +24,11 @@ const transporter = nodemailer.createTransport({
 
 transporter.verify((err) => {
   if (err) console.error("Mail setup failed:", err.message);
-  else console.log("Mail server ready");
+  else console.log("✅ Mail server ready");
 });
 
-function normalizePermissions(perms = []) {
-  return perms.map((p) => {
-    if (p === "student") return "students";
-    if (p === "courses") return "videos";
-    if (p === "transaction") return "payments";
-    return p;
-  });
-}
-
 // =========================
-// REGISTER (Fixed)
+// REGISTER
 // =========================
 exports.register = async (req, res) => {
   try {
@@ -47,23 +38,20 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: "Invalid email" });
 
     if (!isValidPassword(password))
-      return res.status(400).json({
-        message: "Password must be at least 6 characters",
-      });
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters" });
 
     const existingUser = await User.findOne({ $or: [{ email }, { userId }] });
     if (existingUser)
-      return res.status(400).json({
-        message: "Email or User ID already exists",
-      });
+      return res.status(400).json({ message: "Email or User ID already exists" });
 
-    // No manual hashing — User model handles hashing safely
     const user = await User.create({
       name,
       userId,
       email,
       phone,
-      password, 
+      password,
       role: role || "student",
       isSuperAdmin: isSuperAdmin || false,
     });
@@ -86,7 +74,6 @@ exports.register = async (req, res) => {
         isSuperAdmin: !!user.isSuperAdmin,
         profilePic: user.profilePic,
         permissions: user.permissions || [],
-        enrolledCourses: user.enrolledCourses || [],
       },
     });
   } catch (err) {
@@ -96,7 +83,7 @@ exports.register = async (req, res) => {
 };
 
 // =========================
-// LOGIN (Fixed)
+// LOGIN (All roles handled)
 // =========================
 exports.login = async (req, res) => {
   try {
@@ -105,55 +92,60 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Missing credentials" });
 
     const plainPwd = password.trim();
-
     let role = "student";
     let profilePic = "";
-    let permissions = [];
     let isSuperAdmin = false;
 
-// 3 Try Mentor
-const mentor = await Mentor.findOne({
-  $or: [
-    { email: emailOrUserId.trim().toLowerCase() },
-    { userId: emailOrUserId.trim() },
-  ],
-});
+    // =========================
+    // 1️⃣ Mentor Login
+    // =========================
+    const mentor = await Mentor.findOne({
+      $or: [
+        { email: emailOrUserId.trim().toLowerCase() },
+        { userId: emailOrUserId.trim() },
+      ],
+    });
 
-if (mentor) {
-  console.log("Mentor found:", mentor.email);
-  role = "mentor";
-  profilePic = mentor.photo || "";
+    if (mentor) {
+      role = "mentor";
+      profilePic = mentor.photo || "";
 
-  // Use real permissions from DB
-  const permissions = mentor.permissions || [];
+      let isMatch = false;
+      const dbPwd = mentor.password || "";
 
-  const isMatch = await mentor.comparePassword(password.trim());
-  if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+      if (dbPwd.startsWith("$2b$") && dbPwd.length === 60) {
+        isMatch = await bcrypt.compare(plainPwd, dbPwd);
+      } else if (dbPwd === plainPwd) {
+        mentor.password = await bcrypt.hash(plainPwd, 10);
+        await mentor.save();
+        isMatch = true;
+      }
 
-  const token = jwt.sign({ id: mentor._id, role }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
-  });
+      if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-  return res.json({
-    token,
-    user: {
-      id: mentor._id,
-      name: `${mentor.firstName || ""} ${mentor.lastName || ""}`.trim(),
-      userId: mentor.userId,
-      email: mentor.email,
-      role,
-      isSuperAdmin: false,
-      profilePic,
-      permissions,
-    },
-  });
-}
+      const token = jwt.sign({ id: mentor._id, role }, process.env.JWT_SECRET, {
+        expiresIn: "7d",
+      });
 
+      return res.json({
+        token,
+        user: {
+          id: mentor._id,
+          name: `${mentor.firstName || ""} ${mentor.lastName || ""}`.trim(),
+          userId: mentor.userId,
+          email: mentor.email,
+          role,
+          isSuperAdmin: false,
+          profilePic,
+          permissions:
+            mentor.permissions?.length > 0 ? mentor.permissions : ["dashboard"],
+        },
+      });
+    }
 
     // =========================
-    // 2️ Try Admin
+    // 2️⃣ Admin Login
     // =========================
-
     const admin = await Admin.findOne({
       $or: [
         { email: emailOrUserId.trim().toLowerCase() },
@@ -183,6 +175,20 @@ if (mentor) {
         expiresIn: "7d",
       });
 
+      const finalPermissions =
+        admin.isSuperAdmin && (!admin.permissions || admin.permissions.length === 0)
+          ? [
+              "dashboard",
+              "home",
+              "courses",
+              "admin",
+              "mentor",
+              "students",
+              "payments",
+              "feedbacks",
+            ]
+          : admin.permissions || [];
+
       return res.json({
         token,
         user: {
@@ -193,22 +199,13 @@ if (mentor) {
           role,
           isSuperAdmin,
           profilePic,
-          permissions: [
-            "dashboard",
-            "home",
-            "courses",
-            "admin",
-            "mentor",
-            "students",
-            "payments",
-            "feedbacks",
-          ], // full access for admin
+          permissions: finalPermissions,
         },
       });
     }
 
     // =========================
-    // 3️ Try Student
+    // 3️⃣ Student Login
     // =========================
     const student = await Student.findOne({
       $or: [
@@ -224,7 +221,7 @@ if (mentor) {
       const dbPwd = student.password || "";
       let isMatch = false;
 
-      if (dbPwd.startsWith("$2b$") && dbPwd.length === 60) {
+      if (dbPwd.startsWith("$2b$")) {
         isMatch = await bcrypt.compare(plainPwd, dbPwd);
       } else if (dbPwd === plainPwd) {
         student.password = await bcrypt.hash(plainPwd, 10);
@@ -248,13 +245,13 @@ if (mentor) {
           role,
           isSuperAdmin: false,
           profilePic,
-          permissions: ["dashboard", "courses"], // base permissions for students
+          permissions: ["dashboard", "courses"],
         },
       });
     }
 
     // =========================
-    // 4️ Try User
+    // 4️⃣ Normal User Login
     // =========================
     const user = await User.findOne({
       $or: [
@@ -264,13 +261,10 @@ if (mentor) {
     });
 
     if (user) {
-      role = user.role;
-      profilePic = user.profilePic || "";
-
       const isMatch = await bcrypt.compare(plainPwd, user.password);
       if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-      const token = jwt.sign({ id: user._id, role }, process.env.JWT_SECRET, {
+      const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
         expiresIn: "7d",
       });
 
@@ -281,18 +275,76 @@ if (mentor) {
           name: user.name,
           userId: user.userId,
           email: user.email,
-          role,
+          role: user.role,
           isSuperAdmin: !!user.isSuperAdmin,
-          profilePic,
+          profilePic: user.profilePic || "",
           permissions: user.permissions || [],
         },
       });
     }
 
-    // Not found
     return res.status(400).json({ message: "Invalid credentials" });
   } catch (err) {
     console.error("Login error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// =========================
+// GET CURRENT LOGGED-IN USER (NEW)
+// =========================
+// =========================
+// GET CURRENT LOGGED-IN USER (FIXED)
+// =========================
+exports.getCurrentUser = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const role = req.user?.role || "user";
+
+    if (!userId)
+      return res.status(401).json({ message: "Unauthorized - missing user ID" });
+
+    let foundUser = null;
+
+    // Try the most likely collection first
+    if (role === "admin") {
+      foundUser =
+        (await Admin.findById(userId).select("-password")) ||
+        (await User.findById(userId).select("-password"));
+    } else if (role === "mentor") {
+      foundUser =
+        (await Mentor.findById(userId).select("-password")) ||
+        (await User.findById(userId).select("-password"));
+    } else if (role === "student") {
+      foundUser =
+        (await Student.findById(userId).select("-password")) ||
+        (await User.findById(userId).select("-password"));
+    } else {
+      foundUser = await User.findById(userId).select("-password");
+    }
+
+    // If no document found in any collection
+    if (!foundUser)
+      return res.status(404).json({ message: "User not found" });
+
+    // SuperAdmin fallback — treat User with isSuperAdmin as admin
+    const isSuperAdmin = !!foundUser.isSuperAdmin;
+    const resolvedRole =
+      isSuperAdmin || foundUser.role === "admin" ? "admin" : foundUser.role || role;
+
+    res.json({
+      id: foundUser._id,
+      name:
+        foundUser.name ||
+        `${foundUser.firstName || ""} ${foundUser.lastName || ""}`.trim(),
+      email: foundUser.email,
+      role: resolvedRole,
+      isSuperAdmin,
+      profilePic: foundUser.photo || foundUser.profilePic || "",
+      permissions: foundUser.permissions || [],
+    });
+  } catch (err) {
+    console.error("Get current user error:", err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };

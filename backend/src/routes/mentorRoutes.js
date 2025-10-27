@@ -138,4 +138,36 @@ router.put("/:id/permissions", async (req, res) => {
   }
 });
 
+// DELETE: Remove mentor by ID
+router.delete("/:id", async (req, res) => {
+  try {
+    const mentor = await Mentor.findById(req.params.id);
+    if (!mentor) {
+      return res.status(404).json({ message: "Mentor not found" });
+    }
+
+    // 🧹 Delete mentor photo from server if exists
+    if (mentor.photo) {
+      const photoPath = path.join(__dirname, "../../", mentor.photo);
+      if (fs.existsSync(photoPath)) {
+        fs.unlink(photoPath, (err) => {
+          if (err) console.warn("Failed to delete photo:", err.message);
+        });
+      }
+    }
+
+    await Mentor.findByIdAndDelete(req.params.id);
+    res.json({ message: "Mentor deleted successfully ✅" });
+  } catch (err) {
+    console.error("Mentor delete error:", err);
+    res.status(500).json({
+      message: "Failed to delete mentor",
+      error: err.message,
+    });
+  }
+});
+
+
+
+
 module.exports = router;

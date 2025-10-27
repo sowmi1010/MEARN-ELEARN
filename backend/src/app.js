@@ -5,15 +5,15 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const path = require("path");
 const fs = require("fs");
-const http = require("http");              // ✅ Needed for socket.io server
-const { Server } = require("socket.io");   // ✅ Import socket.io
-const chatSocket = require("./socket/chatSocket"); // ✅ Your socket file
+const http = require("http");
+const { Server } = require("socket.io");
+const chatSocket = require("./socket/chatSocket");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
 /* ======================================================
-   ✅ 1. Ensure all upload folders exist
+   ✅ 1. Ensure upload folders exist
 ====================================================== */
 const uploadDirs = [
   "uploads",
@@ -32,10 +32,7 @@ const uploadDirs = [
 
 uploadDirs.forEach((dir) => {
   const fullPath = path.resolve(__dirname, "..", dir);
-  if (!fs.existsSync(fullPath)) {
-    fs.mkdirSync(fullPath, { recursive: true });
-    console.log(`📂 Created missing folder: ${dir}`);
-  }
+  if (!fs.existsSync(fullPath)) fs.mkdirSync(fullPath, { recursive: true });
 });
 
 /* ======================================================
@@ -50,23 +47,22 @@ app.use(
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// ✅ Serve uploads (images, pdf, etc.)
+// ✅ Serve uploads
 app.use(
   "/uploads",
   express.static(path.resolve(__dirname, "../uploads"), {
-    setHeaders: (res) => {
-      res.set("Cross-Origin-Resource-Policy", "cross-origin");
-    },
+    setHeaders: (res) => res.set("Cross-Origin-Resource-Policy", "cross-origin"),
   })
 );
 
 /* ======================================================
    ✅ 3. MongoDB Connection
 ====================================================== */
-const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/elearn";
-
 mongoose
-  .connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/elearn", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
@@ -91,9 +87,9 @@ const chatRoutes = require("./routes/chatRoutes");
 const userLookupRoutes = require("./routes/userLookupRoutes");
 
 /* ======================================================
-   ✅ 5. Register API routes
+   ✅ 5. Register API routes (ORDER MATTERS)
 ====================================================== */
-app.use("/api/auth", authRoutes);
+app.use("/api/auth", authRoutes); // <-- Must be registered before 404 handler
 app.use("/api/admin", adminRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/videos", videoRoutes);
@@ -126,19 +122,18 @@ app.use((err, req, res, next) => {
 });
 
 /* ======================================================
-   ✅ 8. Unknown API routes
+   ✅ 8. Unknown API route handler (AFTER ALL ROUTES)
 ====================================================== */
 app.all(/^\/api\/.*/, (req, res) => {
   res.status(404).json({ message: "API route not found" });
 });
 
 /* ======================================================
-   ✅ 9. Serve frontend (Vite/CRA)
+   ✅ 9. Frontend serve
 ====================================================== */
 const frontendPath = path.resolve(__dirname, "../frontend/dist");
 if (fs.existsSync(frontendPath)) {
   app.use(express.static(frontendPath));
-
   app.get("*", (req, res) => {
     if (!req.path.startsWith("/api")) {
       res.sendFile(path.join(frontendPath, "index.html"));
@@ -147,18 +142,15 @@ if (fs.existsSync(frontendPath)) {
 }
 
 /* ======================================================
-   ✅ 10. Socket.io + Server Initialization
+   ✅ 10. Socket.io + Server Init
 ====================================================== */
 const server = http.createServer(app);
-
 const io = new Server(server, {
   cors: {
     origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
     methods: ["GET", "POST"],
   },
 });
-
-// ✅ Initialize Chat Socket Logic
 chatSocket(io);
 
 /* ======================================================
@@ -166,9 +158,7 @@ chatSocket(io);
 ====================================================== */
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📡 API available at http://localhost:${PORT}/api`);
-  console.log(`💬 WebSocket ready at ws://localhost:${PORT}`);
-  console.log(`🖼️ Uploads available at http://localhost:${PORT}/uploads`);
+  console.log(`📡 API at http://localhost:${PORT}/api`);
 });
 
 module.exports = app;

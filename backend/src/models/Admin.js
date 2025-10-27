@@ -1,4 +1,3 @@
-// backend/src/models/Admin.js
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
@@ -26,10 +25,10 @@ const adminSchema = new mongoose.Schema(
     branchName: { type: String },
     branchNo: { type: String },
     department: { type: String },
-    role: { type: String }, // e.g., Branch Manager
+    role: { type: String, default: "admin" }, // default admin
     salary: { type: Number },
     qualification: { type: String },
-    experience: { type: String }, // e.g., "2 years", "Fresher"
+    experience: { type: String },
     type: { type: String }, // Full-time / Part-time
     language: { type: String },
     skills: { type: String },
@@ -40,23 +39,36 @@ const adminSchema = new mongoose.Schema(
 
     // Login Credentials
     userId: { type: String, required: true, unique: true },
-    password: { type: String, required: true }, // will be auto-hashed
+    password: { type: String, required: true },
 
     // Profile
     photo: { type: String },
 
-    // Permissions / Flags
+    // ✅ Permission System
     isSuperAdmin: { type: Boolean, default: false },
+
+    // Each admin has access to certain modules
+    permissions: {
+      type: [String],
+      default: [
+        "dashboard",
+        "home",
+        "courses",
+        "mentor",
+        "students",
+        "payments",
+      ],
+    },
   },
   { timestamps: true }
 );
 
-// Clean up any old unique index that used to exist on "username"
+// Clean up any old index
 adminSchema.index({ username: 1 }, { unique: false });
 
-// Auto-hash password before saving
+// Hash password before saving (if changed)
 adminSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next(); // skip if unchanged
+  if (!this.isModified("password")) return next();
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -66,9 +78,16 @@ adminSchema.pre("save", async function (next) {
   }
 });
 
-// Compare entered password with hash
+// Compare entered password
 adminSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// Hide sensitive fields
+adminSchema.methods.toJSON = function () {
+  const obj = this.toObject();
+  delete obj.password;
+  return obj;
 };
 
 module.exports = mongoose.model("Admin", adminSchema);

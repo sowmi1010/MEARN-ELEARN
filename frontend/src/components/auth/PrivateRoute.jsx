@@ -5,39 +5,52 @@ export default function PrivateRoute({ children, requiredRole, requiredRoles }) 
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
-  // Not logged in
+  // ✅ 1. Not logged in
   if (!token || !user) {
     return <Navigate to="/login" replace />;
   }
 
   const role = user.role?.toLowerCase();
 
-  // Allow multiple roles if provided
+  // ✅ 2. Super admin/admin always allowed everywhere
+  if (user.isSuperAdmin || role === "admin") {
+    return children;
+  }
+
+  // ✅ 3. Allow multiple roles if requiredRoles prop is used
   if (requiredRoles && Array.isArray(requiredRoles)) {
     const allowed = requiredRoles.map((r) => r.toLowerCase());
     if (!allowed.includes(role)) {
       return <Navigate to="/login" replace />;
     }
+    return children;
   }
 
-  // Admin area → allow both admin and mentor
-  if (requiredRole === "admin" && !["admin", "mentor"].includes(role)) {
+  // ✅ 4. Admin area → allow both admin + mentor
+  if (requiredRole === "admin") {
+    if (["admin", "mentor"].includes(role)) {
+      return children;
+    }
     return <Navigate to="/login" replace />;
   }
 
-  // Mentor area
+  // ✅ 5. Mentor area → strictly mentor only
   if (requiredRole === "mentor" && role !== "mentor") {
     return <Navigate to="/login" replace />;
   }
 
-  // Student area → allow both student and user
-  if (requiredRole === "student" && !["student", "user"].includes(role)) {
+  // ✅ 6. Student area → allow student + user
+  if (requiredRole === "student") {
+    if (["student", "user"].includes(role)) {
+      return children;
+    }
+    // redirect mentors/admins to their dashboards instead of logout
     if (["admin", "mentor"].includes(role)) {
       return <Navigate to="/admin/dashboard" replace />;
     }
     return <Navigate to="/login" replace />;
   }
 
-  // Everything OK → render the page
+  // ✅ 7. Default: just return children if all okay
   return children;
 }

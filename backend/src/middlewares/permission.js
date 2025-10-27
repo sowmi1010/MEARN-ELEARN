@@ -1,26 +1,37 @@
 // middlewares/permission.js
 module.exports = (requiredPermission) => {
   return (req, res, next) => {
-    if (!req.user)
+    if (!req.user) {
       return res.status(401).json({ message: "Unauthorized: user missing" });
-
-    // Super Admin or Admin always have full access
-    if (req.user.role === "admin" || req.user.isSuperAdmin) {
-      return next();
     }
 
-    // Mentor: check if permission exists
-    if (
-      req.user.role === "mentor" &&
-      Array.isArray(req.user.permissions) &&
-      req.user.permissions.includes(requiredPermission)
-    ) {
-      return next();
+    const { role, isSuperAdmin, permissions = [] } = req.user;
+
+    if (isSuperAdmin || role === "admin") return next();
+
+    // Normalize to lowercase for safe comparison
+    const normalizedPerms = permissions.map((p) => p.toLowerCase());
+    const defaultAccess = ["dashboard", "home"];
+    const allowed = [...new Set([...defaultAccess, ...normalizedPerms])];
+
+    if (role === "mentor") {
+      if (allowed.includes(requiredPermission.toLowerCase())) return next();
+      return res
+        .status(403)
+        .json({ message: `Mentor access denied (${requiredPermission})` });
     }
 
-    // Access denied
-    return res.status(403).json({
-      message: `Access denied: missing permission (${requiredPermission})`,
-    });
+    if (role === "student") {
+      const studentAllowed = ["home", "courses", "dashboard"];
+      if (studentAllowed.includes(requiredPermission.toLowerCase()))
+        return next();
+      return res
+        .status(403)
+        .json({ message: `Student access denied (${requiredPermission})` });
+    }
+
+    return res
+      .status(403)
+      .json({ message: `Access denied: missing (${requiredPermission})` });
   };
 };

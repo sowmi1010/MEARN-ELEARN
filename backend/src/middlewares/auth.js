@@ -1,31 +1,26 @@
 const jwt = require("jsonwebtoken");
+const Admin = require("../models/Admin");
 const User = require("../models/User");
 const Mentor = require("../models/Mentor");
-const Admin = require("../models/Admin");
 const Student = require("../models/Student");
 
 module.exports = async (req, res, next) => {
   try {
-    // ✅ Get token from header
     const header = req.headers.authorization || "";
     const token = header.startsWith("Bearer ") ? header.split(" ")[1] : null;
 
-    if (!token) {
-      return res.status(401).json({ message: "Token missing" });
-    }
+    if (!token) return res.status(401).json({ message: "Token missing" });
 
-    // ✅ Verify token
+    // ✅ Decode token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decoded?.id) {
-      return res.status(401).json({ message: "Invalid token" });
-    }
+    if (!decoded?.id) return res.status(401).json({ message: "Invalid token" });
 
-    // ✅ Lookup helper for any collection
+    // ✅ Helper: unified lookup
     const lookup = async (Model, role) => {
       const doc = await Model.findById(decoded.id).select("-password");
       if (!doc) return null;
       return {
-        _id: doc._id, // ✅ Fixed: ensures req.user._id exists
+        _id: doc._id,
         id: doc._id.toString(),
         role,
         name: doc.name || `${doc.firstName || ""} ${doc.lastName || ""}`.trim(),
@@ -36,29 +31,26 @@ module.exports = async (req, res, next) => {
       };
     };
 
-    // ✅ Try all models in priority order
+    // ✅ Priority lookup: Admin → Mentor → Student → User
     req.user =
       (await lookup(Admin, "admin")) ||
-      (await lookup(User, "user")) ||
       (await lookup(Mentor, "mentor")) ||
-      (await lookup(Student, "student"));
+      (await lookup(Student, "student")) ||
+      (await lookup(User, "user"));
 
-    // ✅ Handle not found
-    if (!req.user) {
-      return res.status(401).json({ message: "User not found" });
-    }
+    if (!req.user)
+      return res.status(404).json({ message: "User not found" });
 
-    // ✅ If superadmin or admin email, grant admin rights
+    // ✅ Auto-upgrade: any Admin or SuperAdmin gets full access
     if (
-      decoded.role === "admin" ||
       req.user.isSuperAdmin === true ||
-      req.user.email === "admin@example.com"
+      req.user.role === "admin" ||
+      req.user.email?.toLowerCase() === "admin@example.com"
     ) {
       req.user.role = "admin";
       req.user.isSuperAdmin = true;
     }
 
-    // ✅ Continue
     next();
   } catch (err) {
     console.error("Auth Error:", err.message);
