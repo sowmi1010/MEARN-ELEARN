@@ -47,7 +47,7 @@ export default function LandingPage() {
         {/* Hero Image */}
         <div className="mt-10 md:mt-0 flex justify-center w-full md:w-1/2 relative z-10 animate-fadeInRight">
           <img
-            src="/Hero.png"
+            src="/MEARN-ELEARN/Hero.png"
             alt="Student learning online"
             className="w-full max-w-md rounded-3xl shadow-2xl hover:scale-[1.03] transition-transform duration-500"
           />
@@ -87,10 +87,10 @@ export default function LandingPage() {
           {/* Image Grid */}
           <div className="grid grid-cols-2 gap-6 animate-fadeInRight">
             {[
-              { src: "/kids.png", from: "from-blue-400 to-blue-600" },
-              { src: "/students.png", from: "from-yellow-400 to-yellow-500" },
-              { src: "/online.png", from: "from-green-400 to-green-600" },
-              { src: "/mentor.png", from: "from-pink-400 to-red-500" },
+              { src: "/MEARN-ELEARN/kids.png", from: "from-blue-400 to-blue-600" },
+              { src: "/MEARN-ELEARN/students.png", from: "from-yellow-400 to-yellow-500" },
+              { src: "/MEARN-ELEARN/online.png", from: "from-green-400 to-green-600" },
+              { src: "/MEARN-ELEARN/mentor.png", from: "from-pink-400 to-red-500" },
             ].map((img, i) => (
               <div
                 key={i}
@@ -216,7 +216,7 @@ export default function LandingPage() {
           <div className="flex flex-col items-center text-center">
             <div className="relative w-44 h-44 rounded-full overflow-hidden shadow-xl border-4 border-green-500/70 dark:border-green-400/50 group hover:scale-[1.05] transition-transform duration-300">
               <img
-                src="/founder.jpg"
+                src="/MEARN-ELEARN/founder.jpg"
                 alt="Founder & CEO"
                 className="w-full h-full object-cover group-hover:grayscale-0 grayscale transition-all duration-500"
               />
@@ -281,7 +281,7 @@ export default function LandingPage() {
           <div className="space-y-5">
             <div className="flex items-center gap-3">
               <img
-                src="/logo.png"
+                src="/MEARN-ELEARN/logo.png"
                 alt="Last Try Academy Logo"
                 className="w-12 h-12 rounded-full bg-white"
               />

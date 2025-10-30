@@ -9,7 +9,9 @@ export default function Navbar() {
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const fileInputRef = useRef(null);
-  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("theme") || "light"
+  );
 
   // Theme Toggle
   useEffect(() => {
@@ -121,7 +123,8 @@ export default function Navbar() {
           {user && (
             <div className="flex items-center gap-3">
               <p className="hidden md:block text-sm text-gray-600 dark:text-gray-300 font-medium">
-                Hi, <span className="text-accent font-semibold">{user.name}</span>
+                Hi,{" "}
+                <span className="text-accent font-semibold">{user.name}</span>
               </p>
               <div
                 onClick={() => fileInputRef.current.click()}
@@ -130,8 +133,8 @@ export default function Navbar() {
                 <img
                   src={
                     user.profilePic
-                      ? `http://localhost:4000${user.profilePic}`
-                      : "/default-avatar.png"
+                      ? `${BASE_URL}${user.profilePic}`
+                      : `${BASE_URL}/default-avatar.png`
                   }
                   alt="Profile"
                   className="w-full h-full object-cover"
