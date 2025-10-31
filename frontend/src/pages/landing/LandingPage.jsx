@@ -80,7 +80,7 @@ export default function LandingPage() {
               exams, careers, and beyond.
             </p>
             <div className="mt-6 text-lg font-semibold text-cyan-600">
-               17,000+ Creators — Yesterday’s kids, tomorrow’s leaders
+              17,000+ Creators — Yesterday’s kids, tomorrow’s leaders
             </div>
           </div>
 
@@ -96,8 +96,11 @@ export default function LandingPage() {
                 key={i}
                 className={`bg-gradient-to-br ${img.from} p-3 rounded-2xl shadow-lg hover:scale-[1.05] transition-transform`}
               >
-                <img               src={`${import.meta.env.BASE_URL}${img.src}`}
- alt="" className="rounded-lg" />
+                <img
+                  src={img.src}
+                  alt=""
+                  className="rounded-lg"
+                />
               </div>
             ))}
           </div>
@@ -217,8 +220,7 @@ export default function LandingPage() {
           <div className="flex flex-col items-center text-center">
             <div className="relative w-44 h-44 rounded-full overflow-hidden shadow-xl border-4 border-green-500/70 dark:border-green-400/50 group hover:scale-[1.05] transition-transform duration-300">
               <img
-                             src={`${import.meta.env.BASE_URL}founder.jpg`}
-
+                src={`${import.meta.env.BASE_URL}founder.jpg`}
                 alt="Founder & CEO"
                 className="w-full h-full object-cover group-hover:grayscale-0 grayscale transition-all duration-500"
               />
@@ -283,8 +285,7 @@ export default function LandingPage() {
           <div className="space-y-5">
             <div className="flex items-center gap-3">
               <img
-                           src={`${import.meta.env.BASE_URL}logo.png`}
-
+                src={`${import.meta.env.BASE_URL}logo.png`}
                 alt="Last Try Academy Logo"
                 className="w-12 h-12 rounded-full bg-white"
               />

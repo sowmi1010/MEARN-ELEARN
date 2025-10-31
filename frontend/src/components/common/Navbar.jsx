@@ -12,9 +12,11 @@ export default function Navbar() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
   );
+  const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   // Theme Toggle
   useEffect(() => {
+      console.log("ENV BASE URL →", BASE_URL); // ✅ ADD THIS LINE
     if (theme === "dark") document.documentElement.classList.add("dark");
     else document.documentElement.classList.remove("dark");
     localStorage.setItem("theme", theme);
@@ -79,6 +81,8 @@ export default function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-white/80 dark:bg-darkCard/70 backdrop-blur-lg shadow-md border-b border-gray-200 dark:border-gray-700">
+          {console.log("Navbar Rendered ✅")}
+
       <div className="px-6 py-3 flex justify-between items-center max-w-7xl mx-auto">
         <h1
           onClick={() => navigate("/")}
@@ -131,12 +135,9 @@ export default function Navbar() {
                 className="w-10 h-10 md:w-11 md:h-11 rounded-full border-2 border-accent overflow-hidden shadow cursor-pointer hover:scale-105"
               >
                 <img
-                  src={
-                    user.profilePic
-                      ? `${BASE_URL}${user.profilePic}`
-                      : `${BASE_URL}/default-avatar.png`
-                  }
-                  alt="Profile"
+                  src={`${BASE_URL}/${(
+                    user.profilePic || "default-avatar.png"
+                  ).replace(/^\/+/, "")}`}
                   className="w-full h-full object-cover"
                 />
               </div>
