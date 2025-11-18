@@ -1,4 +1,3 @@
-// middlewares/role.js
 module.exports = (requiredRole) => {
   return (req, res, next) => {
     if (!req.user)
@@ -7,17 +6,29 @@ module.exports = (requiredRole) => {
     // Super Admin always has access
     if (req.user.isSuperAdmin) return next();
 
-    // If the user's main role matches (e.g., admin → full access)
+    /* -------------------------------------------------
+       SPECIAL CASE:
+       Allow student dashboard access to:
+       ✔ student
+       ✔ user
+       ✔ admin (already supported below)
+    --------------------------------------------------- */
+    if (requiredRole === "student") {
+      if (req.user.role === "student") return next();
+      if (req.user.role === "user") return next();   // <-- ADDED
+      if (req.user.role === "admin") return next();  // already existed
+    }
+
+    // Default: role must match exactly
     if (req.user.role === requiredRole) return next();
 
-    // NEW: Mentor/other roles with explicit permission access
+    // Check permission array (for mentors/teachers)
     const hasPermission =
       Array.isArray(req.user.permissions) &&
       req.user.permissions.includes(requiredRole.toLowerCase());
 
     if (hasPermission) return next();
 
-    // Deny if no permission found
     return res
       .status(403)
       .json({ message: `Access denied: Missing "${requiredRole}" permission` });

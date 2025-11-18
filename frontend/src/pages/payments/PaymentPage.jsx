@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import api from "../../utils/api";
 import toast from "react-hot-toast";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
@@ -7,23 +7,58 @@ export default function PaymentPage() {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const { state } = useLocation();
+
+  const [course, setCourse] = useState(state || null);
   const [processing, setProcessing] = useState(false);
 
-  const course = state; // coming from navigate(... {state})
+  const user = JSON.parse(localStorage.getItem("user") || "null");
 
+  // -----------------------------------------
+  // ✅ 1. LOGIN CHECK
+  // -----------------------------------------
+  useEffect(() => {
+    if (!user) {
+      toast.error("Please login to enroll");
+      return navigate("/login");
+    }
+  }, []);
+
+  // -----------------------------------------
+  // ⚠ If user reloads Payment Page (state becomes null)
+  // -----------------------------------------
+  if (!course) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-center">
+        <h1 className="text-3xl font-bold text-red-500">⚠ Course Details Missing</h1>
+        <p className="mt-3 text-gray-500">Please go back and select the course again.</p>
+
+        <button
+          onClick={() => navigate(-1)}
+          className="mt-5 px-6 py-2 bg-blue-600 text-white rounded-lg"
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
+  // -----------------------------------------
+  // ✅ 2. PAYMENT FUNCTION
+  // -----------------------------------------
   const handlePay = async () => {
     try {
       setProcessing(true);
 
-      // ✅ If this is a dummy group course (root-monthly, flower-2, etc)
+      // 🔥 For NON-database courses (root, stem, leaf, flower, seed)
       if (!courseId.startsWith("c_")) {
-        toast.success("✅ Payment Successful!");
+        toast.success("Payment Successful!");
         return navigate("/payment-success");
       }
 
-      // ✅ If real DB course
+      // 🔥 For REAL database courses
       await api.post("/payments/demo-pay", { courseId });
-      toast.success("✅ Payment Successful!");
+
+      toast.success("Payment Successful!");
       navigate("/payment-success");
     } catch (err) {
       toast.error(err.response?.data?.message || "Payment Failed");
@@ -32,13 +67,9 @@ export default function PaymentPage() {
     }
   };
 
-  if (!course)
-    return (
-      <div className="text-center p-10 text-red-500 font-bold">
-        ⚠ Invalid Course
-      </div>
-    );
-
+  // -----------------------------------------
+  // ✅ PAYMENT UI
+  // -----------------------------------------
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6">
       <h1 className="text-4xl font-bold mb-6">Payment</h1>

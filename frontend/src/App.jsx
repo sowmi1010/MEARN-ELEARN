@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -12,28 +12,57 @@ import Navbar from "./components/common/Navbar";
 import PrivateRoute from "./components/auth/PrivateRoute";
 import LoadingSpinner from "./components/common/LoadingSpinner";
 
-// 🔹 Auth pages
+// ⭐ Public Pages
+import CourseGroupsPage from "./pages/courses/CourseGroupsPage";
+import GroupDetailPage from "./pages/courses/GroupDetailPage";
+import PaymentPage from "./pages/payments/PaymentPage";
+import PaymentSuccess from "./pages/payments/PaymentSuccess";
+
+// 🔹 Lazy load pages
 const Login = React.lazy(() => import("./pages/auth/Login"));
 const Register = React.lazy(() => import("./pages/auth/Register"));
 const ForgotPassword = React.lazy(() => import("./pages/auth/ForgotPassword"));
 const VerifyCode = React.lazy(() => import("./pages/auth/VerifyCode"));
 const ResetPassword = React.lazy(() => import("./pages/auth/ResetPassword"));
 
-// 🔹 Landing page
 const LandingPage = React.lazy(() => import("./pages/landing/LandingPage"));
 
-// 🔹 Admin Layout and Pages
+// 🔹 STUDENT
+const StudentLayout = React.lazy(() => import("./layouts/StudentLayout"));
+
+const StudentDashboard = React.lazy(() =>
+  import("./pages/student/StudentDashboard")
+);
+
+const Videos = React.lazy(() => import("./pages/student/Videos"));
+const VideoPlayer = React.lazy(() => import("./pages/student/VideoPlayer"));
+const Books = React.lazy(() => import("./pages/student/Books"));
+const BookViewer = React.lazy(() => import("./pages/student/BookViewer"));
+const Notes = React.lazy(() => import("./pages/student/Notes"));
+const NoteViewer = React.lazy(() => import("./pages/student/NoteViewer"));
+const Tests = React.lazy(() => import("./pages/student/Test"));
+const TestViewer = React.lazy(() => import("./pages/student/TestViewer"));
+const Quiz = React.lazy(() => import("./pages/student/Quiz"));
+const QuizPlayer = React.lazy(() => import("./pages/student/QuizPlayer"));
+const QuizResult = React.lazy(() => import("./pages/student/QuizResult"));
+const Live = React.lazy(() => import("./pages/student/Live"));
+const TodoList = React.lazy(() => import("./pages/student/TodoList"));
+const AddTodo = React.lazy(() => import("./pages/student/AddTodo"));
+
+// 🔹 ADMIN
 const AdminLayout = React.lazy(() => import("./layouts/AdminLayout"));
 const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminPayments = React.lazy(() =>
   import("./pages/admin/payment/AdminPayments")
 );
+
 const AdminList = React.lazy(() =>
   import("./pages/admin/adminUsers/AdminList")
 );
 const AdminDetailsUpload = React.lazy(() =>
   import("./pages/admin/adminUsers/AdminDetailsUpload")
 );
+
 const StudentList = React.lazy(() =>
   import("./pages/admin/students/StudentList")
 );
@@ -43,13 +72,16 @@ const AddStudent = React.lazy(() =>
 const AboutStudent = React.lazy(() =>
   import("./pages/admin/students/AboutStudent")
 );
+
 const AdminHomePage = React.lazy(() => import("./pages/admin/AdminHomePage"));
+
 const TeacherUpload = React.lazy(() =>
   import("./pages/admin/teachers/TeacherUpload")
 );
 const FeedbackUpload = React.lazy(() =>
   import("./pages/admin/feedbacks/FeedbackUpload")
 );
+
 const MentorList = React.lazy(() => import("./pages/admin/mentor/MentorList"));
 const MentorUpload = React.lazy(() =>
   import("./pages/admin/mentor/MentorUpload")
@@ -58,7 +90,7 @@ const MentorAccess = React.lazy(() =>
   import("./pages/admin/mentor/MentorAccess")
 );
 
-// 🔹 Course pages
+// 🔹 ADMIN COURSE PAGES
 const CourseHome = React.lazy(() => import("./pages/admin/course/CourseHome"));
 const CourseSubjects = React.lazy(() =>
   import("./pages/admin/course/CourseSubjects")
@@ -69,41 +101,48 @@ const CourseCategories = React.lazy(() =>
 const CourseContents = React.lazy(() =>
   import("./pages/admin/course/CourseContents")
 );
+
 const AddVideo = React.lazy(() => import("./pages/admin/course/add/AddVideo"));
 const AddBook = React.lazy(() => import("./pages/admin/course/add/AddBook"));
 const AddNotes = React.lazy(() => import("./pages/admin/course/add/AddNotes"));
 const AddTest = React.lazy(() => import("./pages/admin/course/add/AddTest"));
 const AddQuiz = React.lazy(() => import("./pages/admin/course/add/AddQuiz"));
-const ViewNotes = React.lazy(() =>
-  import("./pages/admin/course/view/ViewNotes")
-);
-const EditVideo = React.lazy(() =>
-  import("./pages/admin/course/edit/EditVideo")
-);
+
 const ManageVideos = React.lazy(() =>
   import("./pages/admin/course/manage/ManageVideos")
-);
-const EditNotes = React.lazy(() =>
-  import("./pages/admin/course/edit/EditNotes")
-);
-const ViewVideo = React.lazy(() =>
-  import("./pages/admin/course/view/ViewVideo")
 );
 const ManageNotes = React.lazy(() =>
   import("./pages/admin/course/manage/ManageNotes")
 );
+const ManageTests = React.lazy(() =>
+  import("./pages/admin/course/manage/ManageTests")
+);
+
+const EditVideo = React.lazy(() =>
+  import("./pages/admin/course/edit/EditVideo")
+);
+const EditNotes = React.lazy(() =>
+  import("./pages/admin/course/edit/EditNotes")
+);
 const EditTests = React.lazy(() =>
   import("./pages/admin/course/edit/EditTests")
+);
+
+const ViewVideo = React.lazy(() =>
+  import("./pages/admin/course/view/ViewVideo")
+);
+const ViewNotes = React.lazy(() =>
+  import("./pages/admin/course/view/ViewNotes")
 );
 const ViewTest = React.lazy(() =>
   import("./pages/admin/course/view/ViewTests")
 );
 
-// ✅ Chat pages (non-lazy for stable rendering)
+// 🔹 CHAT
 import ChatList from "./pages/admin/chat/ChatList";
 import ChatWindow from "./pages/admin/chat/ChatWindow";
 
-// 🔹 Animation wrapper
+// ✨ Animation Wrapper
 function PageWrapper({ children }) {
   return (
     <motion.div
@@ -120,35 +159,11 @@ function PageWrapper({ children }) {
 
 function AnimatedRoutes() {
   const location = useLocation();
-  const isChatRoute = location.pathname.startsWith("/admin/team");
 
-  // 🛑 Disable animation for chat routes (to prevent chat remount)
-  if (isChatRoute) {
-    return (
-      <Routes location={location} key={location.pathname}>
-        <Route
-          path="/admin/*"
-          element={
-            <PrivateRoute requiredRoles={["admin", "mentor"]}>
-              <Suspense fallback={<LoadingSpinner />}>
-                <AdminLayout />
-              </Suspense>
-            </PrivateRoute>
-          }
-        >
-          <Route path="team" element={<ChatList />} />
-          <Route path="team/:userId" element={<ChatWindow />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    );
-  }
-
-  // ✅ Use AnimatePresence for normal routes
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        {/* 🌐 Public Routes */}
+        {/* ⭐ PUBLIC ROUTES */}
         <Route
           path="/"
           element={
@@ -159,6 +174,44 @@ function AnimatedRoutes() {
             </Suspense>
           }
         />
+
+        {/* ⭐ Course Group Public */}
+        <Route
+          path="/courses"
+          element={
+            <PageWrapper>
+              <CourseGroupsPage />
+            </PageWrapper>
+          }
+        />
+        <Route
+          path="/courses/:groupName"
+          element={
+            <PageWrapper>
+              <GroupDetailPage />
+            </PageWrapper>
+          }
+        />
+
+        {/* ⭐ Payment */}
+        <Route
+          path="/payment/:courseId"
+          element={
+            <PageWrapper>
+              <PaymentPage />
+            </PageWrapper>
+          }
+        />
+        <Route
+          path="/payment-success"
+          element={
+            <PageWrapper>
+              <PaymentSuccess />
+            </PageWrapper>
+          }
+        />
+
+        {/* ⭐ AUTH ROUTES */}
         <Route
           path="/login"
           element={
@@ -169,6 +222,7 @@ function AnimatedRoutes() {
             </Suspense>
           }
         />
+
         <Route
           path="/register"
           element={
@@ -179,6 +233,7 @@ function AnimatedRoutes() {
             </Suspense>
           }
         />
+
         <Route
           path="/forgot-password"
           element={
@@ -189,6 +244,7 @@ function AnimatedRoutes() {
             </Suspense>
           }
         />
+
         <Route
           path="/verify-code"
           element={
@@ -199,6 +255,7 @@ function AnimatedRoutes() {
             </Suspense>
           }
         />
+
         <Route
           path="/reset-password"
           element={
@@ -210,7 +267,33 @@ function AnimatedRoutes() {
           }
         />
 
-        {/* 🧭 Admin + Mentor Shared Dashboard */}
+        {/* ================= STUDENT ROUTES ================= */}
+        <Route
+          path="/student"
+          element={
+            <Suspense fallback={<LoadingSpinner />}>
+              <StudentLayout />
+            </Suspense>
+          }
+        >
+          <Route index element={<StudentDashboard />} />
+          <Route path="videos" element={<Videos />} />
+          <Route path="video/:id" element={<VideoPlayer />} />
+          <Route path="books" element={<Books />} />
+          <Route path="books/view/:id" element={<BookViewer />} />
+          <Route path="notes" element={<Notes />} />
+          <Route path="notes/view/:id" element={<NoteViewer />} />
+          <Route path="tests" element={<Tests />} />
+          <Route path="tests/view/:id" element={<TestViewer />} />
+          <Route path="quiz" element={<Quiz />} />
+          <Route path="quiz/play/:id" element={<QuizPlayer />} />
+          <Route path="quiz/result" element={<QuizResult />} />
+          <Route path="live" element={<Live />} />
+          <Route path="todo" element={<TodoList />} />
+          <Route path="todo/add" element={<AddTodo />} />
+        </Route>
+
+        {/* ================= ADMIN ROUTES ================= */}
         <Route
           path="/admin/*"
           element={
@@ -221,25 +304,34 @@ function AnimatedRoutes() {
             </PrivateRoute>
           }
         >
-          <Route path="dashboard" element={<AdminDashboard />} />
           <Route index element={<AdminHomePage />} />
-          <Route path="home" element={<AdminHomePage />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="payments" element={<AdminPayments />} />
-          <Route path="teachers" element={<TeacherUpload />} />
-          <Route path="feedbacks" element={<FeedbackUpload />} />
+
+          {/* ADMINS */}
           <Route path="admins" element={<AdminList />} />
           <Route path="admins/new" element={<AdminDetailsUpload />} />
           <Route path="admins/edit/:id" element={<AdminDetailsUpload />} />
+
+          {/* STUDENTS */}
           <Route path="students" element={<StudentList />} />
           <Route path="students/new" element={<AddStudent />} />
           <Route path="students/edit/:id" element={<AddStudent />} />
           <Route path="students/details/:id" element={<AboutStudent />} />
+
+          {/* MENTORS */}
           <Route path="mentors" element={<MentorList />} />
           <Route path="mentors/new" element={<MentorUpload />} />
           <Route path="mentors/edit/:id" element={<MentorUpload />} />
           <Route path="mentor-access/:id" element={<MentorAccess />} />
 
-          {/* 🎓 Courses */}
+          {/* TEACHER */}
+          <Route path="teachers/new" element={<TeacherUpload />} />
+
+          {/* FEEDBACK */}
+          <Route path="feedbacks/new" element={<FeedbackUpload />} />
+
+          {/* COURSES */}
           <Route path="courses" element={<CourseHome />} />
           <Route
             path="courses/:groupId/subjects"
@@ -253,28 +345,35 @@ function AnimatedRoutes() {
             path="courses/:groupId/:subject/:category/contents"
             element={<CourseContents />}
           />
+
+          {/* ADD */}
           <Route path="courses/add-video" element={<AddVideo />} />
           <Route path="courses/add-book" element={<AddBook />} />
           <Route path="courses/add-notes" element={<AddNotes />} />
           <Route path="courses/add-test" element={<AddTest />} />
           <Route path="courses/add-quiz" element={<AddQuiz />} />
+
+          {/* MANAGE */}
+          <Route path="courses/manage-videos" element={<ManageVideos />} />
+          <Route path="courses/manage-notes" element={<ManageNotes />} />
+          <Route path="courses/manage-tests" element={<ManageTests />} />
+
+          {/* EDIT */}
           <Route path="courses/edit/video/:id" element={<EditVideo />} />
-          <Route path="courses/view/video/:id" element={<ViewVideo />} />
-          <Route path="courses/view/note/:id" element={<ViewNotes />} />
           <Route path="courses/edit/notes/:id" element={<EditNotes />} />
-          <Route path="courses/edit/tests/:id" element={<EditTests />} />
+          <Route path="courses/edit/test/:id" element={<EditTests />} />
+
+          {/* VIEW */}
+          <Route path="courses/view/video/:id" element={<ViewVideo />} />
+          <Route path="courses/view/notes/:id" element={<ViewNotes />} />
           <Route path="courses/view/test/:id" element={<ViewTest />} />
-          <Route
-            path="courses/:groupId/:subject/:category/videos"
-            element={<ManageVideos />}
-          />
-          <Route
-            path="courses/:groupId/:subject/:category/notes"
-            element={<ManageNotes />}
-          />
+
+          {/* CHAT */}
+          <Route path="team" element={<ChatList />} />
+          <Route path="team/:userId" element={<ChatWindow />} />
         </Route>
 
-        {/* 🧭 Default fallback */}
+        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AnimatePresence>
@@ -282,24 +381,6 @@ function AnimatedRoutes() {
 }
 
 export default function App() {
-  const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem("user");
-    return stored ? JSON.parse(stored) : null;
-  });
-
-  useEffect(() => {
-    const syncUser = () => {
-      const stored = localStorage.getItem("user");
-      setUser(stored ? JSON.parse(stored) : null);
-    };
-    window.addEventListener("user-login", syncUser);
-    window.addEventListener("user-logout", syncUser);
-    return () => {
-      window.removeEventListener("user-login", syncUser);
-      window.removeEventListener("user-logout", syncUser);
-    };
-  }, []);
-
   return (
     <Router>
       <div className="bg-darkBg min-h-screen text-gray-200">

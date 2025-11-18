@@ -7,34 +7,47 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const fileInputRef = useRef(null);
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
   );
+  const fileInputRef = useRef(null);
   const BASE_URL = import.meta.env.VITE_BASE_URL;
 
-  // Theme Toggle
+  /* ---------------------------------------------------
+     🎯 1. Hide Navbar on Admin / Student / Mentor routes
+  ------------------------------------------------------*/
+  if (
+    location.pathname.startsWith("/admin") ||
+    location.pathname.startsWith("/student") ||
+    location.pathname.startsWith("/mentor") ||
+    location.pathname.startsWith("/teacher")
+  ) {
+    return null;
+  }
+
+  /* ---------------------------------------------------
+     🎯 2. Theme Toggle Handler
+  ------------------------------------------------------*/
   useEffect(() => {
-      console.log("ENV BASE URL →", BASE_URL); // ✅ ADD THIS LINE
     if (theme === "dark") document.documentElement.classList.add("dark");
     else document.documentElement.classList.remove("dark");
+
     localStorage.setItem("theme", theme);
   }, [theme]);
 
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
-  // Load user and listen for login/logout changes
+  /* ---------------------------------------------------
+     🎯 3. Sync User State
+  ------------------------------------------------------*/
   useEffect(() => {
     const syncUser = () => {
       const stored = localStorage.getItem("user");
       setUser(stored ? JSON.parse(stored) : null);
     };
 
-    // Initial load
     syncUser();
 
-    // Listen for all login/logout events across app
     window.addEventListener("storage", syncUser);
     window.addEventListener("user-login", syncUser);
     window.addEventListener("user-logout", syncUser);
@@ -46,23 +59,24 @@ export default function Navbar() {
     };
   }, []);
 
-  // Hide Navbar on admin pages
-  if (location.pathname.startsWith("/admin")) return null;
-
-  // Logout handler
+  /* ---------------------------------------------------
+     🎯 4. Logout Handler
+  ------------------------------------------------------*/
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    setUser(null);
 
-    // Trigger instant logout update everywhere
     window.dispatchEvent(new Event("user-logout"));
     navigate("/login");
   };
 
+  /* ---------------------------------------------------
+     🎯 5. Profile Picture Upload
+  ------------------------------------------------------*/
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
     const formData = new FormData();
     formData.append("profilePic", file);
 
@@ -71,6 +85,7 @@ export default function Navbar() {
       const res = await api.post("/auth/upload-profile", formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       const updatedUser = { ...user, profilePic: res.data.profilePic };
       localStorage.setItem("user", JSON.stringify(updatedUser));
       setUser(updatedUser);
@@ -79,11 +94,14 @@ export default function Navbar() {
     }
   };
 
+  /* ---------------------------------------------------
+     🎯 6. Final Navbar UI
+  ------------------------------------------------------*/
   return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-white/80 dark:bg-darkCard/70 backdrop-blur-lg shadow-md border-b border-gray-200 dark:border-gray-700">
-          {console.log("Navbar Rendered ✅")}
-
       <div className="px-6 py-3 flex justify-between items-center max-w-7xl mx-auto">
+
+        {/* Logo */}
         <h1
           onClick={() => navigate("/")}
           className="text-2xl font-extrabold bg-gradient-to-r from-accent to-blue-500 bg-clip-text text-transparent cursor-pointer"
@@ -91,8 +109,11 @@ export default function Navbar() {
           LAST TRY ACADEMY
         </h1>
 
+        {/* Desktop Menu */}
         <div className="hidden md:flex gap-8 items-center font-medium">
           <NavLink to="/">Home</NavLink>
+          <NavLink to="/courses">Courses</NavLink>
+          <NavLink to="/about">About</NavLink>
 
           {!user ? (
             <>
@@ -109,7 +130,9 @@ export default function Navbar() {
           )}
         </div>
 
+        {/* Right Section */}
         <div className="flex items-center gap-4">
+
           {/* Theme Toggle */}
           <label className="relative inline-flex items-center cursor-pointer">
             <input
@@ -124,12 +147,14 @@ export default function Navbar() {
             </div>
           </label>
 
+          {/* User Profile */}
           {user && (
             <div className="flex items-center gap-3">
               <p className="hidden md:block text-sm text-gray-600 dark:text-gray-300 font-medium">
-                Hi,{" "}
-                <span className="text-accent font-semibold">{user.name}</span>
+                Hi, <span className="text-accent font-semibold">{user.name}</span>
               </p>
+
+              {/* Profile Picture */}
               <div
                 onClick={() => fileInputRef.current.click()}
                 className="w-10 h-10 md:w-11 md:h-11 rounded-full border-2 border-accent overflow-hidden shadow cursor-pointer hover:scale-105"
@@ -141,6 +166,7 @@ export default function Navbar() {
                   className="w-full h-full object-cover"
                 />
               </div>
+
               <input
                 ref={fileInputRef}
                 type="file"
@@ -156,6 +182,9 @@ export default function Navbar() {
   );
 }
 
+/* ---------------------------------------------------
+   🎯 Helper NavLink Component
+------------------------------------------------------*/
 function NavLink({ to, children }) {
   return (
     <Link

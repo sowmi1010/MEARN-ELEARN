@@ -17,96 +17,127 @@ export default function AdminPayments() {
     async function fetchData() {
       if (!(user.role === "admin" || user.permissions?.includes("payments"))) {
         setLoading(false);
-        return; 
+        return;
       }
+
       try {
         const token = localStorage.getItem("token");
         const headers = { Authorization: `Bearer ${token}` };
 
+        // --- GET PAYMENTS ---
         const res = await api.get("/payments/all", { headers });
-        setPayments(res.data);
-        setFiltered(res.data);
 
+        // Normalize to array ALWAYS
+        const list =
+          Array.isArray(res.data)
+            ? res.data
+            : Array.isArray(res.data.payments)
+            ? res.data.payments
+            : [];
+
+        setPayments(list);
+        setFiltered(list);
+
+        // --- GET COURSES ---
         const res2 = await api.get("/courses", { headers });
-        setCourses(res2.data);
+        const courseList =
+          Array.isArray(res2.data)
+            ? res2.data
+            : Array.isArray(res2.data.courses)
+            ? res2.data.courses
+            : [];
+
+        setCourses(courseList);
       } catch (err) {
         console.error("Fetch payments error:", err.response?.data || err.message);
+        setPayments([]);
+        setFiltered([]);
       } finally {
         setLoading(false);
       }
     }
+
     fetchData();
   }, [user.role, user.permissions]);
 
-  // Filter by course
-  function handleFilter(courseId) {
+  // --------------------- FILTER ----------------------
+  const handleFilter = (courseId) => {
     setCourseFilter(courseId);
     setFiltered(
       courseId ? payments.filter((p) => p.course?._id === courseId) : payments
     );
-  }
+  };
 
-  // Export Excel
-  function exportExcel() {
+  // --------------------- EXPORT EXCEL ----------------------
+  const exportExcel = () => {
     if (filtered.length === 0) return alert("No payments to export!");
+
     const ws = XLSX.utils.json_to_sheet(
       filtered.map((p) => ({
-        Student: p.student?.name,
-        Email: p.student?.email,
+        Student: p.user?.name,
+        Email: p.user?.email,
         Course: p.course?.title,
         Amount: p.amount,
-        Date: new Date(p.createdAt).toLocaleDateString(),
+        Date: new Date(p.createdAt).toLocaleString(),
         Status: p.status,
       }))
     );
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Payments");
     XLSX.writeFile(wb, "payments_report.xlsx");
-  }
+  };
 
-  // Export PDF
-  function exportPDF() {
+  // --------------------- EXPORT PDF ----------------------
+  const exportPDF = () => {
     if (filtered.length === 0) return alert("No payments to export!");
+
     const doc = new jsPDF();
     doc.text("Payments Report", 14, 16);
+
     doc.autoTable({
       startY: 22,
       head: [["Student", "Email", "Course", "Amount", "Date", "Status"]],
       body: filtered.map((p) => [
-        p.student?.name,
-        p.student?.email,
+        p.user?.name,
+        p.user?.email,
         p.course?.title,
         `₹${p.amount}`,
-        new Date(p.createdAt).toLocaleDateString(),
+        new Date(p.createdAt).toLocaleString(),
         p.status,
       ]),
     });
+
     doc.save("payments_report.pdf");
-  }
+  };
 
-  const totalIncome = filtered.reduce((sum, p) => sum + p.amount, 0);
+  // --------------------- TOTAL INCOME ----------------------
+  const totalIncome = Array.isArray(filtered)
+    ? filtered.reduce((sum, p) => sum + (p.amount || 0), 0)
+    : 0;
 
+  // --------------------- LOADING ----------------------
   if (loading) return <div className="p-6 text-gray-500">Loading payments...</div>;
 
+  // --------------------- PERMISSION ----------------------
   if (!(user.role === "admin" || user.permissions?.includes("payments"))) {
     return (
-      <div className="p-8 min-h-screen bg-gray-100 dark:bg-darkBg text-red-500 text-xl font-semibold flex items-center justify-center">
+      <div className="p-8 min-h-screen bg-gray-100 text-red-500 text-xl font-semibold">
         You do not have permission to view payment data.
       </div>
     );
   }
 
   return (
-    <div className="p-6 min-h-screen bg-gray-100 dark:bg-darkBg transition-colors duration-300">
-      {/* Page Title */}
+    <div className="p-6 min-h-screen bg-gray-100 dark:bg-darkBg">
       <h1 className="text-3xl font-extrabold text-accent mb-8">💳 Payments</h1>
 
-      {/* Filters + Export */}
+      {/* FILTER + EXPORT BUTTONS */}
       <div className="flex flex-wrap gap-4 mb-8">
         <select
           value={courseFilter}
           onChange={(e) => handleFilter(e.target.value)}
-          className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-darkCard text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-accent outline-none"
+          className="px-4 py-2 rounded-lg border"
         >
           <option value="">All Courses</option>
           {courses.map((c) => (
@@ -116,36 +147,29 @@ export default function AdminPayments() {
           ))}
         </select>
 
-        <button
-          onClick={exportExcel}
-          className="px-5 py-2 bg-gradient-to-r from-green-400 to-emerald-500 text-white font-semibold rounded-lg shadow hover:scale-105 transition-transform duration-300"
-        >
+        <button onClick={exportExcel} className="px-5 py-2 bg-green-500 text-white rounded-lg">
           Export Excel
         </button>
-
-        <button
-          onClick={exportPDF}
-          className="px-5 py-2 bg-gradient-to-r from-red-400 to-red-600 text-white font-semibold rounded-lg shadow hover:scale-105 transition-transform duration-300"
-        >
+        <button onClick={exportPDF} className="px-5 py-2 bg-red-500 text-white rounded-lg">
           Export PDF
         </button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
-        <SummaryCard title="Total Income" value={`₹${totalIncome}`} color="from-green-400 to-emerald-600" />
+      {/* SUMMARY CARDS */}
+      <div className="grid sm:grid-cols-3 gap-6 mb-10">
+        <SummaryCard title="Total Income" value={`₹${totalIncome}`} color="from-green-400 to-green-600" />
         <SummaryCard title="Transactions" value={filtered.length} color="from-purple-400 to-pink-500" />
-        <SummaryCard title="Courses" value={courses.length} color="from-cyan-400 to-blue-500" />
+        <SummaryCard title="Courses" value={courses.length} color="from-blue-400 to-blue-600" />
       </div>
 
-      {/* Payments Table */}
-      <div className="bg-white dark:bg-darkCard p-6 rounded-xl shadow-xl overflow-x-auto border border-gray-200 dark:border-gray-700">
+      {/* TABLE */}
+      <div className="bg-white p-6 rounded-xl shadow">
         {filtered.length === 0 ? (
-          <p className="text-gray-500 dark:text-gray-400">No payments found</p>
+          <p>No payments found</p>
         ) : (
-          <table className="w-full border-collapse">
+          <table className="w-full text-left">
             <thead>
-              <tr className="bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-left">
+              <tr className="bg-gray-200">
                 <th className="p-3">Student</th>
                 <th className="p-3">Email</th>
                 <th className="p-3">Course</th>
@@ -155,31 +179,14 @@ export default function AdminPayments() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((p, idx) => (
-                <tr
-                  key={p._id}
-                  className={`hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                    idx % 2 === 0
-                      ? "bg-gray-50 dark:bg-gray-900/40"
-                      : "bg-gray-100 dark:bg-gray-800/50"
-                  }`}
-                >
-                  <td className="p-3 font-medium text-gray-800 dark:text-gray-100">
-                    {p.student?.name}
-                  </td>
-                  <td className="p-3 text-gray-500 dark:text-gray-300">{p.student?.email}</td>
-                  <td className="p-3 text-gray-800 dark:text-gray-200">{p.course?.title}</td>
-                  <td className="p-3 text-green-500 font-semibold">₹{p.amount}</td>
-                  <td className="p-3 text-gray-500 dark:text-gray-300">
-                    {new Date(p.createdAt).toLocaleDateString()}
-                  </td>
-                  <td
-                    className={`p-3 font-semibold ${
-                      p.status === "success" ? "text-green-500" : "text-red-500"
-                    }`}
-                  >
-                    {p.status}
-                  </td>
+              {filtered.map((p, i) => (
+                <tr key={p._id}>
+                  <td className="p-3">{p.user?.name}</td>
+                  <td className="p-3">{p.user?.email}</td>
+                  <td className="p-3">{p.course?.title}</td>
+                  <td className="p-3">₹{p.amount}</td>
+                  <td className="p-3">{new Date(p.createdAt).toLocaleString()}</td>
+                  <td className="p-3">{p.status}</td>
                 </tr>
               ))}
             </tbody>
@@ -190,13 +197,10 @@ export default function AdminPayments() {
   );
 }
 
-// Summary Card Component
 function SummaryCard({ title, value, color }) {
   return (
-    <div
-      className={`p-6 rounded-xl shadow-lg text-darkBg bg-gradient-to-r ${color} transform hover:scale-105 transition-transform duration-300 text-center`}
-    >
-      <h3 className="text-sm font-bold opacity-80">{title}</h3>
+    <div className={`p-6 rounded-xl text-white bg-gradient-to-r ${color}`}>
+      <h3 className="text-sm font-bold">{title}</h3>
       <p className="text-3xl font-extrabold mt-2">{value}</p>
     </div>
   );

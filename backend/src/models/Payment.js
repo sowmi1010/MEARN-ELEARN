@@ -1,14 +1,30 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const paymentSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course' },
-  provider: { type: String, enum: ['razorpay', 'stripe'], required: true },
-  providerPaymentId: { type: String, required: true },
-  amount: { type: Number, required: true },
-  currency: { type: String, default: 'INR' },
-  status: { type: String, enum: ['created', 'successful', 'failed'], default: 'created' },
-  metadata: Object,
-}, { timestamps: true });
+const paymentSchema = new mongoose.Schema(
+  {
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    course: { type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true },
 
-module.exports = mongoose.model('Payment', paymentSchema);
+    provider: {
+      type: String,
+      enum: ["razorpay", "stripe", "demo"],
+      default: "demo",
+    },
+
+    providerPaymentId: { type: String, required: true },
+
+    amount: { type: Number, default: 0 },
+    currency: { type: String, default: "INR" },
+
+    status: {
+      type: String,
+      enum: ["created", "successful", "failed"],
+      default: "successful",
+    },
+
+    metadata: Object,
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("Payment", paymentSchema);

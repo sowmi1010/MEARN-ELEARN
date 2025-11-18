@@ -10,35 +10,54 @@ exports.addBook = async (req, res) => {
   try {
     const { group, standard, board, language, title, subject, about } = req.body;
 
+    // Required fields
     if (!group || !standard || !board || !language || !title) {
       return res.status(400).json({ message: "All required fields must be filled" });
     }
 
-    const thumbnail = req.files?.thumbnail?.[0]?.path;
-    const file = req.files?.file?.[0]?.path;
+    // Extract Uploaded Files
+    const thumbnail = req.files?.thumbnail?.[0]?.filename
+      ? "uploads/thumbnails/" + req.files.thumbnail[0].filename
+      : null;
 
+    const file = req.files?.file?.[0]?.filename
+      ? "uploads/books/" + req.files.file[0].filename
+      : null;
+
+    // Check files
     if (!thumbnail || !file) {
-      return res.status(400).json({ message: "Both thumbnail and file are required" });
+      return res.status(400).json({
+        message: "Both thumbnail and file are required",
+      });
     }
 
+    // Save to DB
     const newBook = await Book.create({
       group,
       standard,
       board,
       language,
-      subject,
       title,
+      subject,
       about,
       thumbnail,
       file,
     });
 
-    res.status(201).json({ message: "✅ Book added successfully", book: newBook });
+    res.status(201).json({
+      message: "✅ Book added successfully",
+      book: newBook
+    });
+
   } catch (err) {
     console.error("❌ addBook error:", err);
-    res.status(500).json({ message: "Failed to add book", error: err.message });
+    res.status(500).json({
+      message: "Failed to add book",
+      error: err.message
+    });
   }
 };
+
 
 /**
  * ==========================

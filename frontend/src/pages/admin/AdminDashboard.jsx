@@ -15,7 +15,7 @@ export default function AdminDashboard() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const user = JSON.parse(localStorage.getItem("user")); // ✅ get current role & permissions
+  const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
     async function fetchData() {
@@ -23,59 +23,69 @@ export default function AdminDashboard() {
         const token = localStorage.getItem("token");
         const headers = { Authorization: `Bearer ${token}` };
 
-        // ✅ ADMIN or SUPERADMIN — fetch everything
+        // --------------------------------------------
+        // ADMIN or SUPERADMIN
+        // --------------------------------------------
         if (user?.role === "admin" || user?.isSuperAdmin) {
-          const [usersRes, videosRes, paymentsRes, coursesRes] = await Promise.all([
-            api.get("/auth/users", { headers }),
-            api.get("/videos/count/total", { headers }),
-            api.get("/payments/all", { headers }),
-            api.get("/courses", { headers }),
-          ]);
+          const [usersRes, videosRes, paymentsRes, coursesRes] =
+            await Promise.all([
+              api.get("/auth/users", { headers }),
+              api.get("/videos/count/total", { headers }),
+              api.get("/payments/all", { headers }),
+              api.get("/courses", { headers }),
+            ]);
 
           setStudents(usersRes.data || []);
           setVideos(videosRes.data.total || 0);
-          setPayments(paymentsRes.data || []);
+
+          // ✅ FIXED HERE
+          setPayments(paymentsRes.data.payments || []);
+
           setCourses(coursesRes.data || []);
         }
 
-        // ✅ MENTOR — fetch only allowed modules
+        // --------------------------------------------
+        // MENTOR ACCESS
+        // --------------------------------------------
         else if (user?.role === "mentor") {
           const permissions = user?.permissions || [];
 
-          if (permissions.includes("dashboard") || permissions.includes("students")) {
+          if (
+            permissions.includes("dashboard") ||
+            permissions.includes("students")
+          ) {
             try {
               const usersRes = await api.get("/auth/users", { headers });
               setStudents(usersRes.data || []);
-            } catch (err) {
-              console.warn("Mentor: no permission for users data");
-            }
+            } catch {}
           }
 
           if (permissions.includes("courses")) {
             try {
               const coursesRes = await api.get("/courses", { headers });
               setCourses(coursesRes.data || []);
-            } catch (err) {
-              console.warn("Mentor: no permission for courses");
-            }
+            } catch {}
           }
 
           if (permissions.includes("payments")) {
             try {
               const paymentsRes = await api.get("/payments/all", { headers });
-              setPayments(paymentsRes.data || []);
-            } catch (err) {
-              console.warn("Mentor: no permission for payments");
-            }
+
+              // ✅ FIXED HERE TOO
+              setPayments(paymentsRes.data.payments || []);
+            } catch {}
           }
 
-          if (permissions.includes("dashboard") || permissions.includes("videos")) {
+          if (
+            permissions.includes("dashboard") ||
+            permissions.includes("videos")
+          ) {
             try {
-              const videosRes = await api.get("/videos/count/total", { headers });
+              const videosRes = await api.get("/videos/count/total", {
+                headers,
+              });
               setVideos(videosRes.data.total || 0);
-            } catch (err) {
-              console.warn("Mentor: no permission for videos");
-            }
+            } catch {}
           }
         }
       } catch (err) {
@@ -88,6 +98,9 @@ export default function AdminDashboard() {
     fetchData();
   }, []);
 
+  // --------------------------------------------
+  // TOTAL INCOME
+  // --------------------------------------------
   const totalIncome = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
 
   if (loading) {
@@ -98,8 +111,10 @@ export default function AdminDashboard() {
     );
   }
 
-  // ✅ Optional: message if no access to any module
-  if (user?.role === "mentor" && (!user.permissions || user.permissions.length === 0)) {
+  if (
+    user?.role === "mentor" &&
+    (!user.permissions || user.permissions.length === 0)
+  ) {
     return (
       <div className="flex justify-center items-center h-screen text-gray-400 text-lg">
         🔒 You don't have access to any dashboard modules.
@@ -121,18 +136,21 @@ export default function AdminDashboard() {
           icon={<FaUserGraduate />}
           color="from-purple-500 to-pink-500"
         />
+
         <StatCard
           title="Total Videos"
           value={videos}
           icon={<FaVideo />}
           color="from-blue-500 to-indigo-500"
         />
+
         <StatCard
           title="Total Income"
           value={`₹${totalIncome}`}
           icon={<FaRupeeSign />}
           color="from-green-500 to-emerald-600"
         />
+
         <StatCard
           title="Total Courses"
           value={courses.length}
@@ -141,13 +159,13 @@ export default function AdminDashboard() {
         />
       </div>
 
-      {/* Charts Row */}
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <VisitorChart />
         <TopCoursesChart courses={courses} />
       </div>
 
-      {/* Groups and Reviews Row */}
+      {/* Group + Reviews */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <GroupOverview />
         <ReviewStats />
