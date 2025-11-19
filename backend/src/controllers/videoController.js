@@ -1,9 +1,78 @@
 const Video = require("../models/Video");
+const Progress = require("../models/Progress");
+const Certificate = require("../models/Certificate");
+const autoGenerateCertificate = require("../utils/autoCertificate");
 const Course = require("../models/Course");
 const fs = require("fs");
 const path = require("path");
 
- // Add New Video
+
+// Mark Video as Watched + Auto Certificate Generator
+exports.markVideoWatched = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const videoId = req.params.id;
+
+    // Get video
+    const video = await Video.findById(videoId);
+    if (!video) return res.status(404).json({ message: "Video not found" });
+
+    const courseId = video.course;
+    // If no course id, skip progress tracking but don't break
+    if (!courseId) {
+      return res.json({
+        message: "Video watched (no course linked)",
+      });
+    }
+
+
+    // Find or create progress
+    let progress = await Progress.findOne({ student: studentId, course: courseId });
+
+    if (!progress) {
+      progress = await Progress.create({
+        student: studentId,
+        course: courseId,
+        watchedVideos: [videoId],
+      });
+    } else {
+      if (!progress.watchedVideos.includes(videoId)) {
+        progress.watchedVideos.push(videoId);
+      }
+    }
+
+    await progress.save();
+
+    // Count total videos in course
+    const totalVideos = await Video.countDocuments({ course: courseId });
+
+    // 🎉 Check for course completion
+    if (progress.watchedVideos.length === totalVideos && !progress.completed) {
+      progress.completed = true;
+      await progress.save();
+
+      const certificate = await autoGenerateCertificate(studentId, courseId);
+
+      return res.json({
+        message: "🎉 Course completed! Certificate Generated.",
+        certificate,
+      });
+    }
+
+    res.json({
+      message: "Progress Updated",
+      watched: progress.watchedVideos.length,
+      total: totalVideos,
+      progress,
+    });
+  } catch (err) {
+    console.error("markVideoWatched error:", err);
+    res.status(500).json({ message: "Failed to update progress" });
+  }
+};
+
+
+// Add New Video
 exports.addVideo = async (req, res) => {
   try {
     const {
@@ -65,7 +134,7 @@ exports.addVideo = async (req, res) => {
   }
 };
 
- // Get All Videos (Smart Filtering)
+// Get All Videos (Smart Filtering)
 
 exports.getVideos = async (req, res) => {
   try {

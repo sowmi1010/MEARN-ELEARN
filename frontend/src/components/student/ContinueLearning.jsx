@@ -1,7 +1,8 @@
-// src/components/student/ContinueLearning.jsx
 import React, { useEffect, useState } from "react";
 import api from "../../utils/api";
 import { useNavigate } from "react-router-dom";
+import { MdPlayCircle } from "react-icons/md";
+import { RiBookOpenLine } from "react-icons/ri";
 
 export default function ContinueLearning({ selectedCourse }) {
   const [item, setItem] = useState(null);
@@ -14,11 +15,15 @@ export default function ContinueLearning({ selectedCourse }) {
         return;
       }
 
-      // Try backend endpoint for last watched video per course (preferred)
+      // Preferred: Get last-watched video
       try {
         const token = localStorage.getItem("token");
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
-        const res = await api.get(`/progress/last-watched`, { headers, params: { courseId: selectedCourse._id }});
+        const res = await api.get(`/progress/last-watched`, {
+          headers,
+          params: { courseId: selectedCourse._id },
+        });
+
         if (res.data && res.data.video) {
           setItem({
             title: res.data.video.title,
@@ -29,16 +34,21 @@ export default function ContinueLearning({ selectedCourse }) {
           });
           return;
         }
-      } catch (err) {
-        // ignore and fallback to videos list
-      }
+      } catch (err) {}
 
-      // Fallback: fetch first video for course (or any)
+      // Fallback for first video of course
       try {
         const token = localStorage.getItem("token");
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
-        const vRes = await api.get("/videos", { headers, params: { course: selectedCourse._id, limit: 1 }});
-        const videos = Array.isArray(vRes.data) ? vRes.data : vRes.data.videos || [];
+        const vRes = await api.get("/videos", {
+          headers,
+          params: { course: selectedCourse._id, limit: 1 },
+        });
+
+        const videos = Array.isArray(vRes.data)
+          ? vRes.data
+          : vRes.data.videos || [];
+
         if (videos.length) {
           setItem({
             title: videos[0].title,
@@ -51,7 +61,6 @@ export default function ContinueLearning({ selectedCourse }) {
           setItem(null);
         }
       } catch (err) {
-        console.warn("ContinueLearning fallback failed", err);
         setItem(null);
       }
     }
@@ -59,34 +68,80 @@ export default function ContinueLearning({ selectedCourse }) {
     loadLastWatched();
   }, [selectedCourse]);
 
+  /* =====================================================
+      NO COURSE SELECTED
+  ===================================================== */
   if (!selectedCourse) {
     return (
-      <div className="bg-[#081024] p-4 rounded-xl shadow-lg text-gray-300">
-        <h3 className="font-semibold mb-2">Continue Learning</h3>
-        <p className="text-sm">Purchase a course to see learning content here.</p>
+      <div className="bg-gradient-to-br from-[#0c0c18] to-[#0a0a14] 
+        p-6 rounded-2xl shadow-xl border border-purple-800/20 
+        text-gray-300 backdrop-blur-lg">
+        
+        <h3 className="font-semibold text-xl text-purple-300 mb-3">
+          Continue Learning
+        </h3>
+
+        <p className="text-sm text-gray-400">
+          Purchase a course to see your progress here.
+        </p>
       </div>
     );
   }
 
+  /* =====================================================
+      MAIN RETURN
+  ===================================================== */
   return (
-    <div className="bg-[#081024] p-4 rounded-xl shadow-lg text-gray-200">
-      <h3 className="font-semibold mb-4">Continue Learning — {selectedCourse.title}</h3>
+    <div className="bg-gradient-to-br from-[#0d0d1a] to-[#090912] 
+      p-6 rounded-2xl shadow-xl border border-purple-800/20 
+      backdrop-blur-xl text-gray-200 transition-all hover:shadow-purple-700/20">
 
+      {/* Heading */}
+      <h3 className="font-semibold text-xl text-purple-300 mb-5">
+        Continue Learning — {selectedCourse.title}
+      </h3>
+
+      {/* If item exists */}
       {item ? (
-        <div className="flex items-center gap-4">
-          <div className="w-20 h-12 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-md flex items-center justify-center text-sm font-semibold">
-            {item.lessonsCount}L
+        <div className="flex items-center gap-6 group">
+          {/* Thumbnail block */}
+          <div className="w-28 h-20 bg-gradient-to-br from-purple-600 to-indigo-700 
+            rounded-xl shadow-lg flex items-center justify-center 
+            group-hover:scale-105 transition transform">
+            
+<MdPlayCircle className="text-4xl text-white drop-shadow-lg" />
           </div>
+
+          {/* Video details */}
           <div className="flex-1">
-            <div className="text-lg font-bold">{item.title}</div>
-            <div className="text-sm text-gray-400">{item.duration} • {item.lessonsCount} lessons</div>
+            <div className="text-xl font-bold text-gray-100 group-hover:text-purple-300 transition">
+              {item.title}
+            </div>
+
+            <div className="text-sm text-gray-400 mt-1 flex items-center gap-2">
+              <RiBookOpenLine className="text-purple-300" />
+              {item.duration} • {item.lessonsCount} lessons
+            </div>
           </div>
-          <div>
-            <button onClick={() => navigate(`/student/videos?course=${selectedCourse._id}&video=${item.videoId}`)} className="bg-purple-600 px-4 py-2 rounded">Resume</button>
-          </div>
+
+          {/* Resume button */}
+          <button
+            onClick={() =>
+              navigate(
+                `/student/videos?course=${selectedCourse._id}&video=${item.videoId}`
+              )
+            }
+            className="bg-purple-600 hover:bg-purple-700 
+              px-5 py-2 rounded-xl text-white font-semibold shadow 
+              shadow-purple-900/40 transition-all hover:scale-105"
+          >
+            Resume
+          </button>
         </div>
       ) : (
-        <div className="text-sm text-gray-400">No recent progress found for this course.</div>
+        <div className="text-sm text-gray-400">
+          No recent progress found for this course.
+        </div>
       )}
     </div>
   );

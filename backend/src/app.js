@@ -88,6 +88,8 @@ const feedbackRoutes = require("./routes/feedbackRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const userLookupRoutes = require("./routes/userLookupRoutes");
 const todoRoutes = require("./routes/todoRoutes")
+const marks = require("./routes/marks")
+const certificateRoutes = require("./routes/certificateRoutes")
 
 /* ======================================================
    ✅ 5. Register API routes (ORDER MATTERS)
@@ -111,7 +113,8 @@ app.use("/api/feedbacks", feedbackRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/chat/user", userLookupRoutes);
 app.use("/api/todos", todoRoutes)
-
+app.use("/api/marks", marks)
+app.use("/api/certificates", certificateRoutes)
 /* ======================================================
    ✅ 6. Health check
 ====================================================== */
@@ -158,6 +161,58 @@ const io = new Server(server, {
   },
 });
 
+
+io.on('connection', (socket) => {
+  console.log('socket connected', socket.id);
+
+  socket.on('join-room', ({ roomId, user }) => {
+    socket.join(roomId);
+    socket.data.user = user;
+    io.to(roomId).emit('user-joined', { id: socket.id, user });
+  });
+
+  // WebRTC signaling (offer/answer/candidate)
+  socket.on('signal', ({ roomId, to, data }) => {
+    // data: { type: 'offer'|'answer'|'candidate', payload }
+    if (to) io.to(to).emit('signal', { from: socket.id, data });
+    else socket.to(roomId).emit('signal', { from: socket.id, data });
+  });
+
+  // Whiteboard stroke broadcast
+  socket.on('whiteboard:stroke', ({ roomId, stroke }) => {
+    socket.to(roomId).emit('whiteboard:stroke', stroke);
+  });
+  socket.on('whiteboard:clear', ({ roomId }) => {
+    socket.to(roomId).emit('whiteboard:clear');
+  });
+
+  // Raise hand / moderation
+  socket.on('raise-hand', ({ roomId, user }) => {
+    io.to(roomId).emit('raise-hand', { id: socket.id, user, time: Date.now() });
+  });
+  socket.on('moderator:action', ({ roomId, targetId, action }) => {
+    io.to(roomId).emit('moderator:action', { targetId, action });
+  });
+
+  // Chat file message broadcast
+  socket.on('chat:file', ({ roomId, url, meta }) => {
+    io.to(roomId).emit('chat:file', { from: socket.id, url, meta });
+  });
+
+  // reactions
+  socket.on('reaction', ({ roomId, reaction }) => {
+    io.to(roomId).emit('reaction', { from: socket.id, reaction });
+  });
+
+  // voice message broadcast (after uploaded by client)
+  socket.on('chat:voice', ({ roomId, url, meta }) => {
+    io.to(roomId).emit('chat:voice', { from: socket.id, url, meta });
+  });
+
+  socket.on('disconnect', () => {
+    // optionally tell room
+  });
+});
 
 chatSocket(io);
 

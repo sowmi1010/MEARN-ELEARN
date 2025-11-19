@@ -1,58 +1,53 @@
-// src/pages/student/QuizPlayer.jsx
 import React, { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import api from "../../utils/api";
 
 export default function QuizPlayer() {
   const { id } = useParams();
-  const [searchParams] = useSearchParams();
-  const preview = searchParams.get("preview") === "true";
-
   const navigate = useNavigate();
-  const [quiz, setQuiz] = useState(null);
+
+  const [questions, setQuestions] = useState([]);
   const [current, setCurrent] = useState(0);
-  const [selected, setSelected] = useState(null);
-  const [answers, setAnswers] = useState([]); // store chosen indices
-  const [timeLeft, setTimeLeft] = useState(0); // seconds
+  const [answers, setAnswers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const timerRef = useRef(null);
+  const [timeLeft, setTimeLeft] = useState(600);
 
   const token = localStorage.getItem("token");
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
+  // Load all questions for this quiz set
   useEffect(() => {
-    loadQuiz();
-    // eslint-disable-next-line
+    loadAllQuestions();
   }, [id]);
 
-  async function loadQuiz() {
+  async function loadAllQuestions() {
+    setLoading(true);
     try {
       const res = await api.get(`/quizzes/${id}`, { headers });
-      setQuiz(res.data);
-      // default time: 20 seconds per question as example — adjust as needed
-      setTimeLeft((res.data?.length || 1) * 20); // if we had total questions, fallback
-      // if single-question quiz, treat differently
-      setAnswers(Array(res.data ? 1 : 0).fill(null)); // placeholder but below we will set properly
-      // for quizzes that are stored as one-per-doc (question per doc), we will adapt below
+      const base = res.data;
+
+      const all = await api.get("/quizzes", {
+        headers,
+        params: {
+          subject: base.subject,
+          lesson: base.lesson,
+        },
+      });
+
+      setQuestions(all.data);
+      setAnswers(Array(all.data.length).fill(null));
     } catch (err) {
-      console.error("Failed to load quiz", err);
+      console.error("Quiz load error:", err);
     }
+    setLoading(false);
   }
 
-  // If your schema stores a single question per document, but you want a multi-question test,
-  // you'll need a route that returns many quiz docs as test. Here we assume one doc = one question,
-  // but your DB likely has many quiz docs and Admin assembles a test. For now, if res.data is a single quiz,
-  // we will treat test length = 1 (or you can fetch list by query if backend returns array).
-  // To support full tests, you can change backend to return an array for /tests/:id or pass testId.
-
-  // If quiz.options is available and quiz is single-question test:
+  // Timer
   useEffect(() => {
-    if (!quiz) return;
-    // For single-question doc, we just set single-slot answers
-    setAnswers([null]);
-    setCurrent(0);
-    // Start timer (example: 120 secs)
-    setTimeLeft(120);
-    if (timerRef.current) clearInterval(timerRef.current);
+    if (questions.length === 0) return;
+
     timerRef.current = setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
@@ -63,113 +58,149 @@ export default function QuizPlayer() {
         return t - 1;
       });
     }, 1000);
+
     return () => clearInterval(timerRef.current);
-    // eslint-disable-next-line
-  }, [quiz]);
+  }, [questions]);
 
   const selectOption = (index) => {
-    setSelected(index);
-    const copy = [...answers];
-    copy[current] = index;
-    setAnswers(copy);
+    const cp = [...answers];
+    cp[current] = index;
+    setAnswers(cp);
   };
 
-  const nextQuestion = () => {
-    // move to next if any; if only single question then finish
-    // For single-question doc: finish
-    finishQuiz();
+  const next = () => {
+    if (current + 1 < questions.length) setCurrent(current + 1);
+    else finishQuiz();
+  };
+
+  const prev = () => {
+    if (current > 0) setCurrent(current - 1);
   };
 
   const finishQuiz = () => {
-    // compute score for single-question doc
-    if (!quiz) return;
-    const correctIndex = quiz.correctAnswerIndex;
-    const chosen = answers[0];
-    const score = chosen === correctIndex ? 1 : 0;
-    const total = 1;
+    let score = 0;
+    const details = [];
+
+    questions.forEach((q, i) => {
+      const chosen = answers[i];
+      const correct = q.correctAnswerIndex;
+      if (chosen === correct) score++;
+
+      details.push({
+        question: q.question,
+        chosen,
+        correct,
+        options: q.options,
+      });
+    });
+
     navigate("/student/quiz/result", {
-      state: { score, total, details: [{ question: quiz.question, chosen, correctIndex, options: quiz.options }] },
+      state: { score, total: questions.length, details },
     });
   };
 
-  // small helper to format timer mm:ss
-  const formatTime = (sec) => {
+  const format = (sec) => {
     const m = Math.floor(sec / 60).toString().padStart(2, "0");
     const s = (sec % 60).toString().padStart(2, "0");
     return `${m}:${s}`;
   };
 
-  if (!quiz) return <div className="p-6 text-gray-200">Loading quiz...</div>;
+  if (loading || questions.length === 0)
+    return (
+      <div className="p-10 text-center text-gray-300 text-xl">
+        Loading your quiz…
+      </div>
+    );
+
+  const q = questions[current];
 
   return (
-    <div className="min-h-screen bg-black text-gray-100 flex flex-col">
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700">
-        <div className="flex items-center gap-4">
-          <div className="bg-white/10 px-3 py-1 rounded text-sm">1</div>
-          <div className="text-lg font-semibold">{quiz.subject}</div>
-          <div className="text-sm text-gray-400">{quiz.lesson || ""}</div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-b from-black to-[#0b0f17] text-gray-100 flex flex-col">
 
-        <div className="flex items-center gap-4">
-          <div className="bg-white/5 px-3 py-2 rounded text-sm">{formatTime(timeLeft)}</div>
-          <button onClick={() => navigate(-1)} className="text-white/80 hover:text-white">Close ✕</button>
-        </div>
+      {/* TOP TIMER BAR */}
+      <div className="h-2 bg-gray-800 relative">
+        <div
+          className="h-full bg-purple-600 transition-all"
+          style={{
+            width: `${((questions.length - current) / questions.length) * 100}%`,
+          }}
+        ></div>
       </div>
 
-      {/* Question area */}
-      <div className="flex-1 p-8 flex flex-col items-center justify-center">
-        <div className="w-full max-w-3xl">
-          <div className="mb-6">
-            <h2 className="text-xl text-gray-300 text-center">{quiz.question}</h2>
-          </div>
+      {/* HEADER */}
+      <div className="flex items-center justify-between px-6 py-4 bg-black/40 backdrop-blur border-b border-gray-800">
+        <div>
+          <div className="text-lg font-bold">{q.subject}</div>
+          <div className="text-sm text-gray-400">{q.lesson}</div>
+        </div>
+        <div className="text-xl font-mono text-purple-300">{format(timeLeft)}</div>
+      </div>
 
+      {/* QUESTION CARD */}
+      <div className="flex-1 px-6 py-10 flex justify-center">
+        <div className="w-full max-w-3xl bg-[#0e1320]/60 backdrop-blur-xl border border-purple-700/20 rounded-2xl p-8 shadow-2xl">
+
+          {/* QUESTION */}
+          <h2 className="text-2xl font-bold mb-8 leading-relaxed">
+            <span className="text-purple-400 mr-2">Q{current + 1}.</span>
+            {q.question}
+          </h2>
+
+          {/* OPTIONS */}
           <div className="space-y-4">
-            {quiz.options.map((opt, i) => {
-              const isSelected = answers[0] === i;
+            {q.options.map((opt, i) => {
+              const selected = answers[current] === i;
               return (
                 <button
                   key={i}
                   onClick={() => selectOption(i)}
-                  className={`w-full text-left p-4 rounded shadow-md flex items-center gap-4 ${
-                    isSelected ? "bg-white text-black" : "bg-white/5 text-gray-100 hover:bg-white/10"
-                  }`}
+                  className={`
+                    w-full p-4 rounded-xl flex gap-4 transition-all 
+                    ${selected
+                      ? "bg-purple-600 text-white scale-[1.02] shadow-xl"
+                      : "bg-white/5 text-gray-300 hover:bg-white/10"}
+                  `}
                 >
-                  <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-semibold">
+                  <div
+                    className={`
+                      w-10 h-10 rounded-full flex justify-center items-center font-semibold
+                      ${selected ? "bg-white text-black" : "bg-white/10"}
+                    `}
+                  >
                     {String.fromCharCode(65 + i)}
                   </div>
-                  <div>{opt}</div>
+                  <span className="text-lg">{opt}</span>
                 </button>
               );
             })}
           </div>
+
+          {/* NAVIGATION BUTTONS */}
+          <div className="flex justify-between items-center mt-10">
+
+            <button
+              onClick={prev}
+              disabled={current === 0}
+              className="px-5 py-2.5 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-40"
+            >
+              ← Previous
+            </button>
+
+            <button
+              onClick={next}
+              className="px-6 py-3 rounded-lg bg-purple-600 hover:bg-purple-700 font-semibold shadow-lg"
+            >
+              {current + 1 === questions.length ? "Finish Quiz" : "Next →"}
+            </button>
+
+          </div>
         </div>
       </div>
 
-      {/* Footer - progress / next */}
-      <div className="bg-[#0b0d10] p-4 border-t border-gray-800 flex items-center justify-between">
-        <div className="flex-1 mr-4">
-          <div className="h-3 bg-white/10 rounded overflow-hidden">
-            <div
-              className="h-full bg-green-500"
-              style={{ width: `${(answers.filter(a => a !== null).length / (1 || 1)) * 100}%` }}
-            />
-          </div>
-          <div className="text-sm text-gray-400 mt-2">
-            {answers.filter(a => a !== null).length}/{1}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={nextQuestion}
-            disabled={answers[0] === null && !preview}
-            className="bg-green-600 px-6 py-2 rounded text-white disabled:opacity-50"
-          >
-            {preview ? "Close Preview" : "Finish"}
-          </button>
-        </div>
-      </div>
+      {/* FOOTER */}
+      <footer className="py-4 text-center text-gray-400">
+        Question {current + 1} of {questions.length}
+      </footer>
     </div>
   );
 }

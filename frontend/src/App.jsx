@@ -48,6 +48,18 @@ const QuizResult = React.lazy(() => import("./pages/student/QuizResult"));
 const Live = React.lazy(() => import("./pages/student/Live"));
 const TodoList = React.lazy(() => import("./pages/student/TodoList"));
 const AddTodo = React.lazy(() => import("./pages/student/AddTodo"));
+const Marks = React.lazy(() => import("./pages/student/Marks"));
+const Courses = React.lazy(() => import("./pages/student/Courses"));
+const CourseDetails = React.lazy(() => import("./pages/student/CourseDetails"));
+const Certificate = React.lazy(() => import("./pages/student/Certificate"));
+const ViewCertificate = React.lazy(() =>
+  import("./pages/student/ViewCertificate")
+);
+const StudentTeam = React.lazy(() => import("./pages/student/StudentTeam"));
+const ChatWindowPage = React.lazy(() => import("./pages/student/ChatWindow"));
+const StudentProfile = React.lazy(() =>
+  import("./pages/student/ProfileSetting")
+);
 
 // 🔹 ADMIN
 const AdminLayout = React.lazy(() => import("./layouts/AdminLayout"));
@@ -291,6 +303,18 @@ function AnimatedRoutes() {
           <Route path="live" element={<Live />} />
           <Route path="todo" element={<TodoList />} />
           <Route path="todo/add" element={<AddTodo />} />
+          <Route path="marks" element={<Marks />} />
+          <Route path="courses" element={<Courses />} />
+          <Route path="courses/:id" element={<CourseDetails />} />
+          <Route path="certificate" element={<Certificate />} />
+          <Route path="certificate/view/:id" element={<ViewCertificate />} />
+          <Route path="/student/team" element={<StudentTeam />} />
+
+          <Route
+            path="/student/team/chat/:chatId"
+            element={<ChatWindowPage />}
+          />
+          <Route path="/student/settings" element={<StudentProfile />} />
         </Route>
 
         {/* ================= ADMIN ROUTES ================= */}

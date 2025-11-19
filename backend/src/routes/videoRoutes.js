@@ -14,6 +14,8 @@ const {
 
 const auth = require("../middlewares/auth");
 const checkPermission = require("../middlewares/permission");
+const { markVideoWatched } = require("../controllers/videoController");
+
 
 // Ensure upload folders exist
 const baseUploadDir = path.join(__dirname, "../../uploads");
@@ -100,6 +102,9 @@ router.put(
   normalizePaths,
   updateVideo
 );
+
+router.post("/watch/:id", auth, markVideoWatched);
+
 
 // Delete Video (Admin or Mentor with “videos” permission)
 router.delete("/:id", auth, checkPermission("videos"), deleteVideo);

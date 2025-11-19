@@ -7,6 +7,7 @@ export default function NoteViewer() {
   const navigate = useNavigate();
   const [note, setNote] = useState(null);
   const [loading, setLoading] = useState(true);
+
   const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:4000";
 
   useEffect(() => {
@@ -15,6 +16,7 @@ export default function NoteViewer() {
       try {
         const token = localStorage.getItem("token");
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
         const res = await api.get(`/notes/${id}`, { headers });
         setNote(res.data);
       } catch (err) {
@@ -23,6 +25,7 @@ export default function NoteViewer() {
         setLoading(false);
       }
     }
+
     loadNote();
   }, [id]);
 
@@ -32,38 +35,84 @@ export default function NoteViewer() {
   const filePath = (note.file || "").replace(/^\/+/, "");
   const fileUrl = `${BASE_URL}/${filePath}`;
 
-  // detect file type
   const isPDF = filePath.toLowerCase().endsWith(".pdf");
   const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(filePath);
+  const isDoc = /\.(doc|docx)$/i.test(filePath);
 
   return (
     <div className="p-6 min-h-screen bg-[#0b0f1a] text-gray-100">
-      <div className="mb-4 flex items-center justify-between">
+      
+      {/* HEADER */}
+      <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-purple-400">{note.title}</h1>
-          <p className="text-sm text-gray-400">
+          <h1 className="text-3xl font-extrabold text-purple-400">
+            {note.title}
+          </h1>
+          <p className="text-sm text-gray-400 mt-1">
             {note.subject} • {note.lesson}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <button onClick={() => navigate(-1)} className="px-3 py-2 rounded bg-gray-800">Back</button>
-          <a href={fileUrl} target="_blank" rel="noreferrer" className="px-3 py-2 rounded bg-purple-600">Open Raw</a>
+          <a
+            href={fileUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-sm text-white"
+          >
+            Open File
+          </a>
         </div>
       </div>
 
-      <div className="bg-[#081024] rounded-xl overflow-hidden shadow-lg">
+      {/* VIEWER BOX */}
+      <div className="bg-[#081024] rounded-2xl overflow-hidden border border-purple-800/30 shadow-xl p-4">
+        
         {isPDF ? (
+          // PDF VIEWER
           <iframe
             src={fileUrl}
+            className="w-full h-[85vh] rounded-xl shadow-inner bg-black"
             title={note.title}
-            className="w-full h-[85vh] bg-black"
           />
+
         ) : isImage ? (
-          <img src={fileUrl} alt={note.title} className="w-full object-contain max-h-[85vh]" />
+          // IMAGE VIEWER
+          <div className="w-full flex justify-center">
+            <img
+              src={fileUrl}
+              alt={note.title}
+              className="max-h-[85vh] rounded-xl object-contain shadow-xl"
+            />
+          </div>
+
+        ) : isDoc ? (
+          // DOC / DOCX
+          <div className="p-6 text-center text-gray-300">
+            <p className="text-lg mb-3 font-medium">Word Document</p>
+            <a
+              href={fileUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="bg-purple-600 hover:bg-purple-700 px-5 py-2 rounded-lg inline-block"
+            >
+              Click to Open Document
+            </a>
+          </div>
+
         ) : (
-          <div className="p-6 text-gray-300">
-            File type not previewable in browser. <a className="text-purple-300" href={fileUrl} target="_blank" rel="noreferrer">Download/Open</a>
+          // UNKNOWN FILE
+          <div className="p-6 text-gray-300 text-center">
+            This file format cannot be previewed.
+            <br />
+            <a
+              href={fileUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-purple-300 underline mt-2 inline-block"
+            >
+              Open / Download File
+            </a>
           </div>
         )}
       </div>

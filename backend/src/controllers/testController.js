@@ -49,17 +49,29 @@ exports.addTest = async (req, res) => {
 };
 
 // Get All Tests
+// Get All Tests
 exports.getTests = async (req, res) => {
   try {
-    const { group, standard, board, language, subject, category } = req.query;
+    const { group, standard, board, language, subject, category, search } = req.query;
+
     const filter = {};
 
-    if (group) filter.group = { $regex: new RegExp(group, "i") };
-    if (standard) filter.standard = { $regex: new RegExp(standard, "i") };
-    if (board) filter.board = { $regex: new RegExp(board, "i") };
-    if (language) filter.language = { $regex: new RegExp(language, "i") };
-    if (subject) filter.subject = { $regex: new RegExp(subject, "i") };
-    if (category) filter.category = { $regex: new RegExp(category.trim(), "i") };
+    if (group) filter.group = new RegExp(group, "i");
+    if (standard) filter.standard = new RegExp(standard, "i");
+    if (board) filter.board = new RegExp(board, "i");
+    if (language) filter.language = new RegExp(language, "i");
+    if (subject) filter.subject = new RegExp(subject, "i");
+    if (category) filter.category = new RegExp(category.trim(), "i");
+
+    // 🔍 SEARCH Support
+    if (search && search.trim() !== "") {
+      filter.$or = [
+        { title: new RegExp(search, "i") },
+        { description: new RegExp(search, "i") },
+        { subject: new RegExp(search, "i") },
+        { category: new RegExp(search, "i") },
+      ];
+    }
 
     const tests = await Test.find(filter).sort({ createdAt: -1 });
 
@@ -75,6 +87,7 @@ exports.getTests = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch tests", error: err.message });
   }
 };
+
 
 // Get Single Test
 exports.getTestById = async (req, res) => {

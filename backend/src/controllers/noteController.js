@@ -74,9 +74,11 @@ exports.addNote = async (req, res) => {
 //Get All Notes
 exports.getNotes = async (req, res) => {
   try {
-    const { group, standard, board, language, subject, lesson, category } = req.query;
+    const { group, standard, board, language, subject, lesson, category, search } = req.query;
+
     const filter = {};
 
+    // Basic filters
     if (group) filter.group = new RegExp(group, "i");
     if (standard) filter.standard = new RegExp(standard, "i");
     if (board) filter.board = new RegExp(board, "i");
@@ -84,6 +86,16 @@ exports.getNotes = async (req, res) => {
     if (subject) filter.subject = new RegExp(subject, "i");
     if (lesson) filter.lesson = new RegExp(lesson, "i");
     if (category) filter.category = new RegExp(category, "i");
+
+    // ✅ Global Search (title + description + subject + lesson)
+    if (search && search.trim() !== "") {
+      filter.$or = [
+        { title: new RegExp(search, "i") },
+        { description: new RegExp(search, "i") },
+        { subject: new RegExp(search, "i") },
+        { lesson: new RegExp(search, "i") },
+      ];
+    }
 
     const notes = await Note.find(filter).sort({ createdAt: -1 });
 
@@ -99,6 +111,7 @@ exports.getNotes = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch notes", error: err.message });
   }
 };
+
 
 // Get Note by ID
 exports.getNoteById = async (req, res) => {

@@ -7,27 +7,35 @@ export default function Notes() {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Basic client-side filters (optional)
-  const [filters, setFilters] = useState({
-    subject: "",
-    lesson: "",
-    search: "",
-  });
-
   const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:4000";
 
   useEffect(() => {
-    loadNotes();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadNotes(); // load default
   }, []);
 
-  async function loadNotes() {
+  // 🟣 LISTEN TO GLOBAL SEARCH (from StudentLayout)
+  useEffect(() => {
+    const handler = (e) => {
+      const text = e.detail || "";
+      loadNotes(text);
+    };
+
+    window.addEventListener("global-search", handler);
+    return () => window.removeEventListener("global-search", handler);
+  }, []);
+
+  async function loadNotes(searchText = "") {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const res = await api.get("/notes", { headers, params: {} });
-      setNotes(Array.isArray(res.data) ? res.data : []);
+
+      const res = await api.get("/notes", {
+        headers,
+        params: { search: searchText },
+      });
+
+      setNotes(res.data || []);
     } catch (err) {
       console.error("Failed to load notes", err);
       setNotes([]);
@@ -36,84 +44,55 @@ export default function Notes() {
     }
   }
 
-  const filtered = notes.filter((n) => {
-    const s = (n.subject || "").toLowerCase();
-    const l = (n.lesson || "").toLowerCase();
-    const q = (filters.search || "").toLowerCase();
-    if (filters.subject && !s.includes(filters.subject.toLowerCase())) return false;
-    if (filters.lesson && !l.includes(filters.lesson.toLowerCase())) return false;
-    if (q && !((n.title || "").toLowerCase().includes(q) || (n.description || "").toLowerCase().includes(q)))
-      return false;
-    return true;
-  });
-
   return (
-    <div className="p-6 text-gray-100 min-h-screen bg-[#0b0f1a]">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-extrabold text-purple-400">Notes</h1>
-        <div className="flex gap-2">
-          <input
-            value={filters.search}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-            placeholder="Search title or description..."
-            className="px-3 py-2 rounded bg-[#0f172a] text-sm border border-purple-700"
-          />
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#0b0f1a] p-8 text-gray-100">
+      <h1 className="text-3xl font-bold text-purple-400">Notes</h1>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading && <div className="text-gray-400">Loading notes...</div>}
+      {/* Notes Timeline */}
+      <div className="mt-10 space-y-6 relative">
 
-        {!loading && filtered.length === 0 && (
-          <div className="text-gray-400">No notes found.</div>
+        {/* Side Line */}
+        <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-purple-900/40"></div>
+
+        {loading && <div className="text-gray-400 ml-10">Loading notes...</div>}
+
+        {!loading && notes.length === 0 && (
+          <div className="text-gray-400 ml-10">No notes found.</div>
         )}
 
-        {filtered.map((note) => {
-          // normalize thumbnail path and build full URL
-          const thumbPath = (note.thumbnail || "").replace(/^\/+/, "");
-          const thumbUrl = thumbPath ? `${BASE_URL}/${thumbPath}` : "/default-thumbnail.png";
+        {notes.map((note, index) => {
+          const thumb = note.thumbnail
+            ? `${BASE_URL}/${note.thumbnail.replace(/^\/+/, "")}`
+            : "/default-thumbnail.png";
 
           return (
-            <div key={note._id} className="bg-[#081024] rounded-xl overflow-hidden shadow-lg">
-              <div className="w-full h-44 bg-black/20 overflow-hidden">
-                <img
-                  src={thumbUrl}
-                  alt={note.title}
-                  onError={(e) => (e.currentTarget.src = "/default-thumbnail.png")}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+            <div key={note._id} className="ml-10 relative group transition">
+              <div className="absolute -left-[34px] top-5 w-4 h-4 rounded-full bg-purple-600 shadow-lg shadow-purple-500/30"></div>
 
-              <div className="p-4">
-                <h3 className="text-lg font-semibold text-purple-300">{note.title}</h3>
-                <p className="text-sm text-gray-400 mt-1">
-                  {note.subject} • {note.lesson}
-                </p>
-                <p className="text-sm text-gray-400 mt-2 line-clamp-3">
-                  {note.description || ""}
-                </p>
+              <div
+                className="bg-[#111827] hover:bg-[#1a2338] border border-purple-800/20 p-5 rounded-xl shadow-lg transition flex items-start gap-5 cursor-pointer"
+                onClick={() => navigate(`/student/notes/view/${note._id}`)}
+              >
+                <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                  <img src={thumb} className="w-full h-full object-cover" />
+                </div>
 
-                <div className="mt-4 flex gap-3">
-                  <button
-                    onClick={() => navigate(`/student/notes/view/${note._id}`)}
-                    className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded"
-                  >
-                    View Notes
-                  </button>
-
-                  <a
-                    href={`${BASE_URL}/${(note.file || "").replace(/^\/+/, "")}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-4 py-2 border border-purple-700 rounded text-sm text-purple-200 hover:bg-purple-800/20"
-                  >
-                    Open
-                  </a>
+                <div>
+                  <h2 className="text-xl font-semibold text-purple-300">
+                    {note.title}
+                  </h2>
+                  <p className="text-sm text-gray-400 mt-1">
+                    {note.subject} • {note.lesson}
+                  </p>
+                  <p className="text-gray-300 mt-2 line-clamp-2 text-[15px]">
+                    {note.description || ""}
+                  </p>
                 </div>
               </div>
             </div>
           );
         })}
+
       </div>
     </div>
   );

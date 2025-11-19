@@ -151,4 +151,65 @@ router.delete("/detailed-students/:id", auth, checkPermission("students"), async
   }
 });
 
+// ===============================
+// ⭐ Student: View Own Profile
+// ===============================
+router.get("/profile", auth, async (req, res) => {
+  try {
+    const studentId = req.user._id;
+
+    const student = await Student.findById(studentId);
+    if (!student) return res.status(404).json({ message: "Student not found" });
+
+    res.json(sanitizeStudent(student));
+  } catch (err) {
+    console.error("Profile fetch error:", err);
+    res.status(500).json({ message: "Failed to load profile" });
+  }
+});
+
+// ===============================
+// ⭐ Student: Update Own Profile
+// ===============================
+router.put(
+  "/profile",
+  auth,
+  upload.single("photo"),
+  async (req, res) => {
+    try {
+      const studentId = req.user._id;
+      const updates = { ...req.body };
+
+      // Don't allow updating userId, fees, password here
+      delete updates.userId;
+      delete updates.fees;
+      delete updates.password;
+
+      if (req.file) {
+        updates.photo = `/uploads/students/${req.file.filename}`;
+      }
+
+      const student = await Student.findByIdAndUpdate(
+        studentId,
+        updates,
+        { new: true }
+      );
+
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+
+      res.json({
+        message: "Profile updated successfully",
+        student: sanitizeStudent(student),
+      });
+    } catch (err) {
+      console.error("Profile update error:", err);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  }
+);
+
+
+
 module.exports = router;

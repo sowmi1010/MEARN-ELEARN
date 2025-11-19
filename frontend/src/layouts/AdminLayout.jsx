@@ -117,13 +117,38 @@ export default function AdminLayout() {
      ✅ Sidebar Navigation Links
   ====================================================== */
   const allNavLinks = [
-    { key: "dashboard", to: "dashboard", label: "Dashboard", icon: <HiOutlineChartBar /> },
+    {
+      key: "dashboard",
+      to: "dashboard",
+      label: "Dashboard",
+      icon: <HiOutlineChartBar />,
+    },
     { key: "home", to: "home", label: "Home", icon: <HiOutlineHome /> },
-    { key: "courses", to: "courses", label: "Courses", icon: <HiOutlineBookOpen /> },
+    {
+      key: "courses",
+      to: "courses",
+      label: "Courses",
+      icon: <HiOutlineBookOpen />,
+    },
     { key: "admins", to: "admins", label: "Admins", icon: <HiOutlineUser /> },
-    { key: "mentors", to: "mentors", label: "Mentors", icon: <HiOutlineAcademicCap /> },
-    { key: "students", to: "students", label: "Students", icon: <HiOutlineUserGroup /> },
-    { key: "payments", to: "payments", label: "Payments", icon: <HiOutlineCurrencyRupee /> },
+    {
+      key: "mentors",
+      to: "mentors",
+      label: "Mentors",
+      icon: <HiOutlineAcademicCap />,
+    },
+    {
+      key: "students",
+      to: "students",
+      label: "Students",
+      icon: <HiOutlineUserGroup />,
+    },
+    {
+      key: "payments",
+      to: "payments",
+      label: "Payments",
+      icon: <HiOutlineCurrencyRupee />,
+    },
     { key: "team", to: "team", label: "Team", icon: <HiOutlineUserGroup /> },
   ];
 
@@ -197,9 +222,7 @@ export default function AdminLayout() {
             Role: {user?.role || "User"}
           </p>
           {user?.isSuperAdmin && (
-            <p className="text-xs text-yellow-400 font-semibold">
-              Super Admin
-            </p>
+            <p className="text-xs text-yellow-400 font-semibold">Super Admin</p>
           )}
           <p className="text-xs text-gray-500">{user?.name || "User"}</p>
         </div>

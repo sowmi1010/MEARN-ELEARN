@@ -66,30 +66,46 @@ exports.addBook = async (req, res) => {
  */
 exports.getBooks = async (req, res) => {
   try {
-    const { group, standard, board, language, subject, category } = req.query;
+    const { group, standard, board, language, subject, category, search } = req.query;
     const filter = {};
 
-    // ✅ Match filters case-insensitively
-    if (group) filter.group = { $regex: new RegExp(`^${group}$`, "i") };
-    if (standard) filter.standard = { $regex: new RegExp(`^${standard}$`, "i") };
-    if (board) filter.board = { $regex: new RegExp(`^${board}$`, "i") };
-    if (language) filter.language = { $regex: new RegExp(`^${language}$`, "i") };
-    if (subject) filter.subject = { $regex: new RegExp(`^${subject}$`, "i") };
+    // Match filters case-insensitively  
+    if (group) filter.group = new RegExp(group, "i");
+    if (standard) filter.standard = new RegExp(standard, "i");
+    if (board) filter.board = new RegExp(board, "i");
+    if (language) filter.language = new RegExp(language, "i");
+    if (subject) filter.subject = new RegExp(subject, "i");
 
-    // ⚠️ Ignore fake category like “books”, “videos” etc.
-    if (category && !["books", "videos", "notes", "tests", "quizzes"].includes(category.toLowerCase())) {
-      filter.category = { $regex: new RegExp(`^${category}$`, "i") };
+    // Category control
+    if (
+      category &&
+      !["books", "videos", "notes", "tests", "quizzes"].includes(category.toLowerCase())
+    ) {
+      filter.category = new RegExp(category, "i");
+    }
+
+    // ⭐ GLOBAL SEARCH (MAIN FIX)
+    if (search && search.trim() !== "") {
+      filter.$or = [
+        { title: new RegExp(search, "i") },
+        { subject: new RegExp(search, "i") },
+        { about: new RegExp(search, "i") },
+        { group: new RegExp(search, "i") },
+        { standard: new RegExp(search, "i") },
+      ];
     }
 
     console.log("📚 Book Filter:", filter);
 
     const books = await Book.find(filter).sort({ createdAt: -1 });
+
     res.json(books);
   } catch (err) {
     console.error("❌ getBooks error:", err);
     res.status(500).json({ message: "Failed to fetch books", error: err.message });
   }
 };
+
 
 /**
  * ==========================

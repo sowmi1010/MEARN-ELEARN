@@ -4,25 +4,36 @@ import { useNavigate } from "react-router-dom";
 
 export default function Books() {
   const navigate = useNavigate();
-
   const [books, setBooks] = useState([]);
-  const [filters, setFilters] = useState({
-    group: "",
-    standard: "",
-    subject: "",
-    search: "",
-  });
 
+  const [globalSearch, setGlobalSearch] = useState("");
+
+  /* Listen for global search (broadcast) */
   useEffect(() => {
-    loadBooks();
+    const handler = (e) => {
+      setGlobalSearch(e.detail);
+      fetchBooks(e.detail);
+    };
+
+    window.addEventListener("global-search", handler);
+    return () => window.removeEventListener("global-search", handler);
   }, []);
 
-  async function loadBooks() {
+  /* Initial load */
+  useEffect(() => {
+    fetchBooks("");
+  }, []);
+
+  async function fetchBooks(searchValue = "") {
     try {
       const token = localStorage.getItem("token");
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-      const res = await api.get("/books", { headers });
+      const res = await api.get("/books", {
+        headers,
+        params: { search: searchValue },
+      });
+
       setBooks(res.data || []);
     } catch (err) {
       console.error("Failed to load books", err);
@@ -30,59 +41,62 @@ export default function Books() {
   }
 
   return (
-    <div className="p-6 text-gray-100">
-      <h1 className="text-3xl font-bold mb-6 flex items-center gap-2">
-        Books <span>📘</span>
+    <div className="min-h-screen p-6 bg-[#0b0f1a] text-gray-100">
+
+      {/* PAGE TITLE */}
+      <h1 className="text-3xl font-bold mb-6 text-purple-400">
+        Explore Books
       </h1>
 
-      {/* Filters */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <input
-          className="bg-[#0f172a] p-3 rounded"
-          placeholder="Group"
-          onChange={(e) => setFilters({ ...filters, group: e.target.value })}
-        />
-        <input
-          className="bg-[#0f172a] p-3 rounded"
-          placeholder="Standard"
-          onChange={(e) => setFilters({ ...filters, standard: e.target.value })}
-        />
-        <input
-          className="bg-[#0f172a] p-3 rounded"
-          placeholder="Subject"
-          onChange={(e) => setFilters({ ...filters, subject: e.target.value })}
-        />
-        <input
-          className="bg-[#0f172a] p-3 rounded"
-          placeholder="Search..."
-          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-        />
-      </div>
+      {/* BOOK GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
 
-      {/* Books List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {books.length === 0 && (
-          <p className="text-gray-400">No books available</p>
+          <p className="text-gray-400 text-center col-span-3 mt-10">
+            No books found.
+          </p>
         )}
 
         {books.map((book) => (
-          <div key={book._id} className="bg-[#081024] p-4 rounded-xl shadow-xl">
-            <img
-              src={`${import.meta.env.VITE_BASE_URL}/${book.thumbnail}`}
-              alt="Book Thumbnail"
-              className="w-full h-48 object-cover rounded mb-4"
-            />
+          <div
+            key={book._id}
+            className="
+              group relative rounded-2xl overflow-hidden shadow-lg
+              bg-white/5 backdrop-blur-xl border border-white/10 
+              hover:border-purple-600/40 hover:shadow-purple-600/20 
+              transition-all duration-300
+            "
+          >
+            {/* Thumbnail */}
+            <div className="h-56 overflow-hidden">
+              <img
+                src={`${import.meta.env.VITE_BASE_URL}/${book.thumbnail}`}
+                className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+              />
+            </div>
 
-            <h2 className="text-xl font-bold">{book.title}</h2>
-            <p className="text-gray-400">{book.subject}</p>
-            <p className="text-gray-500">{book.standard}</p>
+            {/* Content */}
+            <div className="p-4">
+              <h2 className="text-xl font-bold text-purple-300">
+                {book.title}
+              </h2>
 
-            <button
-              onClick={() => navigate(`/student/books/view/${book._id}`)}
-              className="bg-purple-600 hover:bg-purple-700 w-full py-2 rounded mt-4"
-            >
-              View Book
-            </button>
+              <p className="text-gray-400 text-sm mt-1">
+                {book.subject} • Std {book.standard}
+              </p>
+
+              {/* View Button */}
+              <button
+                className="
+                  mt-4 w-full py-2 rounded-xl
+                  bg-purple-600 hover:bg-purple-700
+                  transition text-white font-medium
+                "
+                onClick={() => navigate(`/student/books/view/${book._id}`)}
+              >
+                Open Book
+              </button>
+            </div>
           </div>
         ))}
       </div>

@@ -2,9 +2,8 @@
 import React, { useEffect, useRef } from "react";
 
 /**
- * Lightweight chart using canvas (no extra library).
- * Accepts progress.history array: [{ date:'2025-11-01', value: 20 }, ...]
- * If no history is available, it draws a simple placeholder.
+ * Minimal Udemy/Coursera style line chart using canvas (no extra library).
+ * Clean, elegant, soft colors.
  */
 export default function PerformanceChart({ progress }) {
   const canvasRef = useRef();
@@ -12,85 +11,108 @@ export default function PerformanceChart({ progress }) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
     const ctx = canvas.getContext("2d");
-    const w = canvas.width = canvas.offsetWidth * devicePixelRatio;
-    const h = canvas.height = 220 * devicePixelRatio;
+    const width = (canvas.width = canvas.offsetWidth * devicePixelRatio);
+    const height = (canvas.height = 220 * devicePixelRatio);
+
     ctx.scale(devicePixelRatio, devicePixelRatio);
 
-    // background
+    // === Background (soft dark) ===
     ctx.clearRect(0, 0, canvas.offsetWidth, 220);
-    ctx.fillStyle = "#061226";
+    ctx.fillStyle = "#0b0b14"; // softer than before
     ctx.fillRect(0, 0, canvas.offsetWidth, 220);
 
-    // sample history or generated
-    const history = (progress && progress.history && Array.isArray(progress.history) && progress.history.length)
-      ? progress.history
-      : generateDummyHistory();
+    // === Data ===
+    const history =
+      progress?.history?.length > 0 ? progress.history : generateDummyHistory();
 
-    // normalize values
     const values = history.map((d) => d.value || 0);
     const max = Math.max(...values, 10);
-    const pad = 30;
-    const availableW = canvas.offsetWidth - pad * 2;
-    const step = availableW / (history.length - 1 || 1);
-    const baseY = 200;
 
-    // draw grid
-    ctx.strokeStyle = "rgba(255,255,255,0.06)";
+    const padding = 35;
+    const chartW = canvas.offsetWidth - padding * 2;
+    const chartH = 150;
+    const step = chartW / (history.length - 1 || 1);
+    const baseY = 170;
+
+    // === Minimal Grid ===
+    ctx.strokeStyle = "rgba(255,255,255,0.05)";
     ctx.lineWidth = 1;
+
     for (let i = 0; i <= 4; i++) {
-      const y = (baseY / 4) * i + 10;
+      const y = (chartH / 4) * i + 10;
       ctx.beginPath();
-      ctx.moveTo(pad, y);
-      ctx.lineTo(canvas.offsetWidth - pad, y);
+      ctx.moveTo(padding, y);
+      ctx.lineTo(canvas.offsetWidth - padding, y);
       ctx.stroke();
     }
 
-    // draw curve
+    // === Line (thin, soft purple) ===
     ctx.beginPath();
-    ctx.strokeStyle = "#8b5cf6";
+    ctx.strokeStyle = "rgba(168, 85, 247, 0.9)"; // clean purple
     ctx.lineWidth = 2;
-    history.forEach((d, i) => {
-      const x = pad + i * step;
-      const y = 10 + (baseY - (d.value / max) * baseY);
+
+    history.forEach((point, i) => {
+      const x = padding + i * step;
+      const y = 10 + (chartH - (point.value / max) * chartH);
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     });
+
     ctx.stroke();
 
-    // draw points
-    ctx.fillStyle = "#c084fc";
-    history.forEach((d, i) => {
-      const x = pad + i * step;
-      const y = 10 + (baseY - (d.value / max) * baseY);
+    // === Points (small, soft dots) ===
+    ctx.fillStyle = "rgba(233, 213, 255, 0.9)";
+    history.forEach((point, i) => {
+      const x = padding + i * step;
+      const y = 10 + (chartH - (point.value / max) * chartH);
       ctx.beginPath();
-      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.arc(x, y, 2.5, 0, Math.PI * 2);
       ctx.fill();
     });
 
-    // draw labels (few)
-    ctx.fillStyle = "rgba(255,255,255,0.6)";
-    ctx.font = "12px Arial";
+    // === Labels (small, minimal) ===
+    ctx.fillStyle = "rgba(255,255,255,0.45)";
+    ctx.font = "11px Inter, sans-serif";
+
     for (let i = 0; i < history.length; i += Math.ceil(history.length / 6) || 1) {
-      const d = history[i];
-      const x = pad + i * step;
-      ctx.fillText(d.label || d.date || "", x - 15, baseY + 25);
+      const p = history[i];
+      const x = padding + i * step;
+      ctx.fillText(p.label || p.date || "", x - 10, baseY + 20);
     }
 
     function generateDummyHistory() {
       const arr = [];
       for (let i = 6; i >= 0; i--) {
-        arr.push({ date: `Day-${i}`, value: Math.round(20 + Math.random() * 80), label: `${i}d` });
+        arr.push({
+          date: `Day-${i}`,
+          value: Math.round(20 + Math.random() * 80),
+          label: `${i}d`,
+        });
       }
       return arr;
     }
   }, [progress]);
 
   return (
-    <div>
-      <h3 className="text-lg font-semibold mb-3">Performance</h3>
-      <div className="rounded-xl overflow-hidden">
-        <canvas ref={canvasRef} style={{ width: "100%", height: 220, display: "block" }} />
+    <div className="
+      bg-[#0d0d17] 
+      p-5 
+      rounded-2xl 
+      border border-purple-900/20 
+      shadow-md
+      w-full
+    ">
+      <h3 className="text-lg font-semibold mb-4 text-purple-300">
+        Performance Overview
+      </h3>
+
+      <div className="rounded-xl overflow-hidden border border-purple-900/20">
+        <canvas
+          ref={canvasRef}
+          style={{ width: "100%", height: 220, display: "block" }}
+        />
       </div>
     </div>
   );

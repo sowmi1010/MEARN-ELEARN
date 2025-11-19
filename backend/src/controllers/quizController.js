@@ -46,13 +46,20 @@ exports.addQuiz = async (req, res) => {
 //Get All Quizzes
 exports.getQuizzes = async (req, res) => {
   try {
-    const quizzes = await Quiz.find().sort({ createdAt: -1 });
+    const { subject, lesson } = req.query;
+    const filter = {};
+
+    if (subject) filter.subject = new RegExp(subject, "i");
+    if (lesson) filter.lesson = new RegExp(lesson, "i");
+
+    const quizzes = await Quiz.find(filter).sort({ createdAt: -1 });
     res.json(quizzes);
   } catch (err) {
     console.error("getQuizzes error:", err);
     res.status(500).json({ message: "Failed to fetch quizzes" });
   }
 };
+
 
 //Get Single Quiz
 exports.getQuizById = async (req, res) => {

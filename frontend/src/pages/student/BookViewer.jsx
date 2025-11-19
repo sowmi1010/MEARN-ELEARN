@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import api from "../../utils/api";
 
 export default function BookViewer() {
   const { id } = useParams();
+  const navigate = useNavigate();
+
   const [book, setBook] = useState(null);
+
+  const BASE_URL = import.meta.env.VITE_BASE_URL;
 
   useEffect(() => {
     async function loadBook() {
@@ -18,22 +22,31 @@ export default function BookViewer() {
         console.error("Failed to load book:", err);
       }
     }
+
     loadBook();
   }, [id]);
 
-  if (!book) return <div className="text-white p-6">Loading book...</div>;
-
-  const BASE_URL = import.meta.env.VITE_BASE_URL;
+  if (!book)
+    return <div className="text-gray-300 p-10">Loading book...</div>;
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-purple-400 mb-4">{book.title}</h1>
+    <div className="min-h-screen bg-[#0b0f1a] text-gray-100 p-6">
+      
+      {/* HEADER */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-purple-400 tracking-wide">
+          {book.title}
+        </h1>
+      </div>
 
-      <iframe
-        src={`${BASE_URL}/${book.file}`}
-        className="w-full h-[90vh] rounded-xl bg-black"
-        title="Book Viewer"
-      />
+      {/* VIEWER */}
+      <div className="rounded-xl overflow-hidden border border-purple-900/40 shadow-2xl">
+        <iframe
+          src={`${BASE_URL}/${book.file}`}
+          className="w-full h-[88vh] rounded-xl bg-black"
+          title="Book Viewer"
+        />
+      </div>
     </div>
   );
 }
