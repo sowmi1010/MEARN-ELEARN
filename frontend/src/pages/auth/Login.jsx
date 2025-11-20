@@ -10,6 +10,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [shake, setShake] = useState(false);
+
   const navigate = useNavigate();
 
   async function handleLogin(e) {
@@ -19,13 +20,10 @@ export default function Login() {
 
     try {
       const res = await api.post("/auth/login", { emailOrUserId, password });
-
-      // Save token and user info
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
       window.dispatchEvent(new Event("user-login"));
 
-      // Role-based navigation
       const { role, permissions = [], isSuperAdmin } = res.data.user;
 
       if (isSuperAdmin || role === "admin") navigate("/admin/dashboard");
@@ -35,32 +33,10 @@ export default function Login() {
         else navigate("/admin/dashboard");
       } else navigate("/");
     } catch (err) {
-      console.error("Login failed:", err.response?.data || err.message);
-
       let msg =
         err.response?.data?.message ||
         err.response?.data?.error ||
         "Incorrect email or password. Please try again!";
-
-      // Normalize message
-      const message = msg.toLowerCase();
-
-      if (message.includes("invalid credentials")) {
-        // Try to guess based on what user entered
-        if (!emailOrUserId.includes("@")) {
-          msg = "⚠️ Invalid User ID. Please check and try again!";
-        } else if (!emailOrUserId.includes(".")) {
-          msg = "⚠️ Invalid email format. Please try again!";
-        } else {
-          msg = "❌ Incorrect email or password. Please try again!";
-        }
-      } else if (message.includes("user not found")) {
-        msg = "⚠️ No account found with that email or ID.";
-      } else if (message.includes("password")) {
-        msg = "❌ Incorrect password. Please try again!";
-      } else if (message.includes("missing")) {
-        msg = "⚠️ Please fill in all fields.";
-      }
 
       setError(msg);
       setShake(true);
@@ -71,90 +47,128 @@ export default function Login() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] text-gray-100">
+    <div
+      className="w-full min-h-screen flex items-center justify-center relative overflow-hidden mt-14"
+      style={{
+        backgroundImage: `url('/Bg.png')`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      {/* LOGO */}
+      <img
+        src="/biglogo.png"
+        alt="LTA"
+        className="absolute top-14 left-28  rounded-full p-1 bg-white shadow-xl"
+      />
+
+      {/* CARD */}
       <form
         onSubmit={handleLogin}
-        className={`relative w-96 p-8 rounded-3xl backdrop-blur-md bg-white/10 shadow-2xl border border-white/20 transition-all duration-500 ${
-          shake ? "animate-shake" : "hover:scale-[1.01]"
-        }`}
+        className={`relative w-full max-w-md mx-4 p-8 rounded-3xl 
+            backdrop-blur-md bg-white/10 border border-white/20 
+            shadow-2xl transition-all duration-500 
+            ${shake ? "animate-[shake_0.45s]" : "hover:scale-[1.01]"}`}
       >
-        <h2 className="text-3xl font-extrabold text-center text-blue-400 mb-8">
-          Login to Last Try Academy
+        {/* TITLE */}
+        <h2 className="text-3xl font-extrabold text-center text-white mb-8 tracking-wide">
+          LOGIN
         </h2>
 
-        {/* Email / ID */}
-        <label className="block mb-4">
-          <span className="text-sm font-medium text-gray-300">
-            Email or User ID
+        {/* EMAIL / USER ID */}
+        <div className="relative mb-5">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/70 text-lg">
+            ✉️
           </span>
           <input
             type="text"
-            placeholder="Enter your email or ID"
+            placeholder="Email or User ID"
             value={emailOrUserId}
             onChange={(e) => setEmailOrUserId(e.target.value)}
-            required
-            className="mt-2 w-full px-4 py-2 rounded-lg bg-gray-800/50 text-gray-100 
-                       border border-gray-700 focus:ring-2 focus:ring-blue-400 outline-none
-                       transition-all duration-300"
+            className="w-full py-3 pl-12 pr-4 rounded-lg 
+                bg-[#12072f]/70 text-white placeholder:text-white/50
+                border border-white/10 focus:ring-2 focus:ring-cyan-400
+                outline-none transition"
           />
-        </label>
+        </div>
 
-        {/* Password */}
-        <label className="block mb-6">
-          <span className="text-sm font-medium text-gray-300">Password</span>
-          <div className="relative mt-2">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-4 py-2 pr-10 rounded-lg bg-gray-800/50 text-gray-100 
-                         border border-gray-700 focus:ring-2 focus:ring-blue-400 outline-none
-                         transition-all duration-300"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-400"
-            >
-              {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-            </button>
+        {/* PASSWORD */}
+        <div className="relative mb-6">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/70 text-lg">
+            🔒
+          </span>
+
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full py-3 pl-12 pr-10 rounded-lg 
+                bg-[#12072f]/70 text-white placeholder:text-white/50
+                border border-white/10 focus:ring-2 focus:ring-cyan-400
+                outline-none transition"
+          />
+
+          <span
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-white/70"
+          >
+            {showPassword ? <FiEyeOff /> : <FiEye />}
+          </span>
+        </div>
+
+        {/* ERROR */}
+        {error && (
+          <div className="flex items-center gap-2 text-red-400 mb-4 text-sm font-medium">
+            <FiAlertCircle size={16} /> {error}
           </div>
-        </label>
+        )}
 
-        {/* Login Button */}
+        {/* BUTTON */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 rounded-lg bg-blue-500 text-white font-semibold 
-                     hover:bg-blue-600 disabled:opacity-70 disabled:cursor-not-allowed
-                     flex items-center justify-center gap-2 transition-all duration-300"
+          className="w-full py-3 rounded-xl text-lg font-bold
+            bg-gradient-to-r from-[#3aa0ff] to-[#9b2fff]
+            text-white shadow-lg hover:scale-[1.03] transition
+            disabled:opacity-70"
         >
           {loading ? (
-            <>
+            <span className="flex items-center justify-center gap-2">
               <FiLoader className="animate-spin" /> Logging in...
-            </>
+            </span>
           ) : (
             "Login"
           )}
         </button>
 
-        {/* Error Message */}
-        {error && (
-          <div className="flex items-center justify-center gap-2 mt-5 text-red-400 text-sm font-medium animate-pulse">
-            <FiAlertCircle size={16} />
-            <span>{error}</span>
-          </div>
-        )}
-
         {/* Forgot Password */}
         <p
           onClick={() => navigate("/forgot-password")}
-          className="text-sm text-blue-400 text-right cursor-pointer mt-4 hover:underline"
+          className="text-sm text-blue-300 text-right mt-4 cursor-pointer hover:underline"
         >
           Forgot Password?
         </p>
+
+        {/* SIGNUP LINK */}
+        <p className="text-center text-white/70 mt-4 text-sm">
+          Don’t have an account?{" "}
+          <span
+            onClick={() => navigate("/register")}
+            className="text-blue-300 cursor-pointer hover:underline"
+          >
+            Register
+          </span>
+        </p>
+
+        {/* ANIMATIONS */}
+        <style>{`
+        @keyframes shake {
+          0%,100% { transform: translateX(0); }
+          20%,60% { transform: translateX(-6px); }
+          40%,80% { transform: translateX(6px); }
+        }
+      `}</style>
       </form>
     </div>
   );
