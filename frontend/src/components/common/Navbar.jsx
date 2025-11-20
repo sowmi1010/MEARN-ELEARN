@@ -1,4 +1,3 @@
-// src/components/common/Navbar.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import api from "../../utils/api";
@@ -10,12 +9,10 @@ export default function Navbar() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
   );
+  const [open, setOpen] = useState(false);
   const fileInputRef = useRef(null);
   const BASE_URL = import.meta.env.VITE_BASE_URL;
 
-  /* ---------------------------------------------------
-     🎯 1. Hide Navbar on Admin / Student / Mentor routes
-  ------------------------------------------------------*/
   if (
     location.pathname.startsWith("/admin") ||
     location.pathname.startsWith("/student") ||
@@ -25,21 +22,14 @@ export default function Navbar() {
     return null;
   }
 
-  /* ---------------------------------------------------
-     🎯 2. Theme Toggle Handler
-  ------------------------------------------------------*/
   useEffect(() => {
     if (theme === "dark") document.documentElement.classList.add("dark");
     else document.documentElement.classList.remove("dark");
-
     localStorage.setItem("theme", theme);
   }, [theme]);
 
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
-  /* ---------------------------------------------------
-     🎯 3. Sync User State
-  ------------------------------------------------------*/
   useEffect(() => {
     const syncUser = () => {
       const stored = localStorage.getItem("user");
@@ -47,11 +37,9 @@ export default function Navbar() {
     };
 
     syncUser();
-
     window.addEventListener("storage", syncUser);
     window.addEventListener("user-login", syncUser);
     window.addEventListener("user-logout", syncUser);
-
     return () => {
       window.removeEventListener("storage", syncUser);
       window.removeEventListener("user-login", syncUser);
@@ -59,20 +47,13 @@ export default function Navbar() {
     };
   }, []);
 
-  /* ---------------------------------------------------
-     🎯 4. Logout Handler
-  ------------------------------------------------------*/
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-
     window.dispatchEvent(new Event("user-logout"));
     navigate("/login");
   };
 
-  /* ---------------------------------------------------
-     🎯 5. Profile Picture Upload
-  ------------------------------------------------------*/
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -94,23 +75,33 @@ export default function Navbar() {
     }
   };
 
-  /* ---------------------------------------------------
-     🎯 6. Final Navbar UI
-  ------------------------------------------------------*/
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 bg-white/80 dark:bg-darkCard/70 backdrop-blur-lg shadow-md border-b border-gray-200 dark:border-gray-700">
-      <div className="px-6 py-3 flex justify-between items-center max-w-7xl mx-auto">
-
-        {/* Logo */}
-        <h1
+    <nav
+      className="fixed top-0 left-1/2 -translate-x-1/2 w-full z-50
+        bg-white/70 dark:bg-[#0b1120]/70 backdrop-blur-xl
+        shadow-[0_4px_20px_rgba(0,0,0,0.12)]
+        border-b border-white/20 dark:border-white/10 transition-all duration-300"
+    >
+      <div className="px-6 py-3 flex justify-between items-center">
+        
+        {/* LOGO */}
+        <div
+          className="flex items-center gap-3 cursor-pointer group"
           onClick={() => navigate("/")}
-          className="text-2xl font-extrabold bg-gradient-to-r from-accent to-blue-500 bg-clip-text text-transparent cursor-pointer"
         >
-          LAST TRY ACADEMY
-        </h1>
+          <img src="/logo.png"
+            className="w-11 h-11 rounded-full border border-white/30 dark:border-white/10 shadow-sm group-hover:scale-105 transition"
+          />
+
+          <h1 className="text-xl md:text-2xl font-extrabold tracking-wide
+            bg-gradient-to-r from-orange-500 to-blue-500 bg-clip-text text-transparent
+            ">
+            LAST TRY ACADEMY
+          </h1>
+        </div>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex gap-8 items-center font-medium">
+        <div className="hidden md:flex gap-10 items-center font-semibold text-[15px]">
           <NavLink to="/">Home</NavLink>
           <NavLink to="/courses">Courses</NavLink>
           <NavLink to="/about">About</NavLink>
@@ -123,76 +114,116 @@ export default function Navbar() {
           ) : (
             <button
               onClick={handleLogout}
-              className="text-red-500 hover:text-red-600 font-semibold"
+              className="text-red-500 hover:text-red-600 transition font-semibold"
             >
               Logout
             </button>
           )}
         </div>
 
-        {/* Right Section */}
+        {/* RIGHT */}
         <div className="flex items-center gap-4">
 
-          {/* Theme Toggle */}
-          <label className="relative inline-flex items-center cursor-pointer">
+          {/* Toggle Theme */}
+          <label className="relative inline-flex items-center cursor-pointer select-none">
             <input
               type="checkbox"
-              className="sr-only peer"
+              className="peer sr-only"
               checked={theme === "dark"}
               onChange={toggleTheme}
             />
-            <div className="w-14 h-7 rounded-full bg-gray-300 dark:bg-gray-700 peer-checked:bg-gradient-to-r peer-checked:from-accent peer-checked:to-blue-500"></div>
-            <div className="absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow flex items-center justify-center text-sm peer-checked:translate-x-7">
+
+            <div
+              className="w-14 h-7 rounded-full bg-gray-300 dark:bg-gray-700
+                peer-checked:bg-gradient-to-r peer-checked:from-orange-400 peer-checked:to-blue-500
+                transition-all"
+            ></div>
+
+            <div
+              className="absolute top-0.5 left-0.5 w-6 h-6 rounded-full shadow
+              bg-white dark:bg-gray-200 flex items-center justify-center
+              text-[12px] peer-checked:translate-x-7 transition-all duration-300"
+            >
               {theme === "dark" ? "🌙" : "☀️"}
             </div>
           </label>
 
-          {/* User Profile */}
+          {/* Profile */}
           {user && (
-            <div className="flex items-center gap-3">
-              <p className="hidden md:block text-sm text-gray-600 dark:text-gray-300 font-medium">
-                Hi, <span className="text-accent font-semibold">{user.name}</span>
+            <div className="hidden md:flex items-center gap-3">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                Hi, <span className="text-orange-500 font-semibold">{user.name}</span>
               </p>
 
-              {/* Profile Picture */}
               <div
                 onClick={() => fileInputRef.current.click()}
-                className="w-10 h-10 md:w-11 md:h-11 rounded-full border-2 border-accent overflow-hidden shadow cursor-pointer hover:scale-105"
+                className="w-10 h-10 rounded-full border-2 border-orange-500 overflow-hidden cursor-pointer
+                shadow-md hover:scale-105 transition-all"
               >
                 <img
-                  src={`${BASE_URL}/${(
-                    user.profilePic || "default-avatar.png"
-                  ).replace(/^\/+/, "")}`}
+                  src={`${BASE_URL}/${(user.profilePic || "default-avatar.png").replace(/^\/+/, "")}`}
                   className="w-full h-full object-cover"
                 />
               </div>
 
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileChange}
-              />
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
             </div>
           )}
+
+          {/* Mobile Menu */}
+          <button
+            className="md:hidden text-3xl text-gray-700 dark:text-gray-200"
+            onClick={() => setOpen(!open)}
+          >
+            ☰
+          </button>
         </div>
       </div>
+
+      {/* Mobile Dropdown */}
+      {open && (
+        <div
+          className="md:hidden flex flex-col bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-lg
+          border-t border-white/20 dark:border-white/10 px-6 py-4 rounded-b-2xl space-y-2"
+        >
+          <NavLink to="/" onClick={() => setOpen(false)}>Home</NavLink>
+          <NavLink to="/courses" onClick={() => setOpen(false)}>Courses</NavLink>
+          <NavLink to="/about" onClick={() => setOpen(false)}>About</NavLink>
+
+          {!user ? (
+            <>
+              <NavLink to="/login" onClick={() => setOpen(false)}>Login</NavLink>
+              <NavLink to="/register" onClick={() => setOpen(false)}>Register</NavLink>
+            </>
+          ) : (
+            <button
+              onClick={() => { setOpen(false); handleLogout(); }}
+              className="text-red-500 text-left mt-3 font-medium"
+            >
+              Logout
+            </button>
+          )}
+        </div>
+      )}
     </nav>
   );
 }
 
-/* ---------------------------------------------------
-   🎯 Helper NavLink Component
-------------------------------------------------------*/
-function NavLink({ to, children }) {
+
+/* 🎯 Beautiful NavLink Component */
+function NavLink({ to, children, ...rest }) {
   return (
     <Link
       to={to}
-      className="relative font-medium text-gray-700 dark:text-gray-300 hover:text-accent group transition"
+      {...rest}
+      className="relative block py-2 font-medium text-gray-700 dark:text-gray-300
+      hover:text-orange-500 transition group"
     >
       {children}
-      <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-accent transition-all duration-300 group-hover:w-full"></span>
+      <span
+        className="absolute left-0 -bottom-1 h-[2px] bg-orange-500
+        w-0 group-hover:w-full transition-all duration-300"
+      ></span>
     </Link>
   );
 }

@@ -6,7 +6,7 @@ const groups = [
     desc: "1st to 4th Standard",
     price: "₹3000",
     offer: "₹500",
-    tagline: "Strong Root, Strong Future!",
+    tagline: "Strong Roots, Strong Future!",
     img: "/Root.png",
   },
   {
@@ -22,14 +22,14 @@ const groups = [
     desc: "9th to 12th Standard",
     price: "₹1000",
     offer: "₹500",
-    tagline: "Soaking Wisdom!",
+    tagline: "Spreading Knowledge, Soaking Wisdom!",
     img: "/Leaf.png",
   },
   {
     name: "Flower",
     desc: "Entrance Exams",
     price: "₹3000",
-    offer: "₹750",
+    offer: "₹1500",
     tagline: "Bloom With Brilliance!",
     img: "/Flower.png",
   },
@@ -53,65 +53,102 @@ const groups = [
 
 export default function CourseGroupsPage() {
   return (
-    <div className="min-h-screen pt-28 pb-20 px-6 bg-white dark:bg-[#050b18] transition-all relative overflow-hidden">
+    <div className="min-h-screen pt-28 pb-20 px-6 bg-white dark:bg-[#050b18] transition-all relative overflow-hidden font-mulish">
 
-      {/* ✅ Floating Background Particles */}
-      {[...Array(15)].map((_, i) => (
-        <span
+      {/* FLOATING PARTICLES */}
+      {[...Array(12)].map((_, i) => (
+        <div
           key={i}
-          className="particle"
+          className="absolute w-5 h-5 bg-gradient-to-br from-cyan-400 to-blue-500 opacity-20 rounded-full blur-xl animate-pulse"
           style={{
-            left: `${Math.random() * 100}%`,
+            left: `${Math.random() * 90}%`,
             top: `${Math.random() * 90}%`,
-            animationDelay: `${Math.random() * 5}s`,
+            animationDuration: `${2 + Math.random() * 3}s`,
           }}
-        ></span>
+        />
       ))}
 
-      {/* ✅ Animated Page Title */}
-      <h1 className="text-4xl md:text-5xl font-extrabold text-center mb-14 text-cyan-600 dark:text-cyan-300 tracking-wide animate-fade-down drop-shadow-lg">
-        OUR COURSE GROUPS
-      </h1>
+      {/* PAGE TITLE */}
+          <div className="flex flex-col items-center justify-center mb-10">
 
-      {/* ✅ Card Grid */}
-      <div className="grid md:grid-cols-3 gap-12 max-w-7xl mx-auto animate-fade-up">
+        <div
+          className="
+      px-6 py-2 border border-gray-400 
+      rounded-full text-lg font-semibold 
+      bg-white dark:bg-gray-900 
+      shadow-sm tracking-wide
+      font-[Mulish]
+    "
+        >
+          Our Course
+        </div>
+
+</div>
+
+      {/* CARD GRID */}
+      <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-12 max-w-7xl mx-auto animate-fade-up">
+
         {groups.map((g, i) => (
           <Link
             key={i}
             to={`/courses/${g.name.toLowerCase()}`}
-            className="group relative rounded-2xl shadow-xl hover:shadow-2xl overflow-hidden transition-all duration-500 bg-white/60 dark:bg-[#0d172b]/60 backdrop-blur-xl border border-gray-200 dark:border-gray-700 hover:-translate-y-2 hover:scale-[1.03]"
+            className="
+              group relative rounded-2xl  
+              bg-white dark:bg-[#0d172b] 
+              border border-gray-200 dark:border-gray-700 
+              shadow-xl hover:shadow-2xl
+              transition-all duration-500 
+              hover:-translate-y-2 hover:scale-[1.03]
+              overflow-hidden backdrop-blur-xl
+            "
           >
-            {/* ✅ Neon border animation on hover */}
-            <span className="absolute inset-0 border-2 border-transparent bg-gradient-to-r from-cyan-500 to-blue-500 opacity-0 group-hover:opacity-100 group-hover:animate-glow rounded-2xl"></span>
+            {/* REMOVED BLUE GLOW COMPLETELY */}
 
-            {/* ✅ Image */}
-            <div className="w-full bg-gradient-to-br from-gray-100 to-white dark:from-[#162131] dark:to-[#0b1423]">
-              <img src={g.img} alt={g.name} className="w-full h-48 object-cover" />
+            {/* IMAGE */}
+            <div className="w-full bg-gradient-to-br from-gray-50 to-white dark:from-[#162131] dark:to-[#0b1423]">
+              <img
+                src={g.img}
+                alt={g.name}
+                className="w-full h-48 object-contain p-4"
+              />
             </div>
 
-            {/* ✅ Content */}
+            {/* CONTENT */}
             <div className="p-6 text-center relative z-10">
-              <h2 className="text-2xl font-extrabold text-gray-800 dark:text-white tracking-wider">
+              <h2 className="font-luckiest text-3xl text-gray-800 dark:text-white tracking-wide">
                 {g.name} GROUP
               </h2>
 
-              <p className="text-gray-500 dark:text-gray-300 mt-1">{g.desc}</p>
+              <p className="text-gray-500 dark:text-gray-300 mt-1 font-semibold">
+                {g.desc}
+              </p>
 
-              {/* ✅ Price */}
+              {/* PRICE SECTION */}
               <div className="flex justify-center items-center gap-3 mt-3">
                 <span className="line-through text-gray-400">{g.price}</span>
-                <span className="text-green-500 font-bold text-xl">{g.offer}</span>
+                <span className="text-green-500 font-bold text-2xl">
+                  {g.offer}
+                </span>
               </div>
 
-              <p className="text-sm italic opacity-75 dark:text-gray-300">{g.tagline}</p>
+              <p className="text-sm italic opacity-75 dark:text-gray-300 mt-1">
+                {g.tagline}
+              </p>
 
-              {/* ✅ Button */}
-              <button className="mt-5 w-full py-2 rounded-xl text-white font-semibold bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-blue-600 hover:to-cyan-500 transition-all duration-300 hover:scale-105 shadow-lg">
+              {/* BUTTON */}
+              <button className="
+                mt-5 w-full py-2 rounded-xl 
+                text-white font-semibold 
+                bg-gradient-to-r from-cyan-500 to-blue-600 
+                hover:from-blue-600 hover:to-cyan-500 
+                transition-all duration-300 hover:scale-105 shadow-lg
+              ">
                 View Courses →
               </button>
             </div>
           </Link>
         ))}
+
       </div>
     </div>
   );

@@ -19,23 +19,8 @@ export default function GroupDetailPage() {
     seed: seedBanner,
   };
 
-  const boardOptions = [
-    "CBSE",
-    "ICSE",
-    "NIOS",
-    "Tamil Nadu",
-    "Kerala",
-    "Gujarat",
-  ];
-
-  const languageOptions = [
-    "English",
-    "Tamil",
-    "Hindi",
-    "Malayalam",
-    "Telugu",
-    "Kannada",
-  ];
+  const boardOptions = ["CBSE", "ICSE", "NIOS", "Tamil Nadu", "Kerala", "Gujarat"];
+  const languageOptions = ["English", "Tamil", "Hindi", "Malayalam", "Telugu", "Kannada"];
 
   const standards = {
     root: ["1st", "2nd", "3rd", "4th"],
@@ -92,12 +77,13 @@ export default function GroupDetailPage() {
   const isPrimary = ["root", "stem", "leaf"].includes(groupName);
 
   return (
-    <div className="relative overflow-hidden bg-white dark:bg-[#050b18] min-h-screen pt-6">
-      {/* ✅ Floating Particles */}
+    <div className="relative overflow-hidden bg-white dark:bg-[#050b18] min-h-screen py-10 px-4 sm:px-6 md:px-10 lg:px-20">
+
+      {/* FLOATING PARTICLES */}
       {[...Array(15)].map((_, i) => (
         <span
           key={i}
-          className="particle"
+          className="particle absolute w-3 h-3 bg-cyan-400/20 dark:bg-blue-500/20 rounded-full blur-xl animate-pulse"
           style={{
             left: `${Math.random() * 100}%`,
             top: `${Math.random() * 80 + 10}%`,
@@ -106,31 +92,37 @@ export default function GroupDetailPage() {
         ></span>
       ))}
 
-      {/* ✅ Banner */}
-      <div className="flex justify-center animate-fade-down">
-        <img src={banners[groupName]} className="w-[420px] md:w-[540px]" />
+      {/* BANNER */}
+      <div className="flex justify-center animate-fade-down mt-4">
+        <img src={banners[groupName]} className="w-[280px] sm:w-[350px] md:w-[480px] lg:w-[520px]" />
       </div>
 
-      {/* ✅ ROOT/STEM/LEAF SECTION */}
+      {/* ROOT/STEM/LEAF SECTION */}
       {isPrimary && (
         <>
-          <div className="mx-auto max-w-5xl bg-white/20 dark:bg-[#0d172b] backdrop-blur-xl border dark:border-gray-700 mt-6 p-7 rounded-3xl shadow-xl animate-fade-up">
-            <div className="grid md:grid-cols-3 gap-6 text-black dark:text-white">
-              <select className="p-3 rounded bg-white dark:bg-[#1c2436] border border-gray-400 dark:border-gray-600">
+          {/* Selection Box */}
+          <div className="mx-auto max-w-5xl bg-white/30 dark:bg-[#0d172b] backdrop-blur-xl border dark:border-gray-700 mt-8 p-6 sm:p-8 rounded-3xl shadow-xl animate-fade-up">
+
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-5 text-black dark:text-white">
+
+              {/* Standard */}
+              <select className="p-3 rounded-xl bg-white dark:bg-[#1c2436] border border-gray-300 dark:border-gray-600">
                 <option>Select Standard</option>
                 {standards[groupName].map((s) => (
                   <option key={s}>{s}</option>
                 ))}
               </select>
 
-              <select className="p-3 rounded bg-white dark:bg-[#1c2436] border border-gray-400 dark:border-gray-600">
+              {/* Board */}
+              <select className="p-3 rounded-xl bg-white dark:bg-[#1c2436] border border-gray-300 dark:border-gray-600">
                 <option>Select Board</option>
                 {boardOptions.map((b) => (
                   <option key={b}>{b}</option>
                 ))}
               </select>
 
-              <select className="p-3 rounded bg-white dark:bg-[#1c2436] border border-gray-400 dark:border-gray-600">
+              {/* Language */}
+              <select className="p-3 rounded-xl bg-white dark:bg-[#1c2436] border border-gray-300 dark:border-gray-600">
                 <option>Select Language</option>
                 {languageOptions.map((l) => (
                   <option key={l}>{l}</option>
@@ -138,8 +130,9 @@ export default function GroupDetailPage() {
               </select>
             </div>
 
+            {/* Group Code for Leaf */}
             {groupName === "leaf" && (
-              <select className="mt-4 w-full p-3 bg-white dark:bg-[#1c2436] border border-gray-400 dark:border-gray-600 text-black dark:text-white rounded">
+              <select className="mt-4 w-full p-3 rounded-xl bg-white dark:bg-[#1c2436] border border-gray-300 dark:border-gray-600 text-black dark:text-white">
                 <option>Select Group Code</option>
                 {leafGroupCodes.map((g) => (
                   <option key={g}>{g}</option>
@@ -148,12 +141,14 @@ export default function GroupDetailPage() {
             )}
           </div>
 
-          {/* ✅ Pricing Cards */}
-          <div className="flex flex-col md:flex-row justify-center gap-12 mt-10 animate-fade-up">
+          {/* Pricing Cards */}
+          <div className="flex flex-col md:flex-row justify-center gap-10 mt-12 animate-fade-up">
+
             {/* Monthly */}
-            <div className="w-72 bg-gradient-to-br from-blue-100 to-white dark:from-[#162131] dark:to-[#0b1423] p-6 rounded-xl shadow-xl hover:scale-105 transition cursor-pointer">
+            <div className="w-full sm:w-80 bg-gradient-to-br from-blue-100 to-white dark:from-[#162131] dark:to-[#0b1423] p-6 rounded-2xl shadow-xl hover:scale-105 transition cursor-pointer">
               <h2 className="text-xl font-bold">COMFORT</h2>
               <p className="text-gray-600 dark:text-gray-400">Monthly</p>
+
               <h3 className="text-3xl font-extrabold text-cyan-600 mt-3">
                 {planPrices[groupName].monthly} INR / month
               </h3>
@@ -175,9 +170,10 @@ export default function GroupDetailPage() {
             </div>
 
             {/* Yearly */}
-            <div className="w-72 bg-gradient-to-br from-yellow-100 to-white dark:from-[#312600] dark:to-[#1c1600] p-6 rounded-xl shadow-xl border-2 border-yellow-400 hover:scale-105 transition cursor-pointer">
+            <div className="w-full sm:w-80 bg-gradient-to-br from-yellow-100 to-white dark:from-[#312600] dark:to-[#1c1600] p-6 rounded-2xl shadow-xl border-2 border-yellow-400 hover:scale-105 transition cursor-pointer">
               <h2 className="text-xl font-bold">PREMIUM</h2>
               <p className="text-gray-600 dark:text-gray-400">Yearly (Most Popular)</p>
+
               <h3 className="text-3xl font-extrabold text-yellow-600 mt-3">
                 {planPrices[groupName].yearly} INR / year
               </h3>
@@ -201,10 +197,11 @@ export default function GroupDetailPage() {
         </>
       )}
 
-      {/* ✅ PROFESSIONAL COURSES */}
+      {/* PROFESSIONAL COURSES */}
       {!isPrimary && (
-        <div className="max-w-6xl mx-auto animate-fade-up mt-6 pb-16">
-          {/* Search Bar */}
+        <div className="max-w-6xl mx-auto animate-fade-up mt-10 pb-16">
+
+          {/* Search */}
           <div className="flex items-center border p-3 rounded-xl bg-white dark:bg-[#121b2e] text-black dark:text-white max-w-lg mx-auto shadow-md">
             <input
               className="flex-1 bg-transparent outline-none"
@@ -213,14 +210,16 @@ export default function GroupDetailPage() {
             <button className="text-xl">🔍</button>
           </div>
 
-          {/* Cards */}
-          <div className="grid md:grid-cols-3 gap-10 mt-12">
+          {/* Course Cards */}
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-10 mt-12">
+
             {professionalCourses.map((c, index) => (
               <div
                 key={index}
                 className="relative bg-[#012b5d] hover:bg-[#003a82] text-white p-6 rounded-2xl shadow-2xl transition-all duration-300 hover:-translate-y-2 hover:scale-105"
               >
                 <img className="w-28 h-28 mx-auto object-contain" src={c.img} />
+
                 <h3 className="text-xl font-bold text-center mt-3">{c.title}</h3>
 
                 <div className="flex justify-center gap-3 mt-2 text-lg">

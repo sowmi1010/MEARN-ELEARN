@@ -407,7 +407,7 @@ function AnimatedRoutes() {
 export default function App() {
   return (
     <Router>
-      <div className="bg-darkBg min-h-screen text-gray-200">
+      <div className="dark:bg-darkBg bg-white min-h-screen text-gray-200">
         <Navbar />
         <Suspense fallback={<LoadingSpinner />}>
           <AnimatedRoutes />
