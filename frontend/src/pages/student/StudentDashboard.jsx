@@ -36,22 +36,44 @@ export default function StudentDashboard() {
         const token = localStorage.getItem("token");
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        // 1️⃣ Purchased courses
-        const payRes = await api.get("/student/dashboard/payments", { headers });
-        const list = Array.isArray(payRes.data.payments) ? payRes.data.payments : [];
+        // 1️⃣ Get all user payments
+        const payRes = await api.get("/student/dashboard/payments", {
+          headers,
+        });
+        const list = Array.isArray(payRes.data.payments)
+          ? payRes.data.payments
+          : [];
 
+        // 2️⃣ Build UNIQUE COURSES FROM PAYMENT METADATA
         const purchased = [];
 
         list.forEach((p) => {
-          if (p.course && !purchased.find((x) => x._id === p.course._id)) {
-            purchased.push(p.course);
+          const meta = p.metadata;
+
+          const uniqueKey = `${meta?.group}-${meta?.standard}-${meta?.groupCode}-${meta?.title}`;
+
+          if (!purchased.find((x) => x.key === uniqueKey)) {
+            purchased.push({
+              key: uniqueKey,
+              _id: p._id,
+              group: meta?.group,
+              title: meta?.title,
+
+              standard: meta?.standard,
+              board: meta?.board,
+              language: meta?.language,
+              groupCode: meta?.groupCode,
+            });
           }
         });
 
         setCourses(purchased);
-        if (purchased.length > 0) setSelectedCourse(purchased[0]);
 
-        // 2️⃣ Course progress
+        if (purchased.length > 0) {
+          setSelectedCourse(purchased[0]);
+        }
+
+        // 3️⃣ Load progress using first selected
         if (purchased[0]?._id) {
           const prog = await api.get("/student/dashboard/progress", {
             headers,
@@ -77,13 +99,11 @@ export default function StudentDashboard() {
 
   return (
     <main className="flex-1 p-6 overflow-auto">
-
       {/* =====================================================
            FULL-WIDTH TOP HEADER
       ===================================================== */}
       <div className="w-full mb-8">
         <div className="flex items-center justify-between">
-
           {/* Left side */}
           <div>
             <h1 className="text-3xl font-extrabold text-purple-400 tracking-wide">
@@ -107,12 +127,10 @@ export default function StudentDashboard() {
             MAIN CONTENT (CENTERED)
       ===================================================== */}
       <div className="max-w-6xl mx-auto space-y-10">
-
         {/* ---------------------------------- */}
         {/* PERFORMANCE + SIDEBAR GRID */}
         {/* ---------------------------------- */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
           {/* Chart Card */}
           <section
             className="
@@ -135,7 +153,6 @@ export default function StudentDashboard() {
 
           {/* RIGHT SIDEBAR */}
           <aside className="space-y-6">
-
             {/* Quick Stats */}
             <div
               className="
@@ -147,11 +164,12 @@ export default function StudentDashboard() {
             >
               <div className="flex items-center gap-2 mb-3">
                 <FaBolt className="text-yellow-400 text-lg" />
-                <h3 className="text-lg font-semibold text-purple-300">Quick Stats</h3>
+                <h3 className="text-lg font-semibold text-purple-300">
+                  Quick Stats
+                </h3>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
-
                 {/* Hours */}
                 <div className="text-center p-3 rounded-xl bg-[#11111f] border border-purple-900/20">
                   <div className="text-xs text-gray-400">Hours</div>
@@ -175,7 +193,6 @@ export default function StudentDashboard() {
                     {progress.testsAttempted}
                   </div>
                 </div>
-
               </div>
             </div>
 
@@ -191,7 +208,6 @@ export default function StudentDashboard() {
         {/*   BOTTOM WIDGET AREA (CENTERED)    */}
         {/* ---------------------------------- */}
         <div className="grid lg:grid-cols-3 gap-8">
-
           {/* To-do List */}
           <div
             className="
@@ -241,7 +257,6 @@ export default function StudentDashboard() {
             <UpcomingLive compact />
           </div>
         </div>
-
       </div>
     </main>
   );
