@@ -54,7 +54,6 @@ const groups = [
 export default function CourseGroupsPage() {
   return (
     <div className="min-h-screen pt-28 pb-20 px-6 bg-white dark:bg-[#050b18] transition-all relative overflow-hidden font-mulish">
-
       {/* FLOATING PARTICLES */}
       {[...Array(12)].map((_, i) => (
         <div
@@ -69,25 +68,22 @@ export default function CourseGroupsPage() {
       ))}
 
       {/* PAGE TITLE */}
-          <div className="flex flex-col items-center justify-center mb-10">
-
+      <div className="flex flex-col items-center justify-center mb-10">
         <div
           className="
       px-6 py-2 border border-gray-400 
       rounded-full text-lg font-semibold 
       bg-white dark:bg-gray-900 
-      shadow-sm tracking-wide
+      shadow-sm tracking-wide text-black dark:text-white
       font-[Mulish]
     "
         >
           Our Course
         </div>
-
-</div>
+      </div>
 
       {/* CARD GRID */}
       <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-12 max-w-7xl mx-auto animate-fade-up">
-
         {groups.map((g, i) => (
           <Link
             key={i}
@@ -136,19 +132,20 @@ export default function CourseGroupsPage() {
               </p>
 
               {/* BUTTON */}
-              <button className="
+              <button
+                className="
                 mt-5 w-full py-2 rounded-xl 
                 text-white font-semibold 
                 bg-gradient-to-r from-cyan-500 to-blue-600 
                 hover:from-blue-600 hover:to-cyan-500 
                 transition-all duration-300 hover:scale-105 shadow-lg
-              ">
+              "
+              >
                 View Courses →
               </button>
             </div>
           </Link>
         ))}
-
       </div>
     </div>
   );

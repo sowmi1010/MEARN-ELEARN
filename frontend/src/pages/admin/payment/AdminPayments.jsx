@@ -7,9 +7,12 @@ import "jspdf-autotable";
 export default function AdminPayments() {
   const [payments, setPayments] = useState([]);
   const [filtered, setFiltered] = useState([]);
-  const [courses, setCourses] = useState([]);
-  const [courseFilter, setCourseFilter] = useState("");
+  const [filter, setFilter] = useState("");
   const [loading, setLoading] = useState(true);
+
+  // ✅ PAGINATION
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(5);
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
@@ -24,10 +27,8 @@ export default function AdminPayments() {
         const token = localStorage.getItem("token");
         const headers = { Authorization: `Bearer ${token}` };
 
-        // --- GET PAYMENTS ---
         const res = await api.get("/payments/all", { headers });
 
-        // Normalize to array ALWAYS
         const list =
           Array.isArray(res.data)
             ? res.data
@@ -35,21 +36,15 @@ export default function AdminPayments() {
             ? res.data.payments
             : [];
 
-        setPayments(list);
-        setFiltered(list);
+        // ✅ SORT - LATEST FIRST
+        const sorted = list.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
 
-        // --- GET COURSES ---
-        const res2 = await api.get("/courses", { headers });
-        const courseList =
-          Array.isArray(res2.data)
-            ? res2.data
-            : Array.isArray(res2.data.courses)
-            ? res2.data.courses
-            : [];
-
-        setCourses(courseList);
+        setPayments(sorted);
+        setFiltered(sorted);
       } catch (err) {
-        console.error("Fetch payments error:", err.response?.data || err.message);
+        console.error("Fetch payments error:", err);
         setPayments([]);
         setFiltered([]);
       } finally {
@@ -58,150 +53,288 @@ export default function AdminPayments() {
     }
 
     fetchData();
-  }, [user.role, user.permissions]);
+  }, []);
 
-  // --------------------- FILTER ----------------------
-  const handleFilter = (courseId) => {
-    setCourseFilter(courseId);
+  // ✅ FILTER FUNCTION
+  const handleFilter = (value) => {
+    setFilter(value);
+    setCurrentPage(1);
+
+    if (!value) return setFiltered(payments);
+
+    const f = value.toLowerCase();
+
     setFiltered(
-      courseId ? payments.filter((p) => p.course?._id === courseId) : payments
+      payments.filter(
+        (p) =>
+          p?.user?.email?.toLowerCase().includes(f) ||
+          p?.metadata?.title?.toLowerCase().includes(f) ||
+          p?.metadata?.group?.toLowerCase().includes(f)
+      )
     );
   };
 
-  // --------------------- EXPORT EXCEL ----------------------
+  // ✅ EXPORT EXCEL
   const exportExcel = () => {
-    if (filtered.length === 0) return alert("No payments to export!");
+    if (filtered.length === 0) return alert("No payments");
 
     const ws = XLSX.utils.json_to_sheet(
       filtered.map((p) => ({
-        Student: p.user?.name,
+        Name: p.user?.name,
         Email: p.user?.email,
-        Course: p.course?.title,
+        Group: p.metadata?.group,
+        Course: p.metadata?.title,
+        Standard: p.metadata?.standard,
+        Board: p.metadata?.board,
+        Language: p.metadata?.language,
         Amount: p.amount,
-        Date: new Date(p.createdAt).toLocaleString(),
+        Method: p.provider,
         Status: p.status,
+        PaymentID: p.providerPaymentId,
       }))
     );
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Payments");
-    XLSX.writeFile(wb, "payments_report.xlsx");
+    XLSX.writeFile(wb, "payments.xlsx");
   };
 
-  // --------------------- EXPORT PDF ----------------------
+  // ✅ EXPORT PDF
   const exportPDF = () => {
-    if (filtered.length === 0) return alert("No payments to export!");
+    if (filtered.length === 0) return alert("No payments");
 
     const doc = new jsPDF();
     doc.text("Payments Report", 14, 16);
 
     doc.autoTable({
-      startY: 22,
-      head: [["Student", "Email", "Course", "Amount", "Date", "Status"]],
+      startY: 24,
+      head: [[
+        "Name",
+        "Group",
+        "Course",
+        "Amount",
+        "Method",
+        "Status"
+      ]],
       body: filtered.map((p) => [
         p.user?.name,
-        p.user?.email,
-        p.course?.title,
+        p.metadata?.group,
+        p.metadata?.title,
         `₹${p.amount}`,
-        new Date(p.createdAt).toLocaleString(),
+        p.provider,
         p.status,
       ]),
     });
 
-    doc.save("payments_report.pdf");
+    doc.save("payments.pdf");
   };
 
-  // --------------------- TOTAL INCOME ----------------------
-  const totalIncome = Array.isArray(filtered)
-    ? filtered.reduce((sum, p) => sum + (p.amount || 0), 0)
-    : 0;
+  // ✅ TOTAL
+  const totalIncome = filtered.reduce((sum, p) => sum + (p.amount || 0), 0);
 
-  // --------------------- LOADING ----------------------
-  if (loading) return <div className="p-6 text-gray-500">Loading payments...</div>;
+  // ✅ PAGINATION
+  const indexOfLast = currentPage * perPage;
+  const indexOfFirst = indexOfLast - perPage;
+  const currentPayments = filtered.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(filtered.length / perPage);
 
-  // --------------------- PERMISSION ----------------------
+  if (loading)
+    return <div className="p-6 text-gray-400">Loading payments...</div>;
+
   if (!(user.role === "admin" || user.permissions?.includes("payments"))) {
     return (
-      <div className="p-8 min-h-screen bg-gray-100 text-red-500 text-xl font-semibold">
-        You do not have permission to view payment data.
+      <div className="p-8 min-h-screen bg-[#050b18] text-red-500 text-xl">
+        No Permission
       </div>
     );
   }
 
   return (
-    <div className="p-6 min-h-screen bg-gray-100 dark:bg-darkBg">
-      <h1 className="text-3xl font-extrabold text-accent mb-8">💳 Payments</h1>
+    <div className="p-6 min-h-screen bg-[#050b18] text-white">
 
-      {/* FILTER + EXPORT BUTTONS */}
+      <h1 className="text-3xl font-bold text-purple-400 mb-6">
+        💳 Payments Dashboard
+      </h1>
+
+      {/* FILTER BAR */}
       <div className="flex flex-wrap gap-4 mb-8">
-        <select
-          value={courseFilter}
+        <input
+          type="text"
+          placeholder="Search by email / group / course..."
+          value={filter}
           onChange={(e) => handleFilter(e.target.value)}
-          className="px-4 py-2 rounded-lg border"
-        >
-          <option value="">All Courses</option>
-          {courses.map((c) => (
-            <option key={c._id} value={c._id}>
-              {c.title}
-            </option>
-          ))}
-        </select>
+          className="px-4 py-2 w-80 bg-[#0d1633] rounded-xl border border-purple-700 outline-none"
+        />
 
-        <button onClick={exportExcel} className="px-5 py-2 bg-green-500 text-white rounded-lg">
+        <button onClick={exportExcel} className="px-6 py-2 bg-green-600 rounded-xl">
           Export Excel
         </button>
-        <button onClick={exportPDF} className="px-5 py-2 bg-red-500 text-white rounded-lg">
+
+        <button onClick={exportPDF} className="px-6 py-2 bg-red-600 rounded-xl">
           Export PDF
         </button>
       </div>
 
-      {/* SUMMARY CARDS */}
-      <div className="grid sm:grid-cols-3 gap-6 mb-10">
-        <SummaryCard title="Total Income" value={`₹${totalIncome}`} color="from-green-400 to-green-600" />
-        <SummaryCard title="Transactions" value={filtered.length} color="from-purple-400 to-pink-500" />
-        <SummaryCard title="Courses" value={courses.length} color="from-blue-400 to-blue-600" />
+      {/* SUMMARY */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+        <SummaryCard title="💰 Total Income" value={`₹${totalIncome}`} />
+        <SummaryCard title="💳 Transactions" value={filtered.length} />
+        <SummaryCard
+          title="👩‍🎓 Students"
+          value={new Set(filtered.map(p => p?.user?.email)).size}
+        />
       </div>
 
       {/* TABLE */}
-      <div className="bg-white p-6 rounded-xl shadow">
-        {filtered.length === 0 ? (
-          <p>No payments found</p>
-        ) : (
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="p-3">Student</th>
-                <th className="p-3">Email</th>
-                <th className="p-3">Course</th>
-                <th className="p-3">Amount</th>
-                <th className="p-3">Date</th>
-                <th className="p-3">Status</th>
+      <div className="overflow-x-auto bg-[#071633] p-6 rounded-2xl shadow-xl">
+
+        <table className="min-w-full text-sm">
+          <thead>
+            <tr className="text-purple-300 border-b border-purple-800">
+              <th className="p-3">Student</th>
+              <th className="p-3">Group</th>
+              <th className="p-3">Details</th>
+              <th className="p-3">Amount</th>
+              <th className="p-3">Method</th>
+              <th className="p-3">Status</th>
+              <th className="p-3">Payment ID</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {currentPayments.map((p) => (
+              <tr key={p._id} className="border-b border-purple-900">
+                <td className="p-3">
+                  <p className="font-semibold">{p.user?.name}</p>
+                  <p className="text-gray-400 text-xs">
+                    {p.user?.email}
+                  </p>
+                </td>
+
+                <td className="p-3 text-cyan-400 font-bold">
+                  {p.metadata?.group?.toUpperCase()}
+                </td>
+
+                <td className="p-3 text-gray-300">
+                  {p.metadata?.standard && (
+                    <p>
+                      {p.metadata.standard} | {p.metadata.board} | {p.metadata.language}
+                    </p>
+                  )}
+
+                  {p.metadata?.groupCode && (
+                    <p className="text-yellow-400 text-xs">
+                      {p.metadata.groupCode}
+                    </p>
+                  )}
+
+                  {!p.metadata?.standard && p.metadata?.title}
+                </td>
+
+                <td className="p-3 text-green-400 font-semibold">
+                  ₹ {p.amount}
+                </td>
+
+                <td className="p-3 uppercase text-indigo-400">
+                  {p.provider}
+                </td>
+
+                <td className="p-3">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-bold
+                    ${
+                      p.status === "successful"
+                        ? "bg-green-600"
+                        : p.status === "failed"
+                        ? "bg-red-600"
+                        : "bg-yellow-500"
+                    }`}
+                  >
+                    {p.status}
+                  </span>
+                </td>
+
+                <td className="p-3 text-xs text-gray-400">
+                  {p.providerPaymentId}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {filtered.map((p, i) => (
-                <tr key={p._id}>
-                  <td className="p-3">{p.user?.name}</td>
-                  <td className="p-3">{p.user?.email}</td>
-                  <td className="p-3">{p.course?.title}</td>
-                  <td className="p-3">₹{p.amount}</td>
-                  <td className="p-3">{new Date(p.createdAt).toLocaleString()}</td>
-                  <td className="p-3">{p.status}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            ))}
+          </tbody>
+        </table>
+
+        {currentPayments.length === 0 && (
+          <p className="text-center p-10 text-gray-400">
+            No payment records found.
+          </p>
         )}
+
+        {/* ✅ PAGINATION */}
+        {totalPages > 1 && (
+          <div className="flex justify-between items-center mt-6">
+
+            {/* PER PAGE */}
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-400">
+                Rows per page
+              </span>
+              <select
+                value={perPage}
+                onChange={(e) => {
+                  setPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="bg-[#0d1633] border border-purple-600 px-2 py-1 rounded-lg"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+              </select>
+            </div>
+
+            {/* PAGES */}
+            <div className="flex gap-2 items-center">
+
+              <button
+                onClick={() => setCurrentPage(prev => prev - 1)}
+                disabled={currentPage === 1}
+                className="px-3 py-1 bg-[#162447] rounded disabled:opacity-40"
+              >
+                Prev
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+                <button
+                  key={num}
+                  onClick={() => setCurrentPage(num)}
+                  className={`px-3 py-1 rounded 
+                  ${currentPage === num ? "bg-purple-600" : "bg-[#162447]"}`}
+                >
+                  {num}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setCurrentPage(prev => prev + 1)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 bg-[#162447] rounded disabled:opacity-40"
+              >
+                Next
+              </button>
+
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
 }
 
-function SummaryCard({ title, value, color }) {
+function SummaryCard({ title, value }) {
   return (
-    <div className={`p-6 rounded-xl text-white bg-gradient-to-r ${color}`}>
-      <h3 className="text-sm font-bold">{title}</h3>
-      <p className="text-3xl font-extrabold mt-2">{value}</p>
+    <div className="p-6 bg-gradient-to-br from-purple-700 to-indigo-700 rounded-2xl shadow-xl">
+      <p className="text-white/70">{title}</p>
+      <h2 className="text-3xl font-bold mt-2">{value}</h2>
     </div>
   );
 }

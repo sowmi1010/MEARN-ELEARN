@@ -3,58 +3,81 @@ const router = express.Router();
 const auth = require("../middlewares/auth");
 const role = require("../middlewares/role");
 const checkPermission = require("../middlewares/permission");
+
 const Payment = require("../models/Payment");
 const Course = require("../models/Course");
+const mongoose = require("mongoose");
+
 
 // ---------------------------------------------
-// 🔥 DEMO PAYMENT — For Fake/Frontend Courses
+// 🔥 DEMO PAYMENT — FIXED (Stores full group info)
 // ---------------------------------------------
 router.post("/demo-pay", auth, async (req, res) => {
   try {
-    const { courseId } = req.body;
+    const {
+      courseId,
+      title,
+      price,
+      group,
+      standard,
+      board,
+      language,
+      groupCode,
+    } = req.body;
+
     const userId = req.user.id;
 
-    if (!courseId) {
-      return res.status(400).json({ message: "Course ID missing" });
+    if (!title || !price) {
+      return res.status(400).json({ message: "Title or Price missing" });
     }
 
-    // Amount optional — frontend may not send
-    const course = await Course.findById(courseId).catch(() => null);
-
-    const amount = course?.price || 0;
+    // Check valid DB course
+    const course = mongoose.Types.ObjectId.isValid(courseId)
+      ? await Course.findById(courseId)
+      : null;
 
     const payment = await Payment.create({
       user: userId,
-      course: courseId,
+      course: course ? course._id : null,
       provider: "demo",
       providerPaymentId: "DEMO_" + Date.now(),
-      amount: amount,
-      currency: "INR",
+      amount: Number(price),
       status: "successful",
+
+      // ✅ ALL DATA SAVED HERE
+      metadata: {
+        title,
+        group,
+        standard,
+        board,
+        language,
+        groupCode,
+      },
     });
 
     res.json({
       message: "Demo Payment Successful",
       payment,
     });
+
   } catch (err) {
-    console.error("Demo Payment Error:", err);
-    res.status(500).json({ message: "Payment failed" });
+    console.error("Payment Error =>", err);
+    res.status(500).json({ message: err.message });
   }
 });
 
+
 // ---------------------------------------------
-// 🔥 GET ALL PAYMENTS (Admin + Mentor with permission)
+// 🔥 GET ALL PAYMENTS (Admin + Mentor)
 // ---------------------------------------------
-// GET: All payments for Admin / Mentor
 router.get("/all", auth, checkPermission("payments"), async (req, res) => {
   try {
     const payments = await Payment.find()
       .populate("user", "name email")
-      .populate("course", "title");
+      .populate("course", "title")
+      .sort({ createdAt: -1 });
 
-    // ALWAYS return pure array
-    return res.json(payments);
+    res.json(payments);
   } catch (err) {
     console.error("Payment fetch error:", err);
     res.status(500).json({ message: "Failed to fetch payments" });
@@ -65,7 +88,6 @@ router.get("/all", auth, checkPermission("payments"), async (req, res) => {
 // ---------------------------------------------
 // 🔥 GET MY PAYMENTS (Student Only)
 // ---------------------------------------------
-// GET MY PAYMENTS (Student Only)
 router.get("/my", auth, role("student"), async (req, res) => {
   try {
     const payments = await Payment.find({ user: req.user.id })
@@ -77,6 +99,5 @@ router.get("/my", auth, role("student"), async (req, res) => {
     res.status(500).json({ message: "Failed to fetch payments" });
   }
 });
-
 
 module.exports = router;

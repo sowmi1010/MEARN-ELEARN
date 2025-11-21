@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 export default function Videos() {
   const [videos, setVideos] = useState([]);
   const [search, setSearch] = useState("");
+  const activeCourse = localStorage.getItem("activeCourse");
 
   const token = localStorage.getItem("token");
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -14,7 +15,10 @@ export default function Videos() {
     try {
       const res = await api.get("/videos", {
         headers,
-        params: { search: query },
+        params: {
+          search: query,
+          course: activeCourse, // ✅ CONNECTED TO DROPDOWN
+        },
       });
       setVideos(res.data);
     } catch (err) {
@@ -41,11 +45,13 @@ export default function Videos() {
 
   return (
     <div className="min-h-screen p-6 text-gray-100 bg-[#0b0f1a]">
-
       {/* PAGE HEADING */}
-      <h1 className="text-3xl font-extrabold text-purple-400 mb-8">
-        Explore Videos
-      </h1>
+      {activeCourse && (
+        <p className="mb-6 text-sm text-gray-400">
+          Showing content for:
+          <span className="text-purple-400 font-bold ml-1">{activeCourse}</span>
+        </p>
+      )}
 
       {/* ========================================================
              VIDEO CARD GRID — Premium Design

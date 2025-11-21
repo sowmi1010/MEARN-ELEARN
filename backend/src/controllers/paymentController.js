@@ -6,13 +6,24 @@ const { createRazorpayOrder, verifyRazorpaySignature } = require('../services/pa
 // Create new payment order
 const createOrder = async (req, res) => {
   try {
-    const { courseId } = req.body;
+    const { courseId, title, price } = req.body;
 
-    const course = await Course.findById(courseId);
-    if (!course) return res.status(404).json({ message: 'Course not found' });
+    let course = await Course.findById(courseId).catch(() => null);
+
+    // If course NOT found in DB (Java, NEET, 12th etc)
+    if (!course) {
+      course = {
+        _id: courseId,
+        title: title,
+        price: price
+      };
+    }
+
 
     // Create order on Razorpay (for Stripe, you'd create a session here)
-    const order = await createRazorpayOrder(course.price, 'INR', `course_${courseId}`);
+    const coursePrice = course?.price || price || 0;
+
+    const order = await createRazorpayOrder(coursePrice, 'INR', `course_${courseId}`);
 
     // Save locally
     const payment = await Payment.create({
@@ -20,9 +31,10 @@ const createOrder = async (req, res) => {
       course: course._id,
       provider: 'razorpay',
       providerPaymentId: order.id,
-      amount: course.price,
+      amount: coursePrice,
       status: 'created'
     });
+
 
     res.json({ order, paymentId: payment._id });
   } catch (err) {

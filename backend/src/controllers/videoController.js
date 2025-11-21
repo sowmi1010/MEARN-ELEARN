@@ -138,10 +138,11 @@ exports.addVideo = async (req, res) => {
 
 exports.getVideos = async (req, res) => {
   try {
-    const { group, standard, board, language, subject, lesson, category, search } = req.query;
+    const { group, standard, board, language, subject, lesson, category, search, course } = req.query;
     const filter = {};
 
     // Match base fields case-insensitively
+    if (course) filter.course = new RegExp(`^${course}$`, "i");
     if (group) filter.group = new RegExp(`^${group}$`, "i");
     if (standard) filter.standard = new RegExp(`^${standard}$`, "i");
     if (board) filter.board = new RegExp(`^${board}$`, "i");

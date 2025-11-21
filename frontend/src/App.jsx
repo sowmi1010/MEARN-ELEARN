@@ -50,7 +50,6 @@ const TodoList = React.lazy(() => import("./pages/student/TodoList"));
 const AddTodo = React.lazy(() => import("./pages/student/AddTodo"));
 const Marks = React.lazy(() => import("./pages/student/Marks"));
 const Courses = React.lazy(() => import("./pages/student/Courses"));
-const CourseDetails = React.lazy(() => import("./pages/student/CourseDetails"));
 const Certificate = React.lazy(() => import("./pages/student/Certificate"));
 const ViewCertificate = React.lazy(() =>
   import("./pages/student/ViewCertificate")
@@ -305,7 +304,6 @@ function AnimatedRoutes() {
           <Route path="todo/add" element={<AddTodo />} />
           <Route path="marks" element={<Marks />} />
           <Route path="courses" element={<Courses />} />
-          <Route path="courses/:id" element={<CourseDetails />} />
           <Route path="certificate" element={<Certificate />} />
           <Route path="certificate/view/:id" element={<ViewCertificate />} />
           <Route path="/student/team" element={<StudentTeam />} />
