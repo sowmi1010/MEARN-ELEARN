@@ -31,33 +31,45 @@ const LandingPage = React.lazy(() => import("./pages/landing/LandingPage"));
 const StudentLayout = React.lazy(() => import("./layouts/StudentLayout"));
 
 const StudentDashboard = React.lazy(() =>
-  import("./pages/student/StudentDashboard")
+  import("./pages/student/dashboard/StudentDashboard")
 );
 
-const Videos = React.lazy(() => import("./pages/student/Videos"));
-const VideoPlayer = React.lazy(() => import("./pages/student/VideoPlayer"));
-const Books = React.lazy(() => import("./pages/student/Books"));
-const BookViewer = React.lazy(() => import("./pages/student/BookViewer"));
-const Notes = React.lazy(() => import("./pages/student/Notes"));
-const NoteViewer = React.lazy(() => import("./pages/student/NoteViewer"));
-const Tests = React.lazy(() => import("./pages/student/Test"));
-const TestViewer = React.lazy(() => import("./pages/student/TestViewer"));
-const Quiz = React.lazy(() => import("./pages/student/Quiz"));
-const QuizPlayer = React.lazy(() => import("./pages/student/QuizPlayer"));
-const QuizResult = React.lazy(() => import("./pages/student/QuizResult"));
-const Live = React.lazy(() => import("./pages/student/Live"));
-const TodoList = React.lazy(() => import("./pages/student/TodoList"));
-const AddTodo = React.lazy(() => import("./pages/student/AddTodo"));
-const Marks = React.lazy(() => import("./pages/student/Marks"));
-const Courses = React.lazy(() => import("./pages/student/Courses"));
-const Certificate = React.lazy(() => import("./pages/student/Certificate"));
-const ViewCertificate = React.lazy(() =>
-  import("./pages/student/ViewCertificate")
+const Videos = React.lazy(() => import("./pages/student/contents/Videos"));
+const VideoPlayer = React.lazy(() =>
+  import("./pages/student/contents/VideoPlayer")
 );
-const StudentTeam = React.lazy(() => import("./pages/student/StudentTeam"));
-const ChatWindowPage = React.lazy(() => import("./pages/student/ChatWindow"));
+const Books = React.lazy(() => import("./pages/student/contents/Books"));
+const BookViewer = React.lazy(() =>
+  import("./pages/student/contents/BookViewer")
+);
+const Notes = React.lazy(() => import("./pages/student/contents/Notes"));
+const NoteViewer = React.lazy(() =>
+  import("./pages/student/contents/NoteViewer")
+);
+const Tests = React.lazy(() => import("./pages/student/contents/Test"));
+const TestViewer = React.lazy(() =>
+  import("./pages/student/contents/TestViewer")
+);
+const Quiz = React.lazy(() => import("./pages/student/contents/Quiz"));
+const QuizPlayer = React.lazy(() =>
+  import("./pages/student/contents/QuizPlayer")
+);
+const QuizResult = React.lazy(() =>
+  import("./pages/student/contents/QuizResult")
+);
+const Live = React.lazy(() => import("./pages/student/learning/Live"));
+const TodoList = React.lazy(() => import("./pages/student/productivity/TodoList"));
+const AddTodo = React.lazy(() => import("./pages/student/productivity/AddTodo"));
+const Marks = React.lazy(() => import("./pages/student/performance/Marks"));
+const Courses = React.lazy(() => import("./pages/student/courses/Courses"));
+const Certificate = React.lazy(() => import("./pages/student/learning/Certificate"));
+const ViewCertificate = React.lazy(() =>
+  import("./pages/student/learning/ViewCertificate")
+);
+const StudentTeam = React.lazy(() => import("./pages/student/community/StudentTeam"));
+const ChatWindowPage = React.lazy(() => import("./pages/student/community/ChatWindow"));
 const StudentProfile = React.lazy(() =>
-  import("./pages/student/ProfileSetting")
+  import("./pages/student/profile/ProfileSetting")
 );
 
 // 🔹 ADMIN

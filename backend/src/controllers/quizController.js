@@ -44,21 +44,37 @@ exports.addQuiz = async (req, res) => {
 };
 
 //Get All Quizzes
+// Get All Quizzes (Class-based Filtering)
 exports.getQuizzes = async (req, res) => {
   try {
-    const { subject, lesson } = req.query;
+    const { group, standard, board, language, search } = req.query;
+
     const filter = {};
 
-    if (subject) filter.subject = new RegExp(subject, "i");
-    if (lesson) filter.lesson = new RegExp(lesson, "i");
+    if (group) filter.group = new RegExp(`^${group}$`, "i");
+    if (standard) filter.standard = new RegExp(`^${standard}$`, "i");
+    if (board) filter.board = new RegExp(`^${board}$`, "i");
+    if (language) filter.language = new RegExp(`^${language}$`, "i");
+
+    if (search) {
+      filter.$or = [
+        { subject: new RegExp(search, "i") },
+        { lesson: new RegExp(search, "i") },
+        { question: new RegExp(search, "i") },
+      ];
+    }
+
+    console.log("Final Quiz Filter:", filter);
 
     const quizzes = await Quiz.find(filter).sort({ createdAt: -1 });
+
     res.json(quizzes);
   } catch (err) {
     console.error("getQuizzes error:", err);
     res.status(500).json({ message: "Failed to fetch quizzes" });
   }
 };
+
 
 
 //Get Single Quiz

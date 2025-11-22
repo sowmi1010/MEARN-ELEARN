@@ -77,20 +77,23 @@ export default function AddTest() {
       Object.entries(formData).forEach(([key, value]) =>
         form.append(key, value)
       );
+
       if (thumbnail) form.append("thumbnail", thumbnail);
       if (file) form.append("file", file);
 
       const token = localStorage.getItem("token");
-      await api.post("/tests/upload", form, {
+
+      const res = await api.post("/tests/upload", form, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
         },
       });
 
-      setMessage("Test uploaded successfully!");
+      console.log("UPLOAD RESPONSE:", res.data); // ✅
 
-      // reset form
+      setMessage("✅ Test uploaded successfully!");
+
       setFormData({
         group: "",
         standard: "",
@@ -100,12 +103,13 @@ export default function AddTest() {
         category: "",
         title: "",
       });
+
       setThumbnail(null);
       setFile(null);
       setThumbnailPreview("");
     } catch (err) {
-      console.error("Upload Error:", err);
-      setMessage("Upload failed. Try again.");
+      console.error("Upload Error:", err.response?.data || err);
+      setMessage("❌ Upload failed. See console");
     } finally {
       setLoading(false);
       setTimeout(() => setMessage(""), 4000);
