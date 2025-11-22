@@ -9,6 +9,24 @@ import UpcomingLive from "../../components/student/UpcomingLive";
 
 import { FaChartLine, FaListUl, FaBolt, FaClock } from "react-icons/fa";
 
+/* ================== FIXED FUNCTION ================== */
+function getCourseName(c) {
+  if (!c) return "";
+
+  if (c.standard) {
+    let name = `${c.standard}`;
+    if (c.groupCode) name += ` - ${c.groupCode}`;
+    if (c.board) name += ` | ${c.board}`;
+    if (c.language) name += ` | ${c.language}`;
+    return name;
+  }
+
+  if (c.title) return c.title;
+
+  return c.group?.toUpperCase() || "Course";
+}
+/* ==================================================== */
+
 export default function StudentDashboard() {
   const [user, setUser] = useState(() => {
     try {
@@ -36,15 +54,16 @@ export default function StudentDashboard() {
         const token = localStorage.getItem("token");
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        // 1️⃣ Get all user payments
+        /* GET USER PAYMENTS */
         const payRes = await api.get("/student/dashboard/payments", {
           headers,
         });
+
         const list = Array.isArray(payRes.data.payments)
           ? payRes.data.payments
           : [];
 
-        // 2️⃣ Build UNIQUE COURSES FROM PAYMENT METADATA
+        /* 2️⃣ CREATE COURSES FROM PAYMENTS */
         const purchased = [];
 
         list.forEach((p) => {
@@ -56,24 +75,31 @@ export default function StudentDashboard() {
             purchased.push({
               key: uniqueKey,
               _id: p._id,
-              group: meta?.group,
-              title: meta?.title,
 
+              group: meta?.group,
               standard: meta?.standard,
               board: meta?.board,
               language: meta?.language,
               groupCode: meta?.groupCode,
+
+              title: meta?.title,
             });
           }
         });
 
         setCourses(purchased);
 
-        if (purchased.length > 0) {
+        /* 3️⃣ RESTORE LAST SELECTED COURSE */
+        const savedName = localStorage.getItem("activeCourse");
+
+        if (savedName) {
+          const found = purchased.find((c) => getCourseName(c) === savedName);
+          setSelectedCourse(found || purchased[0] || null);
+        } else if (purchased.length > 0) {
           setSelectedCourse(purchased[0]);
         }
 
-        // 3️⃣ Load progress using first selected
+        /* 4️⃣ LOAD PROGRESS */
         if (purchased[0]?._id) {
           const prog = await api.get("/student/dashboard/progress", {
             headers,
@@ -88,7 +114,7 @@ export default function StudentDashboard() {
           });
         }
       } catch (err) {
-        console.log(err);
+        console.log("Dashboard error:", err);
       } finally {
         setLoading(false);
       }
@@ -99,14 +125,11 @@ export default function StudentDashboard() {
 
   return (
     <main className="flex-1 p-6 overflow-auto">
-      {/* =====================================================
-           FULL-WIDTH TOP HEADER
-      ===================================================== */}
+      {/* HEADER */}
       <div className="w-full mb-8">
         <div className="flex items-center justify-between">
-          {/* Left side */}
           <div>
-            <h1 className="text-3xl font-extrabold text-purple-400 tracking-wide">
+            <h1 className="text-3xl font-extrabold text-purple-400">
               Hello {user?.name || "Student"} 👋
             </h1>
             <p className="text-sm text-gray-400 mt-1">
@@ -114,33 +137,30 @@ export default function StudentDashboard() {
             </p>
           </div>
 
-          {/* Right: Dropdown */}
+          {/* DROPDOWN */}
           <MyCoursesDropdown
             courses={courses}
             selected={selectedCourse}
-            onSelect={(course) => setSelectedCourse(course)}
+            onSelect={(course) => {
+              setSelectedCourse(course);
+
+              localStorage.setItem("activeCourse", getCourseName(course));
+
+              localStorage.setItem("activeGroup", course.group || "");
+              localStorage.setItem("activeStandard", course.standard || "");
+              localStorage.setItem("activeBoard", course.board || "");
+              localStorage.setItem("activeLanguage", course.language || "");
+              localStorage.setItem("activeSubject", course.title || "");
+            }}
           />
         </div>
       </div>
 
-      {/* =====================================================
-            MAIN CONTENT (CENTERED)
-      ===================================================== */}
+      {/* MAIN CONTENT */}
       <div className="max-w-6xl mx-auto space-y-10">
-        {/* ---------------------------------- */}
-        {/* PERFORMANCE + SIDEBAR GRID */}
-        {/* ---------------------------------- */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Chart Card */}
-          <section
-            className="
-              lg:col-span-2 
-              bg-[#0d0d17] 
-              p-5 rounded-2xl 
-              border border-purple-900/20 
-              shadow-lg
-            "
-          >
+          {/* PERFORMANCE */}
+          <section className="lg:col-span-2 bg-[#0d0d17] p-5 rounded-2xl border border-purple-900/20 shadow-lg">
             <div className="flex items-center gap-2 mb-4">
               <FaChartLine className="text-purple-400 text-lg" />
               <h3 className="text-purple-300 text-lg font-semibold">
@@ -151,17 +171,10 @@ export default function StudentDashboard() {
             <PerformanceChart progress={progress} />
           </section>
 
-          {/* RIGHT SIDEBAR */}
+          {/* SIDEBAR */}
           <aside className="space-y-6">
-            {/* Quick Stats */}
-            <div
-              className="
-                bg-[#0d0d17] 
-                p-5 rounded-2xl 
-                border border-purple-900/20 
-                shadow-lg
-              "
-            >
+            {/* QUICK STATS */}
+            <div className="bg-[#0d0d17] p-5 rounded-2xl border border-purple-900/20 shadow-lg">
               <div className="flex items-center gap-2 mb-3">
                 <FaBolt className="text-yellow-400 text-lg" />
                 <h3 className="text-lg font-semibold text-purple-300">
@@ -170,7 +183,6 @@ export default function StudentDashboard() {
               </div>
 
               <div className="grid grid-cols-3 gap-3">
-                {/* Hours */}
                 <div className="text-center p-3 rounded-xl bg-[#11111f] border border-purple-900/20">
                   <div className="text-xs text-gray-400">Hours</div>
                   <div className="text-xl font-bold text-gray-100 mt-1">
@@ -178,7 +190,6 @@ export default function StudentDashboard() {
                   </div>
                 </div>
 
-                {/* Videos */}
                 <div className="text-center p-3 rounded-xl bg-[#11111f] border border-purple-900/20">
                   <div className="text-xs text-gray-400">Videos</div>
                   <div className="text-xl font-bold text-gray-100 mt-1">
@@ -186,7 +197,6 @@ export default function StudentDashboard() {
                   </div>
                 </div>
 
-                {/* Tests */}
                 <div className="text-center p-3 rounded-xl bg-[#11111f] border border-purple-900/20">
                   <div className="text-xs text-gray-400">Tests</div>
                   <div className="text-xl font-bold text-gray-100 mt-1">
@@ -196,28 +206,17 @@ export default function StudentDashboard() {
               </div>
             </div>
 
-            {/* Continue Learning */}
+            {/* CONTINUE LEARNING */}
             <ContinueLearning selectedCourse={selectedCourse} />
 
-            {/* Upcoming Live */}
+            {/* UPCOMING LIVE */}
             <UpcomingLive />
           </aside>
         </div>
 
-        {/* ---------------------------------- */}
-        {/*   BOTTOM WIDGET AREA (CENTERED)    */}
-        {/* ---------------------------------- */}
+        {/* TO-DO + LIVE */}
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* To-do List */}
-          <div
-            className="
-              lg:col-span-2 
-              bg-[#0d0d17] 
-              p-5 rounded-2xl 
-              border border-purple-900/20 
-              shadow-lg
-            "
-          >
+          <div className="lg:col-span-2 bg-[#0d0d17] p-5 rounded-2xl border border-purple-900/20 shadow-lg">
             <div className="flex items-center gap-2 mb-4">
               <FaListUl className="text-purple-400" />
               <h3 className="text-lg font-semibold text-purple-300">
@@ -238,15 +237,7 @@ export default function StudentDashboard() {
             </ul>
           </div>
 
-          {/* Small Upcoming Live */}
-          <div
-            className="
-              bg-[#0d0d17] 
-              p-5 rounded-2xl 
-              border border-purple-900/20 
-              shadow-lg
-            "
-          >
+          <div className="bg-[#0d0d17] p-5 rounded-2xl border border-purple-900/20 shadow-lg">
             <div className="flex items-center gap-2 mb-4">
               <FaClock className="text-purple-400" />
               <h3 className="text-lg font-semibold text-purple-300">

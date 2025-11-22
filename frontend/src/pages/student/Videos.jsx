@@ -5,21 +5,30 @@ import { Link } from "react-router-dom";
 export default function Videos() {
   const [videos, setVideos] = useState([]);
   const [search, setSearch] = useState("");
+
+  // ✅ Selected course from dropdown (Java / 6th / NEET etc)
   const activeCourse = localStorage.getItem("activeCourse");
 
   const token = localStorage.getItem("token");
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-  /* Load videos (shows all or filtered by search) */
+  const activeStandard = localStorage.getItem("activeStandard");
+  const activeBoard = localStorage.getItem("activeBoard");
+  const activeLanguage = localStorage.getItem("activeLanguage");
+  const activeGroup = localStorage.getItem("activeGroup");
+
+  /* Load videos (filtered by active course + search) */
   const loadVideos = async (query = search) => {
     try {
       const res = await api.get("/videos", {
         headers,
         params: {
-          search: query,
-          course: activeCourse, // ✅ CONNECTED TO DROPDOWN
+          standard: activeStandard,
+          board: activeBoard,
+          language: activeLanguage,
         },
       });
+
       setVideos(res.data);
     } catch (err) {
       console.error("Error fetching videos:", err);
@@ -31,7 +40,7 @@ export default function Videos() {
     loadVideos();
   }, []);
 
-  /* 🔥 Listen to GLOBAL SEARCH from StudentLayout */
+  /* Listen to global search */
   useEffect(() => {
     const handleSearch = (e) => {
       const query = e.detail;
@@ -54,7 +63,7 @@ export default function Videos() {
       )}
 
       {/* ========================================================
-             VIDEO CARD GRID — Premium Design
+            VIDEO CARD GRID — Premium Design
       ======================================================== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
         {videos.map((v) => (
@@ -110,7 +119,7 @@ export default function Videos() {
       {/* NO VIDEOS FOUND */}
       {videos.length === 0 && (
         <p className="text-center text-gray-500 mt-10 text-lg">
-          No videos found.
+          No videos found for {activeCourse}
         </p>
       )}
     </div>

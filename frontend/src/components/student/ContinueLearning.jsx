@@ -8,11 +8,9 @@ export default function ContinueLearning({ selectedCourse }) {
   const [item, setItem] = useState(null);
   const navigate = useNavigate();
 
-  // ✅ Build clean display title
   function getCourseName(c) {
     if (!c) return "";
 
-    // School groups
     if (c.standard) {
       let name = `${c.standard}`;
 
@@ -23,7 +21,6 @@ export default function ContinueLearning({ selectedCourse }) {
       return name;
     }
 
-    // Skills / Competitive
     if (c.title) {
       return c.title;
     }
@@ -32,8 +29,8 @@ export default function ContinueLearning({ selectedCourse }) {
   }
 
   useEffect(() => {
-    async function loadLastWatched() {
-      if (!selectedCourse?._id) {
+    async function loadVideo() {
+      if (!selectedCourse) {
         setItem(null);
         return;
       }
@@ -42,137 +39,96 @@ export default function ContinueLearning({ selectedCourse }) {
         const token = localStorage.getItem("token");
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        // ✅ Try to get last watched video
-        const res = await api.get(`/progress/last-watched`, {
+        const res = await api.get("/videos", {
           headers,
-          params: { courseId: selectedCourse._id },
+          params: {
+            standard: selectedCourse.standard,
+            board: selectedCourse.board,
+            language: selectedCourse.language,
+            limit: 1,
+          },
         });
 
-        if (res.data?.video) {
+        if (res.data && res.data.length > 0) {
+          const v = res.data[0];
+
           setItem({
-            title: res.data.video.title,
-            duration: res.data.video.duration || "—",
-            lessonsCount: res.data.courseLessonsCount || 0,
-            videoId: res.data.video._id,
-          });
-          return;
-        }
-      } catch {}
-
-      // ✅ Fallback – first video of course
-      try {
-        const token = localStorage.getItem("token");
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-        const vRes = await api.get("/videos", {
-          headers,
-          params: { course: selectedCourse._id, limit: 1 },
-        });
-
-        const videos = Array.isArray(vRes.data)
-          ? vRes.data
-          : vRes.data.videos || [];
-
-        if (videos.length) {
-          setItem({
-            title: videos[0].title,
-            duration: videos[0].duration || "—",
-            lessonsCount: videos.length,
-            videoId: videos[0]._id,
+            title: v.title,
+            duration: v.duration || "—",
+            lessonsCount: res.data.length,
+            videoId: v._id,
           });
         } else {
           setItem(null);
         }
-      } catch {
+      } catch (error) {
+        console.error("Continue Learning Error:", error);
         setItem(null);
       }
     }
 
-    loadLastWatched();
+    loadVideo();
   }, [selectedCourse]);
 
-  /* =====================================================
-        NO COURSE SELECTED
-  ===================================================== */
   if (!selectedCourse) {
     return (
-      <div className="bg-gradient-to-br from-[#0c0c18] to-[#0a0a14] p-6 rounded-2xl shadow-xl border border-purple-800/20 text-gray-300 backdrop-blur-lg">
-        <h3 className="font-semibold text-xl text-purple-300 mb-2">
-          Continue Learning
-        </h3>
-        <p className="text-sm text-gray-400">
-          No course selected. Choose a course from dropdown.
-        </p>
+      <div className="bg-[#0d0d17] p-5 rounded-2xl border border-purple-900/20 shadow-lg text-gray-400">
+        No course selected. Choose a course first.
       </div>
     );
   }
 
   const displayName = getCourseName(selectedCourse);
 
-  /* =====================================================
-        MAIN UI
-  ===================================================== */
   return (
     <div
       className="
-      bg-gradient-to-br from-[#0d0d1a] to-[#090912]
-      p-6 rounded-2xl shadow-xl border border-purple-800/20
-      backdrop-blur-xl text-gray-200 transition-all hover:shadow-purple-700/20
-    "
+        bg-[#0d0d1a]
+        p-6 rounded-2xl
+        shadow-xl
+        border border-purple-800/20
+        text-gray-200
+      "
     >
-      {/* Heading */}
       <h3 className="font-semibold text-xl text-purple-300 mb-5">
-        Continue Learning —{" "}
-        <span className="text-white">{displayName}</span>
+        Continue Learning — <span className="text-white">{displayName}</span>
       </h3>
 
-      {/* If found video */}
       {item ? (
         <div className="flex items-center gap-6 group">
-          {/* Thumbnail */}
           <div
             className="
-            w-28 h-20 
-            bg-gradient-to-br from-purple-600 to-indigo-700 
-            rounded-xl shadow-lg 
-            flex items-center justify-center
-            group-hover:scale-105 transition
+              w-28 h-20
+              bg-gradient-to-br from-purple-600 to-indigo-700
+              rounded-xl
+              flex items-center justify-center
             "
           >
-            <MdPlayCircle className="text-4xl text-white drop-shadow-lg" />
+            <MdPlayCircle className="text-4xl text-white" />
           </div>
 
-          {/* Video details */}
           <div className="flex-1">
-            <div className="text-lg font-bold text-gray-100 group-hover:text-purple-300 transition">
-              {item.title}
-            </div>
+            <div className="text-lg font-bold text-gray-100">{item.title}</div>
 
             <div className="text-sm text-gray-400 mt-1 flex items-center gap-2">
               <RiBookOpenLine className="text-purple-300" />
-              {item.duration} • {item.lessonsCount} lessons
+              {item.duration}
             </div>
           </div>
 
-          {/* Resume */}
           <button
-            onClick={() =>
-              navigate(
-                `/student/videos?course=${selectedCourse._id}&video=${item.videoId}`
-              )
-            }
+            onClick={() => navigate(`/student/video/${item.videoId}`)}
             className="
               bg-purple-600 hover:bg-purple-700
               px-5 py-2 rounded-xl text-white
-              font-semibold shadow shadow-purple-900/40
-              transition-all hover:scale-105
+              font-semibold
             "
           >
             Resume
           </button>
         </div>
       ) : (
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-gray-400 mt-3">
           No videos found for this course yet.
         </p>
       )}
