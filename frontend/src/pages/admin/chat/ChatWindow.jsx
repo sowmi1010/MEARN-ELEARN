@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import api from "../../../utils/api";
 import { io } from "socket.io-client";
+import api from "../../../utils/api";
+import { FaArrowLeft, FaPaperPlane } from "react-icons/fa";
 
 // ✅ Single persistent socket
 let socket;
 let socketInitialized = false;
 
-const ChatWindow = () => {
+export default function ChatWindow() {
   const { userId } = useParams();
   const navigate = useNavigate();
 
@@ -22,26 +23,24 @@ const ChatWindow = () => {
   const typingTimeoutRef = useRef(null);
   const currentUser = JSON.parse(localStorage.getItem("user"));
 
-  // scroll to bottom
+  /* Scroll down */
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   /* ======================================================
-     SOCKET INITIALIZATION (once)
+     SOCKET INITIALIZATION
   ====================================================== */
   useEffect(() => {
     if (!socketInitialized) {
       socket = io("http://localhost:4000", {
         transports: ["websocket"],
-        reconnection: true,
       });
 
       const uid = currentUser?._id || currentUser?.id;
       if (uid) socket.emit("joinUser", uid);
 
       socketInitialized = true;
-      console.log("🟢 Global socket initialized");
     }
   }, [currentUser]);
 
@@ -60,27 +59,24 @@ const ChatWindow = () => {
 
         const chatRes = await api.post("/chat/access", { userId });
         if (!active) return;
+
         setChatId(chatRes.data._id);
 
         const msgRes = await api.get(`/chat/message/${chatRes.data._id}`);
         if (!active) return;
 
-        // ✅ Deduplicate messages by _id
         const uniqueMessages = Array.from(
           new Map(msgRes.data.map((m) => [m._id, m])).values()
         );
 
         setMessages(uniqueMessages);
 
-        // join the chat room
         socket.emit("leaveAllRooms");
         socket.emit("joinChat", chatRes.data._id);
-        console.log("📥 Joined chat:", chatRes.data._id);
       } catch (err) {
         console.error("Chat load error:", err.message);
         if (err.response?.status === 401) {
           localStorage.removeItem("token");
-          alert("Session expired. Please log in again.");
           navigate("/login");
         }
       } finally {
@@ -97,13 +93,12 @@ const ChatWindow = () => {
   }, [userId, navigate]);
 
   /* ======================================================
-     SOCKET LISTENERS (deduplicated)
+     SOCKET LISTENERS
   ====================================================== */
   useEffect(() => {
     if (!socket) return;
 
     const handleIncoming = (msg) => {
-      // ✅ Avoid duplication after refresh or rejoin
       setMessages((prev) => {
         if (prev.find((m) => m._id === msg._id)) return prev;
         return [...prev, msg];
@@ -121,14 +116,6 @@ const ChatWindow = () => {
     socket.off("receiveMessage").on("receiveMessage", handleIncoming);
     socket.off("userTyping").on("userTyping", handleTyping);
     socket.off("userStoppedTyping").on("userStoppedTyping", handleStopTyping);
-
-    console.log("✅ Socket listeners attached");
-
-    return () => {
-      socket.off("receiveMessage", handleIncoming);
-      socket.off("userTyping", handleTyping);
-      socket.off("userStoppedTyping", handleStopTyping);
-    };
   }, [userId]);
 
   /* ======================================================
@@ -146,9 +133,7 @@ const ChatWindow = () => {
           ? "Admin"
           : currentUser.role === "mentor"
           ? "Mentor"
-          : currentUser.role === "student"
-          ? "Student"
-          : "User";
+          : "Student";
 
       socket.emit("sendMessage", {
         chatId,
@@ -159,7 +144,7 @@ const ChatWindow = () => {
 
       setNewMessage("");
     } catch (err) {
-      console.error("Send message failed:", err.message);
+      console.error("Send failed:", err.message);
     }
   };
 
@@ -181,122 +166,102 @@ const ChatWindow = () => {
         chatId,
         senderId: currentUser._id || currentUser.id,
       });
-    }, 2000);
+    }, 1500);
   };
 
-  /* ======================================================
-     UI
-  ====================================================== */
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-[#0b0f19] text-white">
-        <p>Loading chat...</p>
+        Loading Chat...
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col bg-[#0b0f19] text-white h-screen">
-      {/* Header */}
-      <div className="flex items-center justify-between bg-[#111827] p-4 border-b border-gray-700">
-        <div className="flex items-center gap-3">
-          {user && (
-            <>
-              <img
-                src={
-                  user.photo
-                    ? `http://localhost:4000${user.photo}`
-                    : "/default-avatar.png"
-                }
-                alt="profile"
-                className="w-10 h-10 rounded-full border border-gray-500 object-cover"
-              />
-              <div>
-                <h2 className="font-semibold">
-                  {user.firstName
-                    ? `${user.firstName} ${user.lastName || ""}`
-                    : user.name}
-                </h2>
-                <p className="text-sm text-gray-400">
-                  {isTyping
-                    ? "Typing..."
-                    : `Online • ${new Date().toLocaleTimeString()}`}
-                </p>
-              </div>
-            </>
-          )}
+    <div className="flex flex-col h-screen bg-[#0b0f19] text-white">
+
+      {/* ✅ HEADER */}
+      <div className="flex items-center justify-between px-6 py-3 bg-[#111827] border-b border-blue-900">
+
+        <div className="flex items-center gap-4">
+
+          <img
+            src={
+              user?.photo
+                ? `http://localhost:4000${user.photo}`
+                : "/default-avatar.png"
+            }
+            className="w-10 h-10 rounded-full border-2 border-blue-500"
+            alt=""
+          />
+
+          <div>
+            <h2 className="font-semibold text-white">
+              {user?.firstName
+                ? `${user.firstName} ${user.lastName || ""}`
+                : user?.name}
+            </h2>
+            <p className="text-xs text-blue-400">
+              {isTyping ? "Typing..." : "Online"}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#0f172a]">
-        {messages.length > 0 ? (
-          messages.map((msg) => {
-            const isReceived = msg.senderId?._id === userId;
-            return (
+      {/* ✅ MESSAGES */}
+      <div className="flex-1 overflow-y-auto px-6 py-4 bg-[#0f172a] space-y-4">
+
+        {messages.map((msg) => {
+          const isReceived = msg.senderId?._id === userId;
+
+          return (
+            <div
+              key={msg._id}
+              className={`flex ${isReceived ? "justify-start" : "justify-end"}`}
+            >
               <div
-                key={msg._id}
-                className={`flex ${
-                  isReceived ? "justify-start" : "justify-end"
+                className={`max-w-md px-4 py-3 rounded-2xl shadow-lg ${
+                  isReceived
+                    ? "bg-[#1f2937] text-gray-100"
+                    : "bg-blue-600 text-white"
                 }`}
               >
-                <div className="flex items-end gap-2">
-                  {isReceived && (
-                    <img
-                      src={
-                        msg.senderId?.photo
-                          ? `http://localhost:4000${msg.senderId.photo}`
-                          : "/default-avatar.png"
-                      }
-                      alt="sender"
-                      className="w-8 h-8 rounded-full border border-gray-600"
-                    />
-                  )}
-                  <div
-                    className={`px-4 py-2 rounded-2xl max-w-xs ${
-                      isReceived
-                        ? "bg-gray-700 text-gray-100"
-                        : "bg-blue-600 text-white"
-                    }`}
-                  >
-                    {msg.text}
-                    <p className="text-xs text-gray-400 mt-1">
-                      {new Date(msg.createdAt).toLocaleTimeString()}
-                    </p>
-                  </div>
-                </div>
+                <p>{msg.text}</p>
+                <p className="text-[11px] text-gray-300 mt-1 text-right">
+                  {new Date(msg.createdAt).toLocaleTimeString()}
+                </p>
               </div>
-            );
-          })
-        ) : (
-          <p className="text-center text-gray-400 text-sm">
-            No messages yet. Start the conversation 👋
-          </p>
+            </div>
+          );
+        })}
+
+        {isTyping && (
+          <p className="text-gray-400 text-sm">Typing...</p>
         )}
-        <div ref={messagesEndRef} />
+
+        <div ref={messagesEndRef}></div>
       </div>
 
-      {/* Input */}
+      {/* ✅ INPUT */}
       <form
         onSubmit={handleSendMessage}
-        className="flex items-center gap-3 p-4 bg-[#111827] border-t border-gray-700"
+        className="flex gap-3 p-4 bg-[#111827] border-t border-blue-900"
       >
         <input
           type="text"
-          placeholder="Type your message..."
           value={newMessage}
           onChange={handleTyping}
-          className="flex-1 bg-[#1e293b] text-white px-4 py-2 rounded-full outline-none border border-gray-600 focus:border-blue-500"
+          placeholder="Type a message..."
+          className="flex-1 px-5 py-3 rounded-full bg-[#1e293b] border border-blue-600 outline-none"
         />
+
         <button
           type="submit"
-          className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-full transition"
+          className="bg-blue-600 px-6 py-3 rounded-full hover:bg-blue-700 flex items-center gap-2"
         >
-          Send
+          <FaPaperPlane />
         </button>
       </form>
     </div>
   );
-};
-
-export default ChatWindow;
+}

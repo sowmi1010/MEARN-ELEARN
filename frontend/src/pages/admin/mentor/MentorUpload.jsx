@@ -13,6 +13,8 @@ import api from "../../../utils/api";
 export default function MentorUpload() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [activeStep, setActiveStep] = useState(1);
+  const [skills, setSkills] = useState([]);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -66,6 +68,22 @@ export default function MentorUpload() {
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  const addSkill = (e) => {
+    if (e.key === "Enter" && e.target.value.trim() !== "") {
+      setSkills([...skills, e.target.value]);
+      setFormData({
+        ...formData,
+        skills: [...skills, e.target.value].join(", "),
+      });
+      e.target.value = "";
+    }
+  };
+
+  const removeSkill = (index) => {
+    const newSkills = skills.filter((_, i) => i !== index);
+    setSkills(newSkills);
+    setFormData({ ...formData, skills: newSkills.join(", ") });
+  };
 
   const handleFile = (e) => setPhoto(e.target.files[0]);
 
@@ -146,51 +164,196 @@ export default function MentorUpload() {
 
             {/* Personal Info */}
             <SectionTitle title="Personal Information" />
-            <Input name="firstName" placeholder="Enter First Name" value={formData.firstName} onChange={handleChange} />
-            <Input name="lastName" placeholder="Enter Last Name" value={formData.lastName} onChange={handleChange} />
-            <Input type="date" name="dob" value={formData.dob} onChange={handleChange} />
-            <Input name="age" placeholder="Enter Age" value={formData.age} onChange={handleChange} />
-            <Select name="gender" value={formData.gender} onChange={handleChange}
-              options={["Male", "Female", "Other"]} placeholder="Select Gender" />
-            <Input name="blood" placeholder="Blood Group" value={formData.blood} onChange={handleChange} />
-            <Select name="handicap" value={formData.handicap} onChange={handleChange}
-              options={["No", "Yes"]} placeholder="Handicap" />
-            <Select name="maritalStatus" value={formData.maritalStatus} onChange={handleChange}
-              options={["Unmarried", "Married"]} placeholder="Marital Status" />
+            <Input
+              name="firstName"
+              placeholder="Enter First Name"
+              value={formData.firstName}
+              onChange={handleChange}
+            />
+            <Input
+              name="lastName"
+              placeholder="Enter Last Name"
+              value={formData.lastName}
+              onChange={handleChange}
+            />
+            <Input
+              type="date"
+              name="dob"
+              value={formData.dob}
+              onChange={handleChange}
+            />
+            <Input
+              name="age"
+              placeholder="Enter Age"
+              value={formData.age}
+              onChange={handleChange}
+            />
+            <Select
+              name="gender"
+              value={formData.gender}
+              onChange={handleChange}
+              options={["Male", "Female", "Other"]}
+              placeholder="Select Gender"
+            />
+            <Input
+              name="blood"
+              placeholder="Blood Group"
+              value={formData.blood}
+              onChange={handleChange}
+            />
+            <Select
+              name="handicap"
+              value={formData.handicap}
+              onChange={handleChange}
+              options={["No", "Yes"]}
+              placeholder="Handicap"
+            />
+            <Select
+              name="maritalStatus"
+              value={formData.maritalStatus}
+              onChange={handleChange}
+              options={["Unmarried", "Married"]}
+              placeholder="Marital Status"
+            />
 
             {/* Job Details */}
             <SectionTitle title="Job Details" />
-            <Input name="branchName" placeholder="Branch Name" value={formData.branchName} onChange={handleChange} />
-            <Input name="branchNumber" placeholder="Branch Number" value={formData.branchNumber} onChange={handleChange} />
-            <Select name="role" value={formData.role} onChange={handleChange}
-              options={["Mentor", "Admin", "Trainer", "Coordinator", "Assistant"]} placeholder="Select Role" />
-            <Select name="experience" value={formData.experience} onChange={handleChange}
-              options={["Fresher", "Junior", "Senior", "Expert"]} placeholder="Experience Level" />
-            <Select name="type" value={formData.type} onChange={handleChange}
-              options={["Full-time", "Part-time", "Contract", "Intern"]} placeholder="Employment Type" />
-            <Input name="qualification" placeholder="Enter Qualification" value={formData.qualification} onChange={handleChange} />
-            <Input name="language" placeholder="Languages Known" value={formData.language} onChange={handleChange} />
-            <Input name="skills" placeholder="Enter Skills" value={formData.skills} onChange={handleChange} />
-            <Input name="salary" placeholder="Salary (₹)" value={formData.salary} onChange={handleChange} />
-            <Input name="department" placeholder="Department" value={formData.department} onChange={handleChange} />
+            <Input
+              name="branchName"
+              placeholder="Branch Name"
+              value={formData.branchName}
+              onChange={handleChange}
+            />
+            <Input
+              name="branchNumber"
+              placeholder="Branch Number"
+              value={formData.branchNumber}
+              onChange={handleChange}
+            />
+            <Select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              options={[
+                "Mentor",
+                "Admin",
+                "Trainer",
+                "Coordinator",
+                "Assistant",
+              ]}
+              placeholder="Select Role"
+            />
+            <Select
+              name="experience"
+              value={formData.experience}
+              onChange={handleChange}
+              options={["Fresher", "Junior", "Senior", "Expert"]}
+              placeholder="Experience Level"
+            />
+            <Select
+              name="type"
+              value={formData.type}
+              onChange={handleChange}
+              options={["Full-time", "Part-time", "Contract", "Intern"]}
+              placeholder="Employment Type"
+            />
+            <Input
+              name="qualification"
+              placeholder="Enter Qualification"
+              value={formData.qualification}
+              onChange={handleChange}
+            />
+            <Input
+              name="language"
+              placeholder="Languages Known"
+              value={formData.language}
+              onChange={handleChange}
+            />
+            <Input
+              name="skills"
+              placeholder="Enter Skills"
+              value={formData.skills}
+              onChange={handleChange}
+            />
+            <Input
+              name="salary"
+              placeholder="Salary (₹)"
+              value={formData.salary}
+              onChange={handleChange}
+            />
+            <Input
+              name="department"
+              placeholder="Department"
+              value={formData.department}
+              onChange={handleChange}
+            />
 
             {/* Contact Info */}
             <SectionTitle title="Contact Information" />
-            <Input type="email" name="email" placeholder="Email ID" value={formData.email} onChange={handleChange} />
-            <Input name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleChange} />
-            <Input name="altPhone" placeholder="Alternate Phone" value={formData.altPhone} onChange={handleChange} />
+            <Input
+              type="email"
+              name="email"
+              placeholder="Email ID"
+              value={formData.email}
+              onChange={handleChange}
+            />
+            <Input
+              name="phone"
+              placeholder="Phone Number"
+              value={formData.phone}
+              onChange={handleChange}
+            />
+            <Input
+              name="altPhone"
+              placeholder="Alternate Phone"
+              value={formData.altPhone}
+              onChange={handleChange}
+            />
 
             {/* Address */}
             <SectionTitle title="Address" />
-            <Input className="md:col-span-3" name="address" placeholder="Enter Full Address" value={formData.address} onChange={handleChange} />
-            <Input name="district" placeholder="District" value={formData.district} onChange={handleChange} />
-            <Input name="state" placeholder="State" value={formData.state} onChange={handleChange} />
-            <Input name="pincode" placeholder="Pincode" value={formData.pincode} onChange={handleChange} />
+            <Input
+              className="md:col-span-3"
+              name="address"
+              placeholder="Enter Full Address"
+              value={formData.address}
+              onChange={handleChange}
+            />
+            <Input
+              name="district"
+              placeholder="District"
+              value={formData.district}
+              onChange={handleChange}
+            />
+            <Input
+              name="state"
+              placeholder="State"
+              value={formData.state}
+              onChange={handleChange}
+            />
+            <Input
+              name="pincode"
+              placeholder="Pincode"
+              value={formData.pincode}
+              onChange={handleChange}
+            />
 
             {/* Login Credentials */}
             <SectionTitle title="Login Credentials" />
-            <Input name="userId" placeholder="Enter User ID" value={formData.userId} onChange={handleChange} />
-            <Input type="password" name="password" placeholder="Enter Password" value={formData.password} onChange={handleChange} required={!id} />
+            <Input
+              name="userId"
+              placeholder="Enter User ID"
+              value={formData.userId}
+              onChange={handleChange}
+            />
+            <Input
+              type="password"
+              name="password"
+              placeholder="Enter Password"
+              value={formData.password}
+              onChange={handleChange}
+              required={!id}
+            />
 
             {/* Submit */}
             <div className="md:col-span-3 flex justify-end mt-6">
@@ -220,7 +383,14 @@ function Input({ className = "", ...props }) {
 }
 
 /* 🔹 Reusable Select */
-function Select({ name, value, onChange, options, placeholder, className = "" }) {
+function Select({
+  name,
+  value,
+  onChange,
+  options,
+  placeholder,
+  className = "",
+}) {
   return (
     <select
       name={name}

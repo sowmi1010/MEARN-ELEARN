@@ -1,32 +1,59 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import api from "../../utils/api";
+
 import StatCard from "./components/StatCard";
 import VisitorChart from "./components/VisitorChart";
 import GroupOverview from "./components/GroupOverview";
 import TopCoursesChart from "./components/TopCoursesChart";
 import ReviewStats from "./components/ReviewStats";
 import RecentPayments from "./components/RecentPayments";
-import { FaUserGraduate, FaVideo, FaRupeeSign, FaBook } from "react-icons/fa";
+
+import {
+  FaUserGraduate,
+  FaVideo,
+  FaRupeeSign,
+  FaBook,
+} from "react-icons/fa";
 
 export default function AdminDashboard() {
+
   const [students, setStudents] = useState([]);
   const [videos, setVideos] = useState(0);
   const [payments, setPayments] = useState([]);
   const [courses, setCourses] = useState([]);
+
+  const [filter, setFilter] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
+
+  // ======================================================
+  // ✅ GLOBAL SEARCH
+  // ======================================================
   useEffect(() => {
-    async function fetchData() {
+    const handler = (e) => {
+      const text = (e?.detail || "").toString().toLowerCase();
+      setFilter(text);
+    };
+
+    window.addEventListener("global-search", handler);
+    return () => window.removeEventListener("global-search", handler);
+  }, []);
+
+
+  // ======================================================
+  // ✅ FETCH + AUTO LIVE REFRESH
+  // ======================================================
+  useEffect(() => {
+
+    const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
         const headers = { Authorization: `Bearer ${token}` };
 
-        // --------------------------------------------
-        // ADMIN or SUPERADMIN
-        // --------------------------------------------
         if (user?.role === "admin" || user?.isSuperAdmin) {
+
           const [usersRes, videosRes, paymentsRes, coursesRes] =
             await Promise.all([
               api.get("/auth/users", { headers }),
@@ -35,77 +62,128 @@ export default function AdminDashboard() {
               api.get("/courses", { headers }),
             ]);
 
+          /* ✅ Students */
           setStudents(usersRes.data || []);
-          setVideos(videosRes.data.total || 0);
 
-          // ✅ FIXED HERE
-          setPayments(paymentsRes.data.payments || []);
+          /* ✅ Videos */
+          setVideos(videosRes.data?.total || 0);
 
+          /* ✅ Payments (Handle all possible structures) */
+          const paymentData = Array.isArray(paymentsRes.data)
+            ? paymentsRes.data
+            : paymentsRes.data?.payments || [];
+
+          setPayments(paymentData);
+
+          /* ✅ Courses */
           setCourses(coursesRes.data || []);
         }
 
-        // --------------------------------------------
-        // MENTOR ACCESS
-        // --------------------------------------------
+        // ================== MENTOR ===================
         else if (user?.role === "mentor") {
+
           const permissions = user?.permissions || [];
 
-          if (
-            permissions.includes("dashboard") ||
-            permissions.includes("students")
-          ) {
-            try {
-              const usersRes = await api.get("/auth/users", { headers });
-              setStudents(usersRes.data || []);
-            } catch {}
+          if (permissions.includes("students")) {
+            const usersRes = await api.get("/auth/users", { headers });
+            setStudents(usersRes.data || []);
           }
 
           if (permissions.includes("courses")) {
-            try {
-              const coursesRes = await api.get("/courses", { headers });
-              setCourses(coursesRes.data || []);
-            } catch {}
+            const coursesRes = await api.get("/courses", { headers });
+            setCourses(coursesRes.data || []);
           }
 
           if (permissions.includes("payments")) {
-            try {
-              const paymentsRes = await api.get("/payments/all", { headers });
+            const paymentsRes = await api.get("/payments/all", { headers });
+            const paymentData = Array.isArray(paymentsRes.data)
+              ? paymentsRes.data
+              : paymentsRes.data?.payments || [];
 
-              // ✅ FIXED HERE TOO
-              setPayments(paymentsRes.data.payments || []);
-            } catch {}
+            setPayments(paymentData);
           }
 
-          if (
-            permissions.includes("dashboard") ||
-            permissions.includes("videos")
-          ) {
-            try {
-              const videosRes = await api.get("/videos/count/total", {
-                headers,
-              });
-              setVideos(videosRes.data.total || 0);
-            } catch {}
+          if (permissions.includes("videos")) {
+            const videosRes = await api.get("/videos/count/total", {
+              headers,
+            });
+            setVideos(videosRes.data?.total || 0);
           }
         }
+
       } catch (err) {
         console.error("Dashboard Fetch Error:", err);
       } finally {
         setLoading(false);
       }
-    }
+    };
 
     fetchData();
+
+    // ✅ AUTO LIVE REFRESH - every 5 seconds
+    const interval = setInterval(fetchData, 5000);
+
+    return () => clearInterval(interval);
+
   }, []);
 
-  // --------------------------------------------
-  // TOTAL INCOME
-  // --------------------------------------------
-  const totalIncome = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
 
+  // ======================================================
+  // ✅ FILTERED DATA
+  // ======================================================
+  const filteredStudents = useMemo(() => {
+    if (!filter) return students;
+
+    return students.filter((s) =>
+      `${s.firstName || ""} ${s.lastName || ""} ${s.email || ""} ${s.role || ""}`
+        .toLowerCase()
+        .includes(filter)
+    );
+  }, [filter, students]);
+
+
+  const filteredCourses = useMemo(() => {
+    if (!filter) return courses;
+
+    return courses.filter((c) =>
+      `${c.title || ""} ${c.standard || ""} ${c.group || ""}`
+        .toLowerCase()
+        .includes(filter)
+    );
+  }, [filter, courses]);
+
+
+  const filteredPayments = useMemo(() => {
+    if (!filter) return payments;
+
+    return payments.filter((p) =>
+      `${p?.user?.email || ""} ${p?.provider || ""} ${p?.metadata?.title || ""}`
+        .toLowerCase()
+        .includes(filter)
+    );
+  }, [filter, payments]);
+
+
+  // ======================================================
+  // ✅ INCOME (FIXED — NO MORE 0 ISSUE)
+  // ======================================================
+  const totalIncome = useMemo(() => {
+    return filteredPayments.reduce((sum, p) => {
+
+      // successful payments only
+      if (p.status === "successful") {
+        return sum + Number(p.amount || 0);
+      }
+
+      return sum;
+    }, 0);
+  }, [filteredPayments]);
+
+
+  // ======================================================
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen text-gray-400 text-lg">
+      <div className="flex justify-center items-center h-[70vh] text-blue-400 text-lg">
         Loading Dashboard...
       </div>
     );
@@ -116,63 +194,88 @@ export default function AdminDashboard() {
     (!user.permissions || user.permissions.length === 0)
   ) {
     return (
-      <div className="flex justify-center items-center h-screen text-gray-400 text-lg">
-        🔒 You don't have access to any dashboard modules.
+      <div className="flex justify-center items-center h-[70vh] text-gray-400 text-lg">
+        🔒 You don&apos;t have access to dashboard modules.
       </div>
     );
   }
 
-  return (
-    <div className="p-8 min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
-      <h1 className="text-3xl font-bold mb-6">
-        {user?.role === "mentor" ? "Mentor Dashboard" : "Admin Dashboard"}
-      </h1>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+  return (
+    <div className="min-h-screen p-6 bg-[#050810] text-white space-y-8">
+
+      {/* HEADER */}
+      <div>
+        <h1 className="text-3xl font-extrabold text-blue-400">
+          {user?.role === "mentor"
+            ? "Mentor Control Panel"
+            : "Admin Control Panel"}
+        </h1>
+
+        <p className="text-gray-400 mt-1 text-sm">
+          Live system analytics and platform monitoring
+        </p>
+      </div>
+
+      {/* ===================================== */}
+      {/* STAT CARDS */}
+      {/* ===================================== */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
         <StatCard
-          title="Total Users"
-          value={students.length}
+          title="Students"
+          value={filteredStudents.length}
           icon={<FaUserGraduate />}
-          color="from-purple-500 to-pink-500"
+          color="from-blue-600 to-cyan-500"
         />
 
         <StatCard
-          title="Total Videos"
+          title="Videos"
           value={videos}
           icon={<FaVideo />}
-          color="from-blue-500 to-indigo-500"
+          color="from-sky-600 to-blue-700"
         />
 
         <StatCard
-          title="Total Income"
+          title="Income"
           value={`₹${totalIncome}`}
           icon={<FaRupeeSign />}
-          color="from-green-500 to-emerald-600"
+          color="from-emerald-500 to-green-600"
         />
 
         <StatCard
-          title="Total Courses"
-          value={courses.length}
+          title="Courses"
+          value={filteredCourses.length}
           icon={<FaBook />}
-          color="from-yellow-500 to-orange-500"
+          color="from-blue-700 to-indigo-600"
         />
+
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <VisitorChart />
-        <TopCoursesChart courses={courses} />
+
+      {/* ===================================== */}
+      {/* CHARTS */}
+      {/* ===================================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <VisitorChart students={filteredStudents} />
+        <TopCoursesChart courses={filteredCourses} />
       </div>
 
-      {/* Group + Reviews */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <GroupOverview />
+
+      {/* ===================================== */}
+      {/* GROUP + REVIEW */}
+      {/* ===================================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <GroupOverview students={filteredStudents} />
         <ReviewStats />
       </div>
 
-      {/* Recent Payments */}
-      <RecentPayments payments={payments} />
+
+      {/* ===================================== */}
+      {/* PAYMENTS TABLE */}
+      {/* ===================================== */}
+      <RecentPayments payments={filteredPayments} />
+
     </div>
   );
 }

@@ -58,16 +58,26 @@ const QuizResult = React.lazy(() =>
   import("./pages/student/contents/QuizResult")
 );
 const Live = React.lazy(() => import("./pages/student/learning/Live"));
-const TodoList = React.lazy(() => import("./pages/student/productivity/TodoList"));
-const AddTodo = React.lazy(() => import("./pages/student/productivity/AddTodo"));
+const TodoList = React.lazy(() =>
+  import("./pages/student/productivity/TodoList")
+);
+const AddTodo = React.lazy(() =>
+  import("./pages/student/productivity/AddTodo")
+);
 const Marks = React.lazy(() => import("./pages/student/performance/Marks"));
 const Courses = React.lazy(() => import("./pages/student/courses/Courses"));
-const Certificate = React.lazy(() => import("./pages/student/learning/Certificate"));
+const Certificate = React.lazy(() =>
+  import("./pages/student/learning/Certificate")
+);
 const ViewCertificate = React.lazy(() =>
   import("./pages/student/learning/ViewCertificate")
 );
-const StudentTeam = React.lazy(() => import("./pages/student/community/StudentTeam"));
-const ChatWindowPage = React.lazy(() => import("./pages/student/community/ChatWindow"));
+const StudentTeam = React.lazy(() =>
+  import("./pages/student/community/StudentTeam")
+);
+const ChatWindowPage = React.lazy(() =>
+  import("./pages/student/community/ChatWindow")
+);
 const StudentProfile = React.lazy(() =>
   import("./pages/student/profile/ProfileSetting")
 );
@@ -338,7 +348,8 @@ function AnimatedRoutes() {
             </PrivateRoute>
           }
         >
-          <Route index element={<AdminHomePage />} />
+          <Route index element={<Navigate to="home" replace />} />
+          <Route path="home" element={<AdminHomePage />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="payments" element={<AdminPayments />} />
 

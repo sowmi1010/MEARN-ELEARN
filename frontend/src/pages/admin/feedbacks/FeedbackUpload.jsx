@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
-import {
-  FaEdit,
-  FaTrash,
-  FaSearch,
-  FaTimes,
-  FaComments,
-  FaPlusCircle,
-} from "react-icons/fa";
+import { FaEdit, FaTrash, FaTimes, FaComments, FaPlusCircle } from "react-icons/fa";
+import useGlobalSearch from "../../../hooks/useGlobalSearch"; // ✅ GLOBAL SEARCH HOOK
 
 export default function FeedbackUpload() {
   const [form, setForm] = useState({
@@ -20,14 +14,15 @@ export default function FeedbackUpload() {
   const [feedbacks, setFeedbacks] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
 
   const apiBase = import.meta.env.VITE_API_URL || "http://localhost:4000";
   const token = localStorage.getItem("token");
 
-  // Fetch all feedbacks on mount
+  // ✅ GLOBAL SEARCH VALUE
+  const search = useGlobalSearch("admin-global-search");
+
   useEffect(() => {
     fetchFeedbacks();
   }, []);
@@ -35,9 +30,9 @@ export default function FeedbackUpload() {
   async function fetchFeedbacks() {
     try {
       const res = await axios.get(`${apiBase}/api/feedbacks`);
-      setFeedbacks(res.data);
+      setFeedbacks(res.data || []);
     } catch {
-      toast.error("❌ Failed to fetch feedbacks");
+      toast.error("Failed to fetch feedbacks");
     }
   }
 
@@ -48,11 +43,11 @@ export default function FeedbackUpload() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+
     const formData = new FormData();
-    formData.append("name", form.name);
-    formData.append("course", form.course);
-    formData.append("comment", form.comment);
-    if (form.photo) formData.append("photo", form.photo);
+    Object.keys(form).forEach((key) => {
+      if (form[key]) formData.append(key, form[key]);
+    });
 
     setLoading(true);
     try {
@@ -60,19 +55,19 @@ export default function FeedbackUpload() {
         await axios.put(`${apiBase}/api/feedbacks/${editingId}`, formData, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        toast.success("✅ Feedback updated successfully!");
+        toast.success("Feedback updated successfully");
       } else {
         await axios.post(`${apiBase}/api/feedbacks`, formData, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        toast.success("✅ Feedback added successfully!");
+        toast.success("Feedback added successfully");
       }
 
       setForm({ name: "", course: "", comment: "", photo: null });
       setEditingId(null);
       fetchFeedbacks();
     } catch {
-      toast.error("⚠️ Failed to save feedback");
+      toast.error("Failed to save feedback");
     } finally {
       setLoading(false);
     }
@@ -87,7 +82,6 @@ export default function FeedbackUpload() {
       photo: null,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
-    toast("✏️ Edit mode enabled");
   }
 
   function confirmDelete(id) {
@@ -100,170 +94,136 @@ export default function FeedbackUpload() {
       await axios.delete(`${apiBase}/api/feedbacks/${deleteId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      toast.success("🗑️ Feedback deleted successfully");
+      toast.success("Feedback deleted");
       fetchFeedbacks();
     } catch {
-      toast.error("❌ Failed to delete feedback");
+      toast.error("Failed to delete feedback");
     }
     setShowModal(false);
   }
 
+  /* ✅ FILTER USING GLOBAL SEARCH */
   const filtered = feedbacks.filter(
     (f) =>
-      f.name.toLowerCase().includes(search.toLowerCase()) ||
-      f.course.toLowerCase().includes(search.toLowerCase())
+      f.name.toLowerCase().includes(search) ||
+      f.course.toLowerCase().includes(search) ||
+      f.comment.toLowerCase().includes(search)
   );
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-[#0b0f19] text-gray-800 dark:text-gray-200 transition-colors duration-300">
+    <div className="min-h-screen bg-[#050910] text-white p-8">
       <Toaster position="top-right" />
 
-      {/* ===== Header Section ===== */}
-        <h1 className="text-4xl  py-10 font-extrabold flex justify-center items-center gap-3">
-          <FaComments className="text-3xl" />
+      {/* HEADER */}
+      <div className="flex justify-center items-center gap-4 mb-10">
+        <FaComments className="text-blue-500 text-3xl" />
+        <h1 className="text-3xl font-bold text-blue-500">
           Student Feedback Management
         </h1>
+      </div>
 
+      <div className="max-w-6xl mx-auto grid lg:grid-cols-5 gap-10">
 
-      <main className="max-w-6xl mx-auto px-6 py-10 space-y-10">
-        {/* ===== Feedback Form ===== */}
-        <section className="bg-white dark:bg-gray-800/70 backdrop-blur-md rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-gray-700 hover:shadow-2xl transition">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-teal-400 bg-clip-text text-transparent">
-              {editingId ? "✏️ Edit Feedback" : "➕ Add New Feedback"}
-            </h2>
-            <FaPlusCircle className="text-blue-500 text-3xl" />
-          </div>
+        {/* ========= FORM ========= */}
+        <div className="lg:col-span-2 bg-[#0b1225] p-6 rounded-2xl border border-blue-500/10 shadow-xl">
+          <h2 className="text-xl font-semibold text-blue-400 mb-6 flex items-center gap-2">
+            <FaPlusCircle />
+            {editingId ? "Edit Feedback" : "Add Feedback"}
+          </h2>
 
-          <form
-            onSubmit={handleSubmit}
-            className="grid grid-cols-1 md:grid-cols-2 gap-6"
-          >
+          <form onSubmit={handleSubmit} className="space-y-4">
             <input
-              type="text"
               name="name"
               placeholder="Student Name"
               value={form.name}
               onChange={handleChange}
-              required
-              className="col-span-1 p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-400 outline-none"
+              className="w-full p-3 rounded-lg bg-black/40 border border-blue-500/30 outline-none"
             />
+
             <input
-              type="text"
               name="course"
               placeholder="Course"
               value={form.course}
               onChange={handleChange}
-              required
-              className="col-span-1 p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-400 outline-none"
+              className="w-full p-3 rounded-lg bg-black/40 border border-blue-500/30 outline-none"
             />
+
             <textarea
               name="comment"
-              placeholder="Feedback / Comment"
+              rows="3"
+              placeholder="Feedback Message"
               value={form.comment}
               onChange={handleChange}
-              rows="4"
-              required
-              className="col-span-2 p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-400 outline-none"
-            ></textarea>
+              className="w-full p-3 rounded-lg bg-black/40 border border-blue-500/30 outline-none"
+            />
 
-            <div className="col-span-2 flex flex-col items-center justify-center">
-              <input
-                type="file"
-                name="photo"
-                accept="image/*"
-                onChange={handleChange}
-                className="w-full text-gray-600 dark:text-gray-300"
-              />
+            <div className="flex flex-col items-center">
+              <input type="file" onChange={handleChange} name="photo" />
               {form.photo && (
-                <div className="mt-3 flex justify-center">
-                  <img
-                    src={URL.createObjectURL(form.photo)}
-                    alt="Preview"
-                    className="w-24 h-24 rounded-full border-2 border-blue-400 shadow hover:scale-105 transition"
-                  />
-                </div>
+                <img
+                  src={URL.createObjectURL(form.photo)}
+                  alt="preview"
+                  className="w-20 h-20 mt-3 rounded-full object-cover border-2 border-blue-500"
+                />
               )}
             </div>
 
-            <div className="col-span-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 bg-gradient-to-r from-blue-600 to-teal-500 text-white font-semibold rounded-lg shadow-lg hover:scale-[1.02] transition disabled:opacity-50"
-              >
-                {loading
-                  ? "Saving..."
-                  : editingId
-                  ? "Update Feedback"
-                  : "Add Feedback"}
-              </button>
-            </div>
+            <button
+              disabled={loading}
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-xl font-semibold"
+            >
+              {loading ? "Saving..." : editingId ? "Update" : "Add"}
+            </button>
           </form>
-        </section>
-
-        {/* ===== Search Bar ===== */}
-        <div className="flex items-center gap-3 bg-white dark:bg-gray-800 px-5 py-3 rounded-2xl shadow border border-gray-200 dark:border-gray-700">
-          <FaSearch className="text-blue-500" />
-          <input
-            type="text"
-            placeholder="Search by student or course..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 bg-transparent outline-none text-gray-700 dark:text-gray-200"
-          />
         </div>
 
-        {/* ===== Feedback List ===== */}
-        <section className="bg-white/90 dark:bg-gray-800/60 rounded-2xl p-8 shadow-lg border border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-semibold text-blue-600 mb-5 flex items-center gap-2">
-            Feedback List
-            <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
-              ({filtered.length})
-            </span>
+        {/* ========= LIST ========= */}
+        <div className="lg:col-span-3 space-y-6">
+          <h2 className="text-lg text-blue-400">
+            Feedback List ({filtered.length})
           </h2>
 
           {filtered.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-              No feedbacks found.
+            <p className="text-gray-500 text-center py-10">
+              No feedback found
             </p>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid md:grid-cols-2 gap-6">
               {filtered.map((fb) => (
                 <div
                   key={fb._id}
-                  className="p-5 bg-gray-50 dark:bg-gray-700 rounded-xl shadow hover:shadow-blue-400/20 transition-transform hover:scale-[1.02]"
+                  className="p-5 bg-[#0b1225] rounded-xl border border-blue-500/10 hover:border-blue-500 hover:shadow-xl transition"
                 >
                   <div className="flex items-center gap-4 mb-3">
                     <img
                       src={
                         fb.photo
-                          ? `${apiBase}${
-                              fb.photo.startsWith("/") ? fb.photo : "/" + fb.photo
-                            }`
+                          ? `${apiBase}${fb.photo}`
                           : "https://via.placeholder.com/80"
                       }
                       alt={fb.name}
-                      className="w-16 h-16 object-cover rounded-full border-2 border-blue-400 shadow"
+                      className="w-16 h-16 rounded-full border-2 border-blue-500 object-cover"
                     />
                     <div>
-                      <h3 className="text-lg font-bold">{fb.name}</h3>
-                      <p className="text-blue-500 text-sm">{fb.course}</p>
+                      <h3 className="text-lg font-semibold">{fb.name}</h3>
+                      <p className="text-blue-400 text-sm">{fb.course}</p>
                     </div>
                   </div>
-                  <p className="text-gray-700 dark:text-gray-300 italic">
-                    “{fb.comment}”
+
+                  <p className="text-gray-400 italic mb-4">
+                    "{fb.comment}"
                   </p>
-                  <div className="flex justify-end gap-3 mt-4">
+
+                  <div className="flex justify-end gap-3">
                     <button
                       onClick={() => handleEdit(fb)}
-                      className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center gap-2 text-sm transition"
+                      className="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex gap-2 items-center"
                     >
                       <FaEdit /> Edit
                     </button>
                     <button
                       onClick={() => confirmDelete(fb._id)}
-                      className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg flex items-center gap-2 text-sm transition"
+                      className="px-3 py-2 bg-red-600 hover:bg-red-700 rounded-lg flex gap-2 items-center"
                     >
                       <FaTrash /> Delete
                     </button>
@@ -272,37 +232,25 @@ export default function FeedbackUpload() {
               ))}
             </div>
           )}
-        </section>
-      </main>
+        </div>
+      </div>
 
-      {/* ===== Delete Confirmation Modal ===== */}
+      {/* MODAL */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg w-[90%] max-w-sm">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-red-500">
-                Confirm Delete
-              </h3>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-[#0b1225] p-6 rounded-xl w-96 border border-red-500/30">
+            <h3 className="text-red-400 text-lg mb-3">Confirm Delete</h3>
+            <p className="text-gray-400 mb-6">Are you sure?</p>
+            <div className="flex justify-end gap-4">
               <button
                 onClick={() => setShowModal(false)}
-                className="text-gray-500 hover:text-gray-800 dark:hover:text-white"
-              >
-                <FaTimes />
-              </button>
-            </div>
-            <p className="text-gray-700 dark:text-gray-300 mb-6">
-              Are you sure you want to delete this feedback?
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2 rounded-lg bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition"
+                className="px-4 py-2 bg-gray-600 rounded"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white shadow"
+                className="px-4 py-2 bg-red-600 rounded"
               >
                 Delete
               </button>

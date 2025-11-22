@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { HiOutlineUserAdd, HiOutlineCamera, HiOutlineMail, HiOutlineOfficeBuilding, HiOutlineUserCircle } from "react-icons/hi";
+import {
+  HiOutlineUserAdd,
+  HiOutlineCamera,
+  HiOutlineMail,
+  HiOutlineOfficeBuilding,
+  HiOutlineUserCircle,
+} from "react-icons/hi";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../../utils/api";
 
@@ -93,97 +99,243 @@ export default function AddAdmin() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white py-10 px-6">
-      <div className="max-w-7xl mx-auto bg-gray-800/70 rounded-2xl shadow-xl border border-gray-700 p-8">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-10 border-b border-gray-700 pb-4">
-          <HiOutlineUserAdd className="text-blue-400 text-3xl" />
-          <h1 className="text-3xl font-bold text-white tracking-wide">
-            {id ? "Edit Admin" : "Add Admin"}
-          </h1>
+    <div className="min-h-screen bg-gradient-to-br from-[#020617] via-[#050b24] to-[#030712] py-16 px-6 text-white">
+      <div className="max-w-7xl mx-auto bg-white/5 backdrop-blur-xl rounded-3xl p-10 border border-blue-500/10 shadow-2xl">
+        {/* ========== HEADER ========== */}
+        <div className="flex items-center justify-between mb-10 border-b border-blue-500/20 pb-6">
+          <div className="flex items-center gap-4">
+            <div className="bg-blue-600/20 p-4 rounded-2xl">
+              <HiOutlineUserAdd className="text-blue-400 text-3xl" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold tracking-wide">
+                {id ? "Edit Admin Profile" : "Create New Admin"}
+              </h1>
+              <p className="text-sm text-gray-400">
+                Fill the admin details properly
+              </p>
+            </div>
+          </div>
         </div>
 
+        {/* ========== PHOTO UPLOAD ========== */}
+        <div className="flex justify-center mb-12">
+          <label className="relative w-36 h-36 rounded-full border-4 border-blue-500/50 shadow-lg cursor-pointer overflow-hidden group bg-black/50">
+            {photo ? (
+              <img
+                src={URL.createObjectURL(photo)}
+                alt="Preview"
+                className="w-full h-full object-cover"
+              />
+            ) : existingPhoto ? (
+              <img
+                src={`http://localhost:4000${existingPhoto}`}
+                alt="Existing"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
+                <HiOutlineCamera className="text-4xl mb-1" />
+                <span className="text-xs">Upload image</span>
+              </div>
+            )}
+
+            <input
+              type="file"
+              className="hidden"
+              accept="image/*"
+              onChange={handleFile}
+            />
+
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-xs text-white tracking-widest">
+              CHANGE
+            </div>
+          </label>
+        </div>
+
+        {/* ========== FORM ========== */}
         <form
           onSubmit={handleSubmit}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          className="grid grid-cols-1 lg:grid-cols-3 gap-6"
         >
-          {/* Upload Photo */}
-          <div className="md:col-span-3 flex justify-center mb-6">
-            <label className="relative w-32 h-32 rounded-full border-4 border-blue-500 shadow-lg cursor-pointer overflow-hidden group bg-gray-700">
-              {photo ? (
-                <img
-                  src={URL.createObjectURL(photo)}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
-                />
-              ) : existingPhoto ? (
-                <img
-                  src={`http://localhost:4000${existingPhoto}`}
-                  alt="Existing"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 text-sm">
-                  <HiOutlineCamera className="text-3xl mb-2" />
-                  Upload Photo
-                </div>
-              )}
-              <input
-                type="file"
-                className="hidden"
-                accept="image/*"
-                onChange={handleFile}
-              />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-xs text-white">
-                Change Photo
-              </div>
-            </label>
-          </div>
+          {/* -------- PERSONAL -------- */}
+          <Section title="Personal Info" />
+          <Input
+            name="firstName"
+            placeholder="First Name"
+            value={formData.firstName}
+            onChange={handleChange}
+          />
+          <Input
+            name="lastName"
+            placeholder="Last Name"
+            value={formData.lastName}
+            onChange={handleChange}
+          />
+          <Input
+            type="date"
+            name="dob"
+            value={formData.dob}
+            onChange={handleChange}
+          />
 
-          {/* First Row */}
-          <Input name="firstName" placeholder="First Name" value={formData.firstName} onChange={handleChange} />
-          <Input name="lastName" placeholder="Last Name" value={formData.lastName} onChange={handleChange} />
-          <Input type="date" name="dob" value={formData.dob} onChange={handleChange} />
+          <Input
+            name="age"
+            placeholder="Age"
+            value={formData.age}
+            onChange={handleChange}
+          />
+          <Select
+            name="gender"
+            value={formData.gender}
+            onChange={handleChange}
+            options={["Male", "Female", "Other"]}
+            placeholder="Gender"
+          />
+          <Input
+            name="blood"
+            placeholder="Blood Group"
+            value={formData.blood}
+            onChange={handleChange}
+          />
 
-          <Input name="age" placeholder="Age" value={formData.age} onChange={handleChange} />
-          <Select name="gender" value={formData.gender} onChange={handleChange} options={["Male","Female","Other"]} placeholder="Gender" />
-          <Input name="blood" placeholder="Blood Group" value={formData.blood} onChange={handleChange} />
+          {/* -------- OFFICE -------- */}
+          <Section title="Office Info" />
+          <Input
+            name="branchName"
+            placeholder="Branch Name"
+            value={formData.branchName}
+            onChange={handleChange}
+          />
+          <Input
+            name="branchNo"
+            placeholder="Branch No"
+            value={formData.branchNo}
+            onChange={handleChange}
+          />
+          <Input
+            name="department"
+            placeholder="Department"
+            value={formData.department}
+            onChange={handleChange}
+          />
 
-          <Select name="handicap" value={formData.handicap} onChange={handleChange} options={["Yes","No"]} placeholder="Handicap" />
-          <Input name="branchName" placeholder="Branch Name" value={formData.branchName} onChange={handleChange} />
-          <Input name="branchNo" placeholder="Branch Number" value={formData.branchNo} onChange={handleChange} />
+          <Input
+            name="role"
+            placeholder="Role"
+            value={formData.role}
+            onChange={handleChange}
+          />
+          <Input
+            name="salary"
+            placeholder="Salary"
+            value={formData.salary}
+            onChange={handleChange}
+          />
+          <Select
+            name="experience"
+            value={formData.experience}
+            onChange={handleChange}
+            options={["Fresher", "1-3 years", "3-5 years", "5+ years"]}
+            placeholder="Experience"
+          />
 
-          <Input name="role" placeholder="Role" value={formData.role} onChange={handleChange} />
-          <Input name="salary" placeholder="Salary" value={formData.salary} onChange={handleChange} />
-          <Input name="email" placeholder="Email ID" value={formData.email} onChange={handleChange} type="email" />
+          {/* -------- CONTACT -------- */}
+          <Section title="Contact Info" />
+          <Input
+            name="email"
+            type="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleChange}
+          />
+          <Input
+            name="phone"
+            placeholder="Phone"
+            value={formData.phone}
+            onChange={handleChange}
+          />
+          <Input
+            name="altPhone"
+            placeholder="Alternate Phone"
+            value={formData.altPhone}
+            onChange={handleChange}
+          />
 
-          <Input name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleChange} />
-          <Input name="altPhone" placeholder="Alternate Phone" value={formData.altPhone} onChange={handleChange} />
-          <Select name="experience" value={formData.experience} onChange={handleChange} options={["Fresher","1-3 years","3-5 years","5+ years"]} placeholder="Experience" />
+          {/* -------- ADDRESS -------- */}
+          <Section title="Address" />
+          <Input
+            className="lg:col-span-3"
+            name="address"
+            placeholder="Full Address"
+            value={formData.address}
+            onChange={handleChange}
+          />
+          <Input
+            name="district"
+            placeholder="District"
+            value={formData.district}
+            onChange={handleChange}
+          />
+          <Input
+            name="state"
+            placeholder="State"
+            value={formData.state}
+            onChange={handleChange}
+          />
+          <Input
+            name="pincode"
+            placeholder="Pincode"
+            value={formData.pincode}
+            onChange={handleChange}
+          />
 
-          <Select name="maritalStatus" value={formData.maritalStatus} onChange={handleChange} options={["Married","Unmarried"]} placeholder="Marital Status" />
-          <Input name="department" placeholder="Department" value={formData.department} onChange={handleChange} />
-          <Input name="type" placeholder="Type" value={formData.type} onChange={handleChange} />
+          {/* -------- EXTRA -------- */}
+          <Section title="Extra Skills" />
+          <Input
+            name="language"
+            placeholder="Languages Known"
+            value={formData.language}
+            onChange={handleChange}
+          />
+          <Input
+            name="qualification"
+            placeholder="Qualification"
+            value={formData.qualification}
+            onChange={handleChange}
+          />
+          <Input
+            name="skills"
+            placeholder="Skills"
+            value={formData.skills}
+            onChange={handleChange}
+          />
 
-          <Input className="md:col-span-3" name="address" placeholder="Address" value={formData.address} onChange={handleChange} />
-          <Input name="district" placeholder="District" value={formData.district} onChange={handleChange} />
-          <Input name="state" placeholder="State" value={formData.state} onChange={handleChange} />
-          <Input name="pincode" placeholder="Pincode" value={formData.pincode} onChange={handleChange} />
+          {/* -------- LOGIN -------- */}
+          <Section title="Login Credentials" />
+          <Input
+            name="userId"
+            placeholder="User ID"
+            value={formData.userId}
+            onChange={handleChange}
+          />
+          <Input
+            type="password"
+            name="password"
+            placeholder={id ? "New Password (optional)" : "Password"}
+            value={formData.password}
+            onChange={handleChange}
+            required={!id}
+          />
 
-          <Input name="language" placeholder="Language" value={formData.language} onChange={handleChange} />
-          <Input name="qualification" placeholder="Qualification" value={formData.qualification} onChange={handleChange} />
-          <Input name="skills" placeholder="Skills" value={formData.skills} onChange={handleChange} />
-
-          <Input name="userId" placeholder="User ID" value={formData.userId} onChange={handleChange} />
-          <Input type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} required={!id} />
-
-          <div className="md:col-span-3 flex justify-end mt-6">
+          {/* -------- BUTTON -------- */}
+          <div className="lg:col-span-3 flex justify-end pt-10">
             <button
               type="submit"
               disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-lg font-semibold text-white shadow-lg transition"
+              className="px-10 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:scale-105 transition font-semibold shadow-xl"
             >
-              {loading ? "Saving..." : id ? "Update Admin" : "Complete"}
+              {loading ? "Saving..." : id ? "Update Admin" : "Create Admin"}
             </button>
           </div>
         </form>
@@ -202,8 +354,26 @@ function Input({ className = "", ...props }) {
   );
 }
 
+function Section({ title }) {
+  return (
+    <div className="lg:col-span-3 mt-6 mb-2">
+      <h3 className="text-blue-400 font-semibold tracking-widest text-sm border-b border-blue-500/20 pb-2">
+        {title.toUpperCase()}
+      </h3>
+    </div>
+  );
+}
+
+
 /* Reusable Select */
-function Select({ name, value, onChange, options, placeholder, className = "" }) {
+function Select({
+  name,
+  value,
+  onChange,
+  options,
+  placeholder,
+  className = "",
+}) {
   return (
     <select
       name={name}

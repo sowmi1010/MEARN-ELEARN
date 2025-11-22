@@ -259,7 +259,7 @@ export default function AddVideo() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Thumbnail */}
           <div className="bg-gray-800/70 p-6 rounded-xl border border-gray-700 text-center hover:bg-gray-800 hover:shadow-lg hover:shadow-blue-700/30 transition-all">
-            <label className="block text-gray-300 font-medium mb-3 flex justify-center items-center gap-2">
+            <label className="text-gray-300 font-medium mb-3 flex justify-center items-center gap-2">
               <FaUpload className="text-blue-400" /> Upload Thumbnail
             </label>
             <input
@@ -274,7 +274,7 @@ export default function AddVideo() {
 
           {/* Video File */}
           <div className="bg-gray-800/70 p-6 rounded-xl border border-gray-700 text-center hover:bg-gray-800 hover:shadow-lg hover:shadow-purple-700/30 transition-all">
-            <label className="block text-gray-300 font-medium mb-3 flex justify-center items-center gap-2">
+            <label className="text-gray-300 font-medium mb-3 flex justify-center items-center gap-2">
               <FaUpload className="text-purple-400" /> Upload Video File
             </label>
             <input
