@@ -125,41 +125,22 @@ const MentorAccess = React.lazy(() =>
 
 // 🔹 ADMIN COURSE PAGES
 const CourseHome = React.lazy(() => import("./pages/admin/course/CourseHome"));
-const CourseSubjects = React.lazy(() =>
-  import("./pages/admin/course/CourseSubjects")
-);
-const CourseCategories = React.lazy(() =>
-  import("./pages/admin/course/CourseCategories")
-);
-const CourseContents = React.lazy(() =>
-  import("./pages/admin/course/CourseContents")
+
+const ContentManager = React.lazy(() =>
+  import("./pages/admin/course/ContentManager")
 );
 
-const AddVideo = React.lazy(() => import("./pages/admin/course/add/AddVideo"));
-const AddBook = React.lazy(() => import("./pages/admin/course/add/AddBook"));
-const AddNotes = React.lazy(() => import("./pages/admin/course/add/AddNotes"));
-const AddTest = React.lazy(() => import("./pages/admin/course/add/AddTest"));
-const AddQuiz = React.lazy(() => import("./pages/admin/course/add/AddQuiz"));
-
-const ManageVideos = React.lazy(() =>
-  import("./pages/admin/course/manage/ManageVideos")
-);
-const ManageNotes = React.lazy(() =>
-  import("./pages/admin/course/manage/ManageNotes")
-);
-const ManageTests = React.lazy(() =>
-  import("./pages/admin/course/manage/ManageTests")
+const VideoForm = React.lazy(() =>
+  import("./pages/admin/course/form/VideoForm")
 );
 
-const EditVideo = React.lazy(() =>
-  import("./pages/admin/course/edit/EditVideo")
+const BookForm = React.lazy(() => import("./pages/admin/course/form/BookForm"));
+const NotesForm = React.lazy(() =>
+  import("./pages/admin/course/form/NotesForm")
 );
-const EditNotes = React.lazy(() =>
-  import("./pages/admin/course/edit/EditNotes")
-);
-const EditTests = React.lazy(() =>
-  import("./pages/admin/course/edit/EditTests")
-);
+const TestForm = React.lazy(() => import("./pages/admin/course/form/TestForm"));
+
+const QuizForm = React.lazy(() => import("./pages/admin/course/form/QuizForm"));
 
 const ViewVideo = React.lazy(() =>
   import("./pages/admin/course/view/ViewVideo")
@@ -170,6 +151,10 @@ const ViewNotes = React.lazy(() =>
 const ViewTest = React.lazy(() =>
   import("./pages/admin/course/view/ViewTests")
 );
+
+const ViewBook = React.lazy(() => import("./pages/admin/course/view/ViewBook"))
+
+const ViewQuiz = React.lazy(() => import("./pages/admin/course/view/ViewQuiz"))
 
 // 🔹 CHAT
 import ChatList from "./pages/admin/chat/ChatList";
@@ -378,40 +363,28 @@ function AnimatedRoutes() {
 
           {/* COURSES */}
           <Route path="courses" element={<CourseHome />} />
-          <Route
-            path="courses/:groupId/subjects"
-            element={<CourseSubjects />}
-          />
-          <Route
-            path="courses/:groupId/:subject/categories"
-            element={<CourseCategories />}
-          />
-          <Route
-            path="courses/:groupId/:subject/:category/contents"
-            element={<CourseContents />}
-          />
 
-          {/* ADD */}
-          <Route path="courses/add-video" element={<AddVideo />} />
-          <Route path="courses/add-book" element={<AddBook />} />
-          <Route path="courses/add-notes" element={<AddNotes />} />
-          <Route path="courses/add-test" element={<AddTest />} />
-          <Route path="courses/add-quiz" element={<AddQuiz />} />
+          <Route path="courses/:groupId/manage" element={<ContentManager />} />
 
-          {/* MANAGE */}
-          <Route path="courses/manage-videos" element={<ManageVideos />} />
-          <Route path="courses/manage-notes" element={<ManageNotes />} />
-          <Route path="courses/manage-tests" element={<ManageTests />} />
-
-          {/* EDIT */}
-          <Route path="courses/edit/video/:id" element={<EditVideo />} />
-          <Route path="courses/edit/notes/:id" element={<EditNotes />} />
-          <Route path="courses/edit/test/:id" element={<EditTests />} />
+          {/* VIDEO FORM (ADD + EDIT) */}
+          <Route path="courses/add-video" element={<VideoForm />} />
+          <Route path="courses/videos/edit/:id" element={<VideoForm />} />
+          <Route path="courses/add-book" element={<BookForm />} />
+          <Route path="courses/books/edit/:id" element={<BookForm />} />
+          <Route path="courses/add-notes" element={<NotesForm />} />
+          <Route path="courses/notes/edit/:id" element={<NotesForm />} />
+          <Route path="courses/add-test" element={<TestForm />} />
+          <Route path="courses/tests/edit/:id" element={<TestForm />} />
+          <Route path="courses/add-quiz" element={<QuizForm />} />
+          <Route path="courses/quiz/edit/:id" element={<QuizForm />} />
 
           {/* VIEW */}
           <Route path="courses/view/video/:id" element={<ViewVideo />} />
-          <Route path="courses/view/notes/:id" element={<ViewNotes />} />
+          <Route path="courses/view/note/:id" element={<ViewNotes />} />
           <Route path="courses/view/test/:id" element={<ViewTest />} />
+          <Route path="courses/view/book/:id" element={<ViewBook />} />
+          <Route path="courses/view/qui/:id" element={< ViewQuiz />} />
+
 
           {/* CHAT */}
           <Route path="team" element={<ChatList />} />

@@ -146,7 +146,7 @@ export default function CourseHome() {
         {groups.map((g) => (
           <div
             key={g.id}
-            onClick={() => navigate(`/admin/courses/${g.id}/subjects`)}
+            onClick={() => navigate(`/admin/courses/${g.id}/manage`)}
             className="group cursor-pointer bg-gray-900/80 hover:bg-gray-800 pb-6 rounded-2xl shadow-lg border border-gray-700 transition-transform duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-700/40 text-center backdrop-blur-md"
           >
             <img

@@ -1,13 +1,24 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../../../utils/api";
+import { FaArrowLeft, FaFileAlt } from "react-icons/fa";
 
 export default function ViewTest() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [test, setTest] = useState(null);
   const [loading, setLoading] = useState(true);
-  const fileBase = "http://localhost:4000/";
+
+  const BASE = "http://localhost:4000";
+
+  const getFile = (path) => {
+    if (!path) return "";
+    const clean = path.replace(/\\/g, "/");
+    if (clean.startsWith("http")) return clean;
+    if (clean.startsWith("/")) return `${BASE}${clean}`;
+    return `${BASE}/${clean}`;
+  };
 
   useEffect(() => {
     const fetchTest = async () => {
@@ -15,72 +26,78 @@ export default function ViewTest() {
         const res = await api.get(`/tests/${id}`);
         setTest(res.data);
       } catch (err) {
-        console.error(" Failed to fetch test:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchTest();
   }, [id]);
 
-  const normalize = (p) => (p ? p.replace(/\\/g, "/") : "");
-
   if (loading)
     return (
-      <div className="flex justify-center items-center min-h-screen text-gray-300">
-        Loading test details...
+      <div className="min-h-screen flex items-center justify-center text-white bg-black">
+        Loading Test...
       </div>
     );
 
   if (!test)
     return (
-      <div className="flex justify-center items-center min-h-screen text-red-400">
+      <div className="min-h-screen flex items-center justify-center text-red-400 bg-black">
         Test not found
       </div>
     );
 
   return (
-    <div className="p-8 bg-gray-900 text-white min-h-screen flex flex-col items-center">
-      <button
-        onClick={() => navigate(-1)}
-        className="self-start mb-4 bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded"
-      >
-        ⬅ Back
-      </button>
+    <div className="min-h-screen bg-[#050813] text-white px-6 py-10">
 
-      <div className="max-w-4xl w-full bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700">
-        <h1 className="text-3xl font-bold mb-4 text-center">{test.title}</h1>
+      {/* MAIN CARD */}
+      <div className="max-w-6xl mx-auto backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-2xl grid md:grid-cols-3 gap-6">
 
-        <div className="flex justify-center mb-6">
-          {test.file && (
-            <iframe
-              src={`${fileBase}${normalize(test.file)}`}
-              title="Test File"
-              className="w-full h-[500px] rounded-lg border border-gray-700 shadow-md"
+        {/* TEST PREVIEW */}
+        <div className="md:col-span-2 space-y-5">
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <FaFileAlt className="text-orange-400" />
+            {test.title}
+          </h1>
+
+          <iframe
+            src={getFile(test.file)}
+            title="Test Preview"
+            className="w-full h-[520px] rounded-xl border border-orange-500/20 bg-black"
+          />
+
+        </div>
+
+        {/* INFO PANEL */}
+        <div className="space-y-5 bg-black/40 p-6 rounded-xl border border-white/10">
+
+          {test.thumbnail && (
+            <img
+              src={getFile(test.thumbnail)}
+              alt="Thumbnail"
+              className="w-full h-40 object-cover rounded-lg border border-white/10"
             />
           )}
+
+          <Info label="Group" value={test.group} />
+          <Info label="Standard" value={test.standard} />
+          <Info label="Board" value={test.board} />
+          <Info label="Language" value={test.language} />
+          <Info label="Subject" value={test.subject} />
+          <Info label="Category" value={test.category} />
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-6 text-gray-300">
-          <p><strong>Group:</strong> {test.group}</p>
-          <p><strong>Standard:</strong> {test.standard}</p>
-          <p><strong>Board:</strong> {test.board}</p>
-          <p><strong>Language:</strong> {test.language}</p>
-          <p><strong>Subject:</strong> {test.subject}</p>
-          <p><strong>Category:</strong> {test.category}</p>
-        </div>
-
-        {test.thumbnail && (
-          <div className="mt-6 text-center">
-            <h3 className="text-xl font-semibold mb-2 text-blue-400">Thumbnail Preview</h3>
-            <img
-              src={`${fileBase}${normalize(test.thumbnail)}`}
-              alt={test.title}
-              className="rounded-lg w-64 mx-auto border border-gray-700"
-            />
-          </div>
-        )}
       </div>
     </div>
   );
 }
+
+/* Small info row */
+const Info = ({ label, value }) => (
+  <div>
+    <p className="text-xs text-gray-500">{label}</p>
+    <p className="text-sm font-medium">{value || "-"}</p>
+  </div>
+);

@@ -1,21 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../../../utils/api";
+import { FaArrowLeft, FaRegPlayCircle } from "react-icons/fa";
 
 export default function ViewVideo() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [video, setVideo] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fileBase = "http://localhost:4000";
+  const BASE = "http://localhost:4000";
 
-  // Helper: normalize + remove "uploads/uploads" or absolute paths
-  const cleanPath = (p) => {
+  const handlePath = (p) => {
     if (!p) return "";
-    let normalized = p.replace(/\\/g, "/"); // Convert backslashes
-    normalized = normalized.replace(/^.*uploads\//, "uploads/"); // keep only relative part
-    return `${fileBase}/${normalized}`;
+    const clean = p.replace(/\\/g, "/");
+    if (clean.startsWith("http")) return clean;
+    if (clean.startsWith("/")) return `${BASE}${clean}`;
+    return `${BASE}/${clean}`;
   };
 
   useEffect(() => {
@@ -24,7 +26,7 @@ export default function ViewVideo() {
         const res = await api.get(`/videos/${id}`);
         setVideo(res.data);
       } catch (err) {
-        console.error("Failed to fetch video:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -34,66 +36,66 @@ export default function ViewVideo() {
 
   if (loading)
     return (
-      <div className="flex justify-center items-center min-h-screen text-gray-300">
-        Loading video details...
+      <div className="h-screen flex items-center justify-center text-white bg-black">
+        Loading...
       </div>
     );
 
   if (!video)
     return (
-      <div className="flex justify-center items-center min-h-screen text-red-400">
+      <div className="h-screen flex items-center justify-center text-red-400 bg-black">
         Video not found
       </div>
     );
 
   return (
-    <div className="p-8 bg-gray-900 text-white min-h-screen flex flex-col items-center">
-      <div className="max-w-4xl w-full bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700">
-        {/* Title */}
-        <h1 className="text-3xl font-bold mb-4 text-center">{video.title}</h1>
+    <div className="min-h-screen bg-[#050813] text-white px-6 py-10">
+      {/* MAIN CARD */}
+      <div className="max-w-6xl mx-auto backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-2xl grid md:grid-cols-3 gap-6">
+        {/* VIDEO AREA */}
+        <div className="md:col-span-2 space-y-4">
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <FaRegPlayCircle className="text-cyan-400" />
+            {video.title}
+          </h1>
 
-        {/* Video player */}
-        <div className="flex justify-center mb-6">
           <video
-            key={cleanPath(video.file)} // force refresh on new video
             controls
-            className="w-full max-w-3xl rounded-lg shadow-md border border-gray-700"
-          >
-            <source src={cleanPath(video.file)} type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-        </div>
+            src={handlePath(video.file)}
+            className="w-full rounded-xl border border-cyan-400/20"
+          />
 
-        {/* Info */}
-        <div className="grid grid-cols-2 gap-4 mb-6 text-gray-300">
-          <p><strong>Group:</strong> {video.group}</p>
-          <p><strong>Standard:</strong> {video.standard}</p>
-          <p><strong>Board:</strong> {video.board}</p>
-          <p><strong>Language:</strong> {video.language}</p>
-          <p><strong>Subject:</strong> {video.subject}</p>
-          <p><strong>Lesson:</strong> {video.lesson}</p>
-          <p><strong>Category:</strong> {video.category}</p>
-          <p><strong>Video Number:</strong> {video.videoNumber}</p>
-        </div>
-
-        {/* Description */}
-        <div>
-          <h2 className="text-2xl font-semibold mb-2">Description</h2>
-          <p className="text-gray-300 leading-relaxed">
-            {video.aboutCourse || "No description provided."}
+          <p className="text-gray-400">
+            {video.aboutCourse || "No description provided"}
           </p>
         </div>
 
-        {/* Thumbnail */}
-        <div className="mt-6 text-center">
-          <h3 className="text-xl font-semibold mb-2">Thumbnail Preview</h3>
+        {/* INFO PANEL */}
+        <div className="space-y-5 bg-black/30 p-6 rounded-xl border border-white/10">
           <img
-            src={cleanPath(video.thumbnail)}
-            alt={video.title}
-            className="rounded-lg w-64 mx-auto border border-gray-700"
+            src={handlePath(video.thumbnail)}
+            alt="Thumbnail"
+            className="w-full h-48 object-cover rounded-lg mb-4 border border-white/10"
           />
+
+          <Info label="Group" value={video.group} />
+          <Info label="Standard" value={video.standard} />
+          <Info label="Board" value={video.board} />
+          <Info label="Language" value={video.language} />
+          <Info label="Subject" value={video.subject} />
+          <Info label="Lesson" value={video.lesson} />
+          <Info label="Category" value={video.category} />
+          <Info label="Video No" value={video.videoNumber} />
         </div>
       </div>
     </div>
   );
 }
+
+// SMALL COMPONENT
+const Info = ({ label, value }) => (
+  <div>
+    <p className="text-xs text-gray-500">{label}</p>
+    <p className="text-sm font-medium">{value || "-"}</p>
+  </div>
+);
