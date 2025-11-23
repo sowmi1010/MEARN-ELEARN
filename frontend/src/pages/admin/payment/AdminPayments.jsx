@@ -12,10 +12,8 @@ export default function AdminPayments() {
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Global search from AdminLayout
   const search = useGlobalSearch();
 
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(5);
 
@@ -55,9 +53,9 @@ export default function AdminPayments() {
     fetchData();
   }, []);
 
-  // ✅ APPLY GLOBAL SEARCH FILTER
+  // ✅ APPLY GLOBAL SEARCH FILTER (FIXED)
   useEffect(() => {
-    if (!search) {
+    if (!search || typeof search !== "string") {
       setFiltered(payments);
       return;
     }
@@ -84,8 +82,8 @@ export default function AdminPayments() {
 
     const ws = XLSX.utils.json_to_sheet(
       filtered.map((p) => ({
-        Name: p.user?.name,
-        Email: p.user?.email,
+        Name: p.user?.name || "Student",
+        Email: p.user?.email || p.user,
         Group: p.metadata?.group,
         Course: p.metadata?.title,
         Standard: p.metadata?.standard,
@@ -114,7 +112,7 @@ export default function AdminPayments() {
       startY: 22,
       head: [["Name", "Group", "Course", "Amount", "Method", "Status"]],
       body: filtered.map((p) => [
-        p.user?.name,
+        p.user?.name || "Student",
         p.metadata?.group,
         p.metadata?.title,
         `₹${p.amount}`,
@@ -178,7 +176,7 @@ export default function AdminPayments() {
         <SummaryCard title="Transactions" value={filtered.length} />
         <SummaryCard
           title="Students"
-          value={new Set(filtered.map((p) => p?.user?.email)).size}
+          value={new Set(filtered.map((p) => p?.user)).size}
         />
       </div>
 
@@ -205,9 +203,11 @@ export default function AdminPayments() {
                 className="border-b border-blue-900 hover:bg-[#0b2a55] transition"
               >
                 <td className="p-3">
-                  <p className="font-semibold">{p.user?.name}</p>
+                  <p className="font-semibold">
+                    {p.user?.name || "Student"}
+                  </p>
                   <p className="text-gray-400 text-xs">
-                    {p.user?.email}
+                    {p.user?.email || p.user}
                   </p>
                 </td>
 
@@ -241,9 +241,9 @@ export default function AdminPayments() {
                 </td>
 
                 <td className="p-3 text-center">
-                  {p?.user?._id && (
+                  {p?.user && (
                     <Link
-                      to={`/admin/students/details/${p.user._id}`}
+                      to={`/admin/students/details/${p.user}`}
                       className="inline-flex items-center gap-1 bg-blue-600 px-3 py-1 rounded-md hover:bg-blue-700 transition"
                     >
                       <FaUserCircle /> View
@@ -259,61 +259,6 @@ export default function AdminPayments() {
           <p className="text-center p-10 text-gray-400">
             No payment records found.
           </p>
-        )}
-
-        {/* PAGINATION */}
-        {totalPages > 1 && (
-          <div className="flex justify-between items-center mt-6">
-
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-400">Rows</span>
-              <select
-                value={perPage}
-                onChange={(e) => {
-                  setPerPage(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                className="bg-[#0d1633] border border-blue-600 px-2 py-1 rounded-lg"
-              >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-              </select>
-            </div>
-
-            <div className="flex gap-2 items-center">
-              <button
-                onClick={() => setCurrentPage((p) => p - 1)}
-                disabled={currentPage === 1}
-                className="px-3 py-1 bg-[#162447] rounded disabled:opacity-40"
-              >
-                Prev
-              </button>
-
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
-                <button
-                  key={num}
-                  onClick={() => setCurrentPage(num)}
-                  className={`px-3 py-1 rounded ${
-                    currentPage === num
-                      ? "bg-blue-600"
-                      : "bg-[#162447]"
-                  }`}
-                >
-                  {num}
-                </button>
-              ))}
-
-              <button
-                onClick={() => setCurrentPage((p) => p + 1)}
-                disabled={currentPage === totalPages}
-                className="px-3 py-1 bg-[#162447] rounded disabled:opacity-40"
-              >
-                Next
-              </button>
-            </div>
-
-          </div>
         )}
 
       </div>

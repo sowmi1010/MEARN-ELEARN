@@ -4,196 +4,236 @@ const User = require("../models/User");
 const Admin = require("../models/Admin");
 const Student = require("../models/Student");
 const Mentor = require("../models/Mentor");
-const mongoose = require("mongoose");
 
-// 🧩 Helper: Find user in any collection
+// ================= FIND USER ANY =================
 async function findAnyUser(userId) {
   return (
-    (await Admin.findById(userId).select("name firstName lastName email photo profilePic")) ||
-    (await Student.findById(userId).select("firstName lastName email photo profilePic")) ||
-    (await Mentor.findById(userId).select("name email photo profilePic")) ||
-    (await User.findById(userId).select("name email photo profilePic"))
+    (await Admin.findById(userId)) ||
+    (await Student.findById(userId)) ||
+    (await Mentor.findById(userId)) ||
+    (await User.findById(userId))
   );
 }
 
-/* ======================================================
-   🧩 Create or get existing chat between two users
-====================================================== */
+// ================= ACCESS CHAT ===================
 exports.accessChat = async (req, res) => {
   try {
     const { userId } = req.body;
-    const currentUserId = req.user?._id;
+    const currentUserId = req.user._id;
 
-    if (!userId) return res.status(400).json({ message: "UserId is required" });
-    if (!currentUserId) return res.status(401).json({ message: "Unauthorized" });
+    if (!userId)
+      return res.status(400).json({ message: "UserId required" });
 
-    const currentUserModel =
-      req.user.role === "admin"
-        ? "Admin"
-        : req.user.role === "mentor"
-        ? "Mentor"
-        : req.user.role === "student"
-        ? "Student"
-        : "User";
-
-    const receiver = await findAnyUser(userId);
-    if (!receiver) return res.status(404).json({ message: "Receiver not found" });
-
-    // ✅ Find chat by both participant IDs (flat structure)
     let chat = await Chat.findOne({
-      isGroup: false,
       participants: { $all: [currentUserId, userId] },
-    })
-      .populate("lastMessage")
-      .lean();
+      isGroup: false,
+    });
 
-    // ✅ Create chat if not exists
     if (!chat) {
       chat = await Chat.create({
         participants: [currentUserId, userId],
-        participantModel: [currentUserModel, "User"], // you can adjust "User" dynamically if needed
       });
     }
 
-    res.status(200).json(chat);
+    res.json(chat);
   } catch (err) {
-    console.error("🔥 Access Chat Error:", err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ error: err.message });
   }
 };
 
-/* ======================================================
-   🧾 Get all chats for current user
-====================================================== */
-exports.getUserChats = async (req, res) => {
-  try {
-    const chats = await Chat.find({ participants: req.user._id })
-      .populate("participants", "-password")
-      .populate({
-        path: "lastMessage",
-        populate: { path: "senderId", select: "name email photo profilePic" },
-      })
-      .sort({ updatedAt: -1 });
-
-    res.status(200).json(chats);
-  } catch (err) {
-    console.error("Get User Chats Error:", err);
-    res.status(500).json({ message: err.message });
-  }
-};
-
-/* ======================================================
-   💬 Send a message (auto-create chat if missing)
-====================================================== */
+// ================= SEND MESSAGE ===================
 exports.sendMessage = async (req, res) => {
   try {
-    const { chatId, text, receiverId } = req.body;
+    const { chatId, text, type } = req.body;
     const senderId = req.user._id;
+
+    if (!chatId) {
+      return res.status(400).json({ message: "ChatId required" });
+    }
+
     const senderModel =
       req.user.role === "admin"
         ? "Admin"
         : req.user.role === "mentor"
-        ? "Mentor"
-        : req.user.role === "student"
-        ? "Student"
-        : "User";
+          ? "Mentor"
+          : req.user.role === "student"
+            ? "Student"
+            : "User";
 
-    if ((!chatId && !receiverId) || !text) {
-      return res.status(400).json({
-        message: "Either chatId or receiverId and text are required",
-      });
+    let imageUrl = null;
+    let voiceUrl = null;
+
+    if (type === "image" && req.file) {
+      imageUrl = `/uploads/chat/images/${req.file.filename}`;
     }
 
-    let chat = null;
-
-    // ✅ Use chatId if given
-    if (chatId) chat = await Chat.findById(chatId);
-
-    // ✅ Otherwise find/create chat with receiver
-    if (!chat && receiverId) {
-      chat =
-        (await Chat.findOne({
-          isGroup: false,
-          participants: { $all: [senderId, receiverId] },
-        })) ||
-        (await Chat.create({
-          participants: [senderId, receiverId],
-          participantModel: [senderModel, "User"],
-        }));
+    if (type === "voice" && req.file) {
+      voiceUrl = `/uploads/chat/voices/${req.file.filename}`;
     }
 
-    if (!chat) return res.status(404).json({ message: "Chat not found" });
-
-    // ✅ Create and save message
     const message = await Message.create({
-      chatId: chat._id,
+      chatId,
       senderId,
       senderModel,
-      text,
+      type,
+      text: type === "text" ? text : null,
+      imageUrl,
+      voiceUrl,
+      status: "delivered",
     });
 
-    chat.lastMessage = message._id;
-    await chat.save();
+    await Chat.findByIdAndUpdate(chatId, {
+      lastMessage: message._id,
+      updatedAt: new Date(),
+    });
 
-    const populatedMessage = await message.populate(
-      "senderId",
-      "name email firstName lastName photo profilePic"
-    );
-
-    res.status(201).json(populatedMessage);
+    res.json(message);
   } catch (err) {
-    console.error("Send Message Error:", err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ error: err.message });
   }
 };
 
-/* ======================================================
-   📜 Get all messages for a chat
-====================================================== */
+
+// ================= GET MESSAGES ===================
 exports.getMessages = async (req, res) => {
   try {
     const { chatId } = req.params;
 
     const messages = await Message.find({ chatId })
       .sort({ createdAt: 1 })
-      .lean();
+      .populate("senderId", "name firstName lastName photo profilePic");
 
-    const populated = await Promise.all(
-      messages.map(async (msg) => {
-        let senderModel;
-        if (msg.senderModel === "Admin") senderModel = Admin;
-        else if (msg.senderModel === "Mentor") senderModel = Mentor;
-        else if (msg.senderModel === "Student") senderModel = Student;
-        else senderModel = User;
-
-        const sender = await senderModel
-          .findById(msg.senderId)
-          .select("firstName lastName name email photo profilePic");
-
-        return { ...msg, senderId: sender };
-      })
-    );
-
-    res.status(200).json(populated);
+    res.json(messages);
   } catch (err) {
-    console.error("Get Messages Error:", err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ error: err.message });
   }
 };
 
-/* ======================================================
-   🧠 Get any user by ID (for frontend /chat/user/:id)
-====================================================== */
+// ================= MARK AS SEEN ===================
+exports.markAsSeen = async (req, res) => {
+  try {
+    const { chatId } = req.body;
+    const userId = req.user._id;
+
+    await Message.updateMany(
+      {
+        chatId,
+        senderId: { $ne: userId },
+      },
+      {
+        status: "seen",
+        seenAt: new Date(),
+      }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ================= GET USER INFO ===================
 exports.getAnyUser = async (req, res) => {
   try {
-    const { id } = req.params;
-    const user = await findAnyUser(id);
+    let user = await findAnyUser(req.params.id);
 
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      _id: user._id,
+      firstName: user.firstName || user.name,
+      lastName: user.lastName || "",
+      photo: user.photo || user.profilePic || null,
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ================= DELETE MESSAGE ===================
+exports.deleteMessage = async (req, res) => {
+  try {
+    const msg = await Message.findById(req.params.id);
+
+    if (!msg) return res.status(404).json({ message: "Message not found" });
+
+    if (msg.senderId.toString() !== req.user._id.toString())
+      return res.status(403).json({ message: "Not allowed" });
+
+    await msg.deleteOne();
+
+    res.json({ success: true, message: "Deleted" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ================= EDIT MESSAGE ===================
+exports.editMessage = async (req, res) => {
+  try {
+    const { text } = req.body;
+    const msg = await Message.findById(req.params.id);
+
+    if (!msg) return res.status(404).json({ message: "Message not found" });
+
+    if (msg.senderId.toString() !== req.user._id.toString())
+      return res.status(403).json({ message: "Not allowed" });
+
+    msg.text = text;
+    msg.isEdited = true;
+
+    await msg.save();
+
+    res.json(msg);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.accessChat = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const currentUserId = req.user._id;
+
+    if (!userId)
+      return res.status(400).json({ message: "UserId required" });
+
+    const user = await findAnyUser(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    res.status(200).json(user);
+    let chat = await Chat.findOne({
+      participants: { $all: [currentUserId, userId] },
+      isGroup: false,
+    });
+
+    if (!chat) {
+      chat = await Chat.create({
+        participants: [currentUserId, userId],
+        participantModel: [
+          req.user.role === "admin"
+            ? "Admin"
+            : req.user.role === "student"
+            ? "Student"
+            : req.user.role === "mentor"
+            ? "Mentor"
+            : "User",
+
+          user instanceof Admin
+            ? "Admin"
+            : user instanceof Student
+            ? "Student"
+            : user instanceof Mentor
+            ? "Mentor"
+            : "User",
+        ],
+      });
+    }
+
+    res.json(chat);
   } catch (err) {
-    console.error("Get Any User Error:", err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ error: err.message });
   }
 };

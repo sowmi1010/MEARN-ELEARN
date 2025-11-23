@@ -31,6 +31,33 @@ router.get("/", async (req, res) => {
   }
 });
 
+// ✅ GET detailed mentors (For ChatList)
+router.get("/detailed-mentors", async (req, res) => {
+  try {
+    const mentors = await Mentor.find().select(
+      "firstName lastName email phone department type photo"
+    );
+
+    const formatted = mentors.map((m) => ({
+      _id: m._id,
+      firstName: m.firstName,
+      lastName: m.lastName || "",
+      email: m.email,
+      phone: m.phone,
+      department: m.department,
+      type: m.type,
+      photo: m.photo,
+      role: "mentor",
+    }));
+
+    res.status(200).json(formatted);
+  } catch (error) {
+    console.error("❌ detailed-mentors error:", error);
+    res.status(500).json({ message: "Failed fetching mentors" });
+  }
+});
+
+
 // GET mentor by ID
 router.get("/:id", async (req, res) => {
   try {

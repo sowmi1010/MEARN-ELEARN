@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
-import { FaEdit, FaTrash, FaTimes, FaComments, FaPlusCircle } from "react-icons/fa";
-import useGlobalSearch from "../../../hooks/useGlobalSearch"; // ✅ GLOBAL SEARCH HOOK
+import { FaEdit, FaTrash, FaComments, FaPlusCircle } from "react-icons/fa";
+import useGlobalSearch from "../../../hooks/useGlobalSearch";
 
 export default function FeedbackUpload() {
   const [form, setForm] = useState({
@@ -11,6 +11,7 @@ export default function FeedbackUpload() {
     comment: "",
     photo: null,
   });
+
   const [feedbacks, setFeedbacks] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -27,11 +28,16 @@ export default function FeedbackUpload() {
     fetchFeedbacks();
   }, []);
 
+  // ✅ FETCH FEEDBACKS
   async function fetchFeedbacks() {
     try {
-      const res = await axios.get(`${apiBase}/api/feedbacks`);
+      const res = await axios.get(`${apiBase}/api/feedbacks`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
       setFeedbacks(res.data || []);
-    } catch {
+    } catch (error) {
+      console.error(error);
       toast.error("Failed to fetch feedbacks");
     }
   }
@@ -52,9 +58,11 @@ export default function FeedbackUpload() {
     setLoading(true);
     try {
       if (editingId) {
-        await axios.put(`${apiBase}/api/feedbacks/${editingId}`, formData, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await axios.put(
+          `${apiBase}/api/feedbacks/${editingId}`,
+          formData,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
         toast.success("Feedback updated successfully");
       } else {
         await axios.post(`${apiBase}/api/feedbacks`, formData, {
@@ -66,7 +74,8 @@ export default function FeedbackUpload() {
       setForm({ name: "", course: "", comment: "", photo: null });
       setEditingId(null);
       fetchFeedbacks();
-    } catch {
+    } catch (error) {
+      console.error(error);
       toast.error("Failed to save feedback");
     } finally {
       setLoading(false);
@@ -94,20 +103,25 @@ export default function FeedbackUpload() {
       await axios.delete(`${apiBase}/api/feedbacks/${deleteId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       toast.success("Feedback deleted");
       fetchFeedbacks();
-    } catch {
+    } catch (error) {
+      console.error(error);
       toast.error("Failed to delete feedback");
     }
     setShowModal(false);
   }
 
-  /* ✅ FILTER USING GLOBAL SEARCH */
+  // ✅ SAFE SEARCH FIX (IMPORTANT PART)
+  const safeSearch =
+    typeof search === "string" ? search.toLowerCase() : "";
+
   const filtered = feedbacks.filter(
     (f) =>
-      f.name.toLowerCase().includes(search) ||
-      f.course.toLowerCase().includes(search) ||
-      f.comment.toLowerCase().includes(search)
+      f?.name?.toLowerCase().includes(safeSearch) ||
+      f?.course?.toLowerCase().includes(safeSearch) ||
+      f?.comment?.toLowerCase().includes(safeSearch)
   );
 
   return (
@@ -123,8 +137,7 @@ export default function FeedbackUpload() {
       </div>
 
       <div className="max-w-6xl mx-auto grid lg:grid-cols-5 gap-10">
-
-        {/* ========= FORM ========= */}
+        {/* FORM */}
         <div className="lg:col-span-2 bg-[#0b1225] p-6 rounded-2xl border border-blue-500/10 shadow-xl">
           <h2 className="text-xl font-semibold text-blue-400 mb-6 flex items-center gap-2">
             <FaPlusCircle />
@@ -177,7 +190,7 @@ export default function FeedbackUpload() {
           </form>
         </div>
 
-        {/* ========= LIST ========= */}
+        {/* LIST */}
         <div className="lg:col-span-3 space-y-6">
           <h2 className="text-lg text-blue-400">
             Feedback List ({filtered.length})
@@ -235,7 +248,7 @@ export default function FeedbackUpload() {
         </div>
       </div>
 
-      {/* MODAL */}
+      {/* DELETE MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-[#0b1225] p-6 rounded-xl w-96 border border-red-500/30">

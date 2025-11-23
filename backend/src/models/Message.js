@@ -7,33 +7,51 @@ const messageSchema = new mongoose.Schema(
       ref: "Chat",
       required: true,
     },
+
     senderId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-      refPath: "senderModel", // 👈 dynamic ref
+      refPath: "senderModel",
     },
+
     senderModel: {
       type: String,
-      required: true,
       enum: ["User", "Admin", "Student", "Mentor"],
+      required: true,
     },
+
+    type: {
+      type: String,
+      enum: ["text", "image", "voice"],
+      default: "text",
+    },
+
     text: {
       type: String,
-      required: true,
       trim: true,
+      default: null,
     },
-    readBy: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        refPath: "readByModel",
-      },
-    ],
-    readByModel: [
-      {
-        type: String,
-        enum: ["User", "Admin", "Student", "Mentor"],
-      },
-    ],
+
+    imageUrl: {
+      type: String,
+      default: null,
+    },
+
+    voiceUrl: {
+      type: String,
+      default: null,
+    },
+
+    status: {
+      type: String,
+      enum: ["sent", "delivered", "seen"],
+      default: "sent",
+    },
+
+    seenAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

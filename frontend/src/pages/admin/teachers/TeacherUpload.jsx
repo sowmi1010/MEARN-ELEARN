@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
-import {
-  FaEdit,
-  FaTrash,
-  FaTimes,
-  FaUserTie,
-} from "react-icons/fa";
-
+import { FaEdit, FaTrash, FaUserTie } from "react-icons/fa";
 import useGlobalSearch from "../../../hooks/useGlobalSearch";
 
 export default function TeacherUpload() {
@@ -36,12 +30,26 @@ export default function TeacherUpload() {
 
   async function fetchTeachers() {
     try {
-      const res = await axios.get(`${apiBase}/api/teachers`);
+      const res = await axios.get(`${apiBase}/api/teachers`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
       setTeachers(res.data || []);
     } catch {
       toast.error("Failed to fetch teachers");
     }
   }
+
+  // ✅ SAFE SEARCH (FIXED)
+  const safeSearch =
+    typeof search === "string" ? search.toLowerCase() : "";
+
+  const filtered = teachers.filter(
+    (t) =>
+      t?.name?.toLowerCase().includes(safeSearch) ||
+      t?.subject?.toLowerCase().includes(safeSearch) ||
+      t?.description?.toLowerCase().includes(safeSearch)
+  );
 
   function handleChange(e) {
     const { name, value, files } = e.target;
@@ -111,19 +119,10 @@ export default function TeacherUpload() {
     setShowModal(false);
   }
 
-  /* ✅ FILTER WITH GLOBAL SEARCH */
-  const filtered = teachers.filter(
-    (t) =>
-      t.name.toLowerCase().includes(search) ||
-      t.subject.toLowerCase().includes(search) ||
-      t.description.toLowerCase().includes(search)
-  );
-
   return (
     <div className="min-h-screen bg-[#050910] text-white p-8">
       <Toaster position="top-right" />
 
-      {/* HEADER */}
       <div className="flex justify-center items-center gap-4 mb-10">
         <FaUserTie className="text-blue-500 text-3xl" />
         <h1 className="text-3xl font-bold text-blue-500">
@@ -133,20 +132,20 @@ export default function TeacherUpload() {
 
       <div className="max-w-6xl mx-auto grid lg:grid-cols-5 gap-10">
 
-        {/* ================= FORM ================= */}
+        {/* FORM */}
         <div className="lg:col-span-2 bg-[#0b1225] p-6 rounded-2xl border border-blue-500/10 shadow-xl">
+
           <h2 className="text-xl font-semibold text-blue-400 mb-6 text-center">
             {editingId ? "Edit Teacher" : "Add Teacher"}
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-
             <input
               name="name"
               placeholder="Teacher name"
               value={form.name}
               onChange={handleChange}
-              className="w-full p-3 rounded-lg bg-black/40 border border-blue-500/30 outline-none"
+              className="w-full p-3 rounded-lg bg-black/40 border border-blue-500/30"
             />
 
             <input
@@ -154,7 +153,7 @@ export default function TeacherUpload() {
               placeholder="Subject"
               value={form.subject}
               onChange={handleChange}
-              className="w-full p-3 rounded-lg bg-black/40 border border-blue-500/30 outline-none"
+              className="w-full p-3 rounded-lg bg-black/40 border border-blue-500/30"
             />
 
             <textarea
@@ -163,31 +162,26 @@ export default function TeacherUpload() {
               placeholder="About teacher"
               value={form.description}
               onChange={handleChange}
-              className="w-full p-3 rounded-lg bg-black/40 border border-blue-500/30 outline-none"
+              className="w-full p-3 rounded-lg bg-black/40 border border-blue-500/30"
             />
 
-            <div className="flex flex-col items-center gap-3">
-              <input type="file" onChange={handleChange} name="photo" />
-              {form.photo && (
-                <img
-                  src={URL.createObjectURL(form.photo)}
-                  className="w-20 h-20 rounded-full object-cover border-2 border-blue-500"
-                />
-              )}
-            </div>
+            <input type="file" onChange={handleChange} name="photo" />
 
             <button
               disabled={loading}
-              className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 font-semibold tracking-wider"
+              className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700"
             >
-              {loading ? "Saving..." : editingId ? "Update Teacher" : "Add Teacher"}
+              {loading
+                ? "Saving..."
+                : editingId
+                ? "Update Teacher"
+                : "Add Teacher"}
             </button>
           </form>
         </div>
 
-        {/* ================= LIST ================= */}
+        {/* LIST */}
         <div className="lg:col-span-3">
-
           <h2 className="text-lg text-blue-400 mb-6">
             Teacher List ({filtered.length})
           </h2>
@@ -201,7 +195,7 @@ export default function TeacherUpload() {
               {filtered.map((t) => (
                 <div
                   key={t._id}
-                  className="flex justify-between items-center p-5 rounded-xl bg-[#0b1225] border border-blue-500/10 hover:border-blue-500 hover:shadow-xl transition"
+                  className="flex justify-between items-center p-5 rounded-xl bg-[#0b1225] border border-blue-500/10 hover:border-blue-500 transition"
                 >
                   <div className="flex gap-4 items-center">
                     <img
@@ -210,13 +204,13 @@ export default function TeacherUpload() {
                           ? `${apiBase}${t.photo}`
                           : "https://via.placeholder.com/60"
                       }
-                      className="w-16 h-16 rounded-full border-2 border-blue-500 object-cover"
+                      className="w-16 h-16 rounded-full"
                     />
 
                     <div>
                       <h3 className="text-lg font-semibold">{t.name}</h3>
                       <p className="text-blue-400 text-sm">{t.subject}</p>
-                      <p className="text-gray-400 text-sm line-clamp-2">
+                      <p className="text-gray-400 text-sm">
                         {t.description}
                       </p>
                     </div>
@@ -225,33 +219,37 @@ export default function TeacherUpload() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleEdit(t)}
-                      className="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg flex gap-2"
+                      className="px-3 py-2 bg-blue-600 rounded-lg"
                     >
                       <FaEdit /> Edit
                     </button>
 
                     <button
                       onClick={() => confirmDelete(t._id)}
-                      className="px-3 py-2 bg-red-600 hover:bg-red-700 rounded-lg flex gap-2"
+                      className="px-3 py-2 bg-red-600 rounded-lg"
                     >
                       <FaTrash /> Delete
                     </button>
                   </div>
+
                 </div>
               ))}
             </div>
           )}
-
         </div>
       </div>
 
       {/* DELETE MODAL */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
-          <div className="bg-[#0b1225] p-6 rounded-xl w-96 border border-red-500/30">
-            <h3 className="text-red-400 text-lg mb-3">Confirm Delete</h3>
-            <p className="text-gray-300 mb-6">Are you sure?</p>
-            <div className="flex justify-end gap-4">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center">
+          <div className="bg-[#0b1225] p-6 rounded-xl w-96">
+            <h3 className="text-red-400 text-lg mb-3">
+              Confirm Delete
+            </h3>
+            <p className="text-gray-400 mb-6">
+              Are you sure?
+            </p>
+            <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowModal(false)}
                 className="px-4 py-2 bg-gray-600 rounded"
@@ -260,7 +258,7 @@ export default function TeacherUpload() {
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 bg-red-600 rounded text-white"
+                className="px-4 py-2 bg-red-600 rounded"
               >
                 Delete
               </button>

@@ -5,16 +5,15 @@ const chatSchema = new mongoose.Schema(
     participants: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        refPath: "participantModel",
         required: true,
       },
     ],
-    participantModel: [
+    participantModels: [
       {
         type: String,
-        required: true,
         enum: ["User", "Admin", "Student", "Mentor"],
-      },
+        required: true
+      }
     ],
     isGroup: { type: Boolean, default: false },
     groupName: { type: String, trim: true },

@@ -55,7 +55,6 @@ export default function StudentLayout() {
     { to: "/student/tests", label: "Tests", icon: <RiTestTubeLine /> },
     { to: "/student/quiz", label: "Quiz", icon: <MdQuiz /> },
     { to: "/student/live", label: "Live", icon: <FaVideo /> },
-    { to: "/student/academy", label: "Academy", icon: <GiGraduateCap /> },
     { to: "/student/todo", label: "To-Do", icon: <FaTasks /> },
     { to: "/student/marks", label: "Marks", icon: <TbReportAnalytics /> },
     { to: "/student/courses", label: "Courses", icon: <RiBookOpenLine /> },

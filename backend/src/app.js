@@ -83,6 +83,7 @@ const categoryRoutes = require("./routes/categoryRoutes");
 const studentRoutes = require("./routes/studentRoutes");
 const studentDashboardRoutes = require('./routes/studentDashboardRoutes')
 const mentorRoutes = require("./routes/mentorRoutes");
+const userRoutes = require("./routes/userRoutes");
 const teacherRoutes = require("./routes/teacherRoutes");
 const feedbackRoutes = require("./routes/feedbackRoutes");
 const chatRoutes = require("./routes/chatRoutes");
@@ -108,6 +109,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/student/dashboard", studentDashboardRoutes);
 app.use("/api/mentor", mentorRoutes);
+app.use("/api/user", userRoutes);
 app.use("/api/teachers", teacherRoutes);
 app.use("/api/feedbacks", feedbackRoutes);
 app.use("/api/chat", chatRoutes);
