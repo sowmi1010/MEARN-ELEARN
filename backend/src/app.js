@@ -8,6 +8,8 @@ const fs = require("fs");
 const http = require("http");
 const { Server } = require("socket.io");
 const chatSocket = require("./socket/chatSocket");
+const liveSocket = require("./socket/liveSocket");
+
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -95,6 +97,7 @@ const certificateRoutes = require("./routes/certificateRoutes")
 /* ======================================================
    ✅ 5. Register API routes (ORDER MATTERS)
 ====================================================== */
+app.use("/api/chat", require("./routes/chat.public"));
 app.use("/api/auth", authRoutes); // <-- Must be registered before 404 handler
 app.use("/api/admin", adminRoutes);
 app.use("/api/courses", courseRoutes);
@@ -160,63 +163,14 @@ const io = new Server(server, {
   cors: {
     origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
     methods: ["GET", "POST"],
+    credentials: true
   },
 });
 
 
-io.on('connection', (socket) => {
-  console.log('socket connected', socket.id);
-
-  socket.on('join-room', ({ roomId, user }) => {
-    socket.join(roomId);
-    socket.data.user = user;
-    io.to(roomId).emit('user-joined', { id: socket.id, user });
-  });
-
-  // WebRTC signaling (offer/answer/candidate)
-  socket.on('signal', ({ roomId, to, data }) => {
-    // data: { type: 'offer'|'answer'|'candidate', payload }
-    if (to) io.to(to).emit('signal', { from: socket.id, data });
-    else socket.to(roomId).emit('signal', { from: socket.id, data });
-  });
-
-  // Whiteboard stroke broadcast
-  socket.on('whiteboard:stroke', ({ roomId, stroke }) => {
-    socket.to(roomId).emit('whiteboard:stroke', stroke);
-  });
-  socket.on('whiteboard:clear', ({ roomId }) => {
-    socket.to(roomId).emit('whiteboard:clear');
-  });
-
-  // Raise hand / moderation
-  socket.on('raise-hand', ({ roomId, user }) => {
-    io.to(roomId).emit('raise-hand', { id: socket.id, user, time: Date.now() });
-  });
-  socket.on('moderator:action', ({ roomId, targetId, action }) => {
-    io.to(roomId).emit('moderator:action', { targetId, action });
-  });
-
-  // Chat file message broadcast
-  socket.on('chat:file', ({ roomId, url, meta }) => {
-    io.to(roomId).emit('chat:file', { from: socket.id, url, meta });
-  });
-
-  // reactions
-  socket.on('reaction', ({ roomId, reaction }) => {
-    io.to(roomId).emit('reaction', { from: socket.id, reaction });
-  });
-
-  // voice message broadcast (after uploaded by client)
-  socket.on('chat:voice', ({ roomId, url, meta }) => {
-    io.to(roomId).emit('chat:voice', { from: socket.id, url, meta });
-  });
-
-  socket.on('disconnect', () => {
-    // optionally tell room
-  });
-});
-
 chatSocket(io);
+liveSocket(io);
+
 
 /* ======================================================
    ✅ 11. Start Server

@@ -75,9 +75,6 @@ const ViewCertificate = React.lazy(() =>
 const StudentTeam = React.lazy(() =>
   import("./pages/student/community/StudentTeam")
 );
-const ChatWindowPage = React.lazy(() =>
-  import("./pages/student/community/ChatWindow")
-);
 const StudentProfile = React.lazy(() =>
   import("./pages/student/profile/ProfileSetting")
 );
@@ -315,10 +312,9 @@ function AnimatedRoutes() {
           <Route path="certificate/view/:id" element={<ViewCertificate />} />
           <Route path="/student/team" element={<StudentTeam />} />
 
-          <Route
-            path="/student/team/chat/:chatId"
-            element={<ChatWindowPage />}
-          />
+         <Route path="/student/team/:userId" element={<ChatWindow />} />
+         
+
           <Route path="/student/settings" element={<StudentProfile />} />
         </Route>
 

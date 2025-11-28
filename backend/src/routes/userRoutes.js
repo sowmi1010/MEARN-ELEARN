@@ -22,4 +22,36 @@ router.get("/all", async (req, res) => {
   }
 });
 
+router.get("/list", async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching users" });
+  }
+});
+
+
+// ✅ PUBLIC USERS LIST (For Chat)
+router.get("/public-list", async (req, res) => {
+  try {
+    const users = await User.find({}, "name role");
+
+    const formatted = users.map((u) => ({
+      _id: u._id,
+      firstName: u.name,
+      lastName: "",
+      role: u.role,
+      photo: "",
+    }));
+
+    res.json(formatted);
+  } catch (err) {
+    console.error("Public user list error:", err);
+    res.status(500).json({ message: "Failed" });
+  }
+});
+
+
+
 module.exports = router;

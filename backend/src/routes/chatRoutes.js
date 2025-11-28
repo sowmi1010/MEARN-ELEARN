@@ -1,10 +1,10 @@
+// backend/routes/chatRoutes.js
 const express = require("express");
 const router = express.Router();
 const protect = require("../middlewares/auth");
 const chatUpload = require("../middlewares/chatUpload");
 const Chat = require("../models/Chat");
 const Message = require("../models/Message");
-
 
 const {
   accessChat,
@@ -13,7 +13,7 @@ const {
   markAsSeen,
   getAnyUser,
   deleteMessage,
-  editMessage
+  editMessage,
 } = require("../controllers/chatController");
 
 // basic
@@ -35,6 +35,7 @@ router.delete("/message/:id", protect, deleteMessage);
 // EDIT MESSAGE
 router.put("/message/:id", protect, editMessage);
 
+// ===== CHAT LIST FOR SIDEBAR =====
 router.get("/list", protect, async (req, res) => {
   try {
     const chats = await Chat.find({ participants: req.user._id })
@@ -42,9 +43,7 @@ router.get("/list", protect, async (req, res) => {
         path: "participants",
         select: "firstName lastName name photo profilePic",
       })
-      .populate({
-        path: "lastMessage",
-      })
+      .populate("lastMessage")
       .sort({ updatedAt: -1 });
 
     res.json(chats);
@@ -53,8 +52,7 @@ router.get("/list", protect, async (req, res) => {
   }
 });
 
-
-
+// ===== UNREAD COUNT =====
 router.get("/unread/:chatId", protect, async (req, res) => {
   const count = await Message.countDocuments({
     chatId: req.params.chatId,
@@ -64,6 +62,5 @@ router.get("/unread/:chatId", protect, async (req, res) => {
 
   res.json({ total: count });
 });
-
 
 module.exports = router;

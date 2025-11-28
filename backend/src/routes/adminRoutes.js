@@ -375,4 +375,27 @@ router.delete("/students/:id", auth, role("admin"), async (req, res) => {
   }
 });
 
+
+// ✅ PUBLIC ADMIN LIST (For Chat)
+router.get("/public-list", async (req, res) => {
+  try {
+    const admins = await Admin.find({}, "firstName lastName photo email");
+
+    const formatted = admins.map((a) => ({
+      _id: a._id,
+      firstName: a.firstName,
+      lastName: a.lastName || "",
+      email: a.email,
+      photo: a.photo || "",
+      role: "admin",
+    }));
+
+    res.json(formatted);
+  } catch (err) {
+    console.error("Public admin list error:", err);
+    res.status(500).json({ message: "Failed to load admins" });
+  }
+});
+
+
 module.exports = router;

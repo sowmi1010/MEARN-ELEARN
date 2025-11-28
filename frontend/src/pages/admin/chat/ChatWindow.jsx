@@ -1,21 +1,12 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import api from "../../../utils/api";
+
 import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
 
-import {
-  FaPaperPlane,
-  FaImage,
-  FaSmile,
-  FaReply,
-  FaTrash,
-  FaEdit,
-  FaTimes,
-} from "react-icons/fa";
-
-let socket;
+import { FaPaperPlane, FaImage, FaSmile } from "react-icons/fa";
 
 export default function ChatWindow() {
   const { userId } = useParams();
@@ -24,41 +15,61 @@ export default function ChatWindow() {
   const [chatId, setChatId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
-
   const [showEmoji, setShowEmoji] = useState(false);
-  const [replyTo, setReplyTo] = useState(null);
-  const [editMsg, setEditMsg] = useState(null);
 
+  const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
   const fileRef = useRef(null);
-  const emojiRef = useRef(null);
+  const connectedRef = useRef(false); // ✅ IMPORTANT
 
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 
-  /* AUTO SCROLL + SEEN */
+  /* ===== MY MESSAGE CHECK ===== */
+  const isMyMessage = (msg) => {
+    const sender =
+      typeof msg.senderId === "object" ? msg.senderId._id : msg.senderId;
+    return sender === currentUser._id;
+  };
+
+  /* ================= SOCKET INIT ================= */
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (connectedRef.current) return; // ✅ blocks double execution (React StrictMode)
+    connectedRef.current = true;
 
-    if (chatId) {
-      api.post("/chat/seen", { chatId });
-      socket.emit("messageSeen", { chatId, userId: currentUser._id });
-    }
-  }, [messages]);
+    socketRef.current = io("http://localhost:4000", {
+      transports: ["websocket"],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
 
-  /* SOCKET INIT */
-  useEffect(() => {
-    if (!socket) {
-      socket = io("http://localhost:4000", { transports: ["websocket"] });
-
+    socketRef.current.on("connect", () => {
+      console.log("✅ SOCKET CONNECTED:", socketRef.current.id);
       if (currentUser?._id) {
-        socket.emit("joinUser", currentUser._id);
+        socketRef.current.emit("joinUser", currentUser._id);
       }
-    }
+    });
+
+    socketRef.current.on("disconnect", () => {
+      console.log("❌ SOCKET DISCONNECTED");
+    });
+
+    socketRef.current.on("connect_error", (err) => {
+      console.warn("⚠️ Socket error:", err.message);
+    });
+
+    return () => {
+      // ❌ DO NOT fully destroy during dev refreshes
+      if (socketRef.current) {
+        socketRef.current.off();
+      }
+    };
   }, []);
 
-  /* LOAD CHAT */
+  /* ================= LOAD CHAT ================= */
   useEffect(() => {
-    const load = async () => {
+    if (!userId) return;
+
+    const loadChat = async () => {
       try {
         const userRes = await api.get(`/chat/user/${userId}`);
         setUser(userRes.data);
@@ -69,107 +80,93 @@ export default function ChatWindow() {
         const msgRes = await api.get(`/chat/message/${chatRes.data._id}`);
         setMessages(msgRes.data);
 
-        socket.emit("joinChat", chatRes.data._id);
+        if (socketRef.current && chatRes.data._id) {
+          socketRef.current.emit("joinChat", chatRes.data._id);
+          console.log("✅ JOINED ROOM:", chatRes.data._id);
+        }
       } catch (err) {
-        console.error(err);
+        console.error("CHAT LOAD ERROR:", err);
       }
     };
 
-    load();
+    loadChat();
   }, [userId]);
 
-  /* REALTIME LISTEN */
+  /* ================= SCROLL + SEEN ================= */
   useEffect(() => {
-    if (!socket) return;
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
-    socket.on("receiveMessage", (msg) => {
-      if (
-        msg.senderId === currentUser._id ||
-        msg.senderId?._id === currentUser._id
-      )
-        return;
+    if (chatId && socketRef.current) {
+      api.post("/chat/seen", { chatId });
 
-      setMessages((prev) => [...prev, msg]);
-    });
+      socketRef.current.emit("messageSeen", {
+        chatId,
+        userId: currentUser._id,
+      });
+    }
+  }, [messages, chatId]);
 
-    socket.on("messageSeen", () => {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.senderId?._id === currentUser._id
-            ? { ...m, status: "seen", seenAt: new Date() }
-            : m
-        )
-      );
-    });
-
-    return () => socket.off();
-  }, []);
-
-  /* EMOJI CLOSE ON OUTSIDE CLICK */
+  /* ================= RECEIVE MESSAGE ================= */
   useEffect(() => {
-    const handleClick = (e) => {
-      if (emojiRef.current && !emojiRef.current.contains(e.target)) {
-        setShowEmoji(false);
-      }
+    if (!socketRef.current) return;
+
+    const handleReceive = (msg) => {
+      setMessages((prev) => {
+        if (prev.find((m) => m._id === msg._id)) return prev;
+        return [...prev, msg];
+      });
     };
 
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    socketRef.current.on("receiveMessage", handleReceive);
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.off("receiveMessage", handleReceive);
+      }
+    };
   }, []);
 
-  /* SEND MESSAGE */
+  /* ================= SEND TEXT ================= */
   const sendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage || !chatId) return;
 
-    if (editMsg) {
-      const { data } = await api.put(`/chat/message/${editMsg._id}`, {
+    if (!newMessage.trim() || !chatId || !socketRef.current) return;
+
+    try {
+      const { data } = await api.post("/chat/message/text", {
+        chatId,
+        type: "text",
         text: newMessage,
       });
 
-      setMessages((prev) =>
-        prev.map((m) => (m._id === editMsg._id ? data : m))
-      );
-      setEditMsg(null);
+      socketRef.current.emit("sendMessage", data);
+
+      setMessages((prev) => [...prev, data]);
       setNewMessage("");
-      return;
+      setShowEmoji(false);
+    } catch (error) {
+      console.error("SEND ERROR:", error);
     }
-
-    const { data } = await api.post("/chat/message/text", {
-      chatId,
-      type: "text",
-      text: newMessage,
-      replyTo: replyTo?._id || null,
-    });
-
-    socket.emit("sendMessage", data);
-    setMessages((prev) => [...prev, data]);
-
-    setNewMessage("");
-    setReplyTo(null);
-    setShowEmoji(false);
   };
 
-  /* IMAGE */
+  /* ================= IMAGE UPLOAD ================= */
   const handleImage = async (e) => {
     const file = e.target.files[0];
-    if (!file || !chatId) return;
+    if (!file || !chatId || !socketRef.current) return;
 
-    const formData = new FormData();
-    formData.append("image", file);
-    formData.append("chatId", chatId);
-    formData.append("type", "image");
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("chatId", chatId);
+      formData.append("type", "image");
 
-    const { data } = await api.post("/chat/message/image", formData);
+      const { data } = await api.post("/chat/message/image", formData);
 
-    socket.emit("sendMessage", data);
-    setMessages((prev) => [...prev, data]);
-  };
-
-  /* DELETE */
-  const deleteMessage = async (id) => {
-    await api.delete(`/chat/message/${id}`);
-    setMessages((prev) => prev.filter((m) => m._id !== id));
+      socketRef.current.emit("sendMessage", data);
+      setMessages((prev) => [...prev, data]);
+    } catch (error) {
+      console.error("IMAGE ERROR:", error);
+    }
   };
 
   const formatTime = (date) =>
@@ -179,7 +176,7 @@ export default function ChatWindow() {
     });
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)] bg-[#0b0f19] text-white rounded-xl overflow-hidden relative">
+    <div className="flex flex-col h-[calc(100vh-120px)] bg-[#0b0f19] text-white rounded-xl overflow-hidden">
       {/* HEADER */}
       <div className="flex items-center gap-4 px-6 py-4 bg-[#111827] border-b border-blue-900">
         <img
@@ -188,15 +185,15 @@ export default function ChatWindow() {
               ? `http://localhost:4000${user.photo}`
               : "/default-avatar.png"
           }
-          className="w-10 h-10 rounded-full border border-blue-500"
+          className="w-10 h-10 rounded-full border border-blue-500 object-cover"
         />
         <h2 className="font-bold text-lg">{user?.firstName || user?.name}</h2>
       </div>
 
-      {/* CHAT BODY */}
-      <div className="flex-1 overflow-y-scroll px-6 py-4 bg-[#0f172a] space-y-6">
+      {/* MESSAGES */}
+      <div className="flex-1 overflow-y-auto px-6 py-4 bg-[#0f172a] space-y-4">
         {messages.map((msg) => {
-          const mine = msg.senderId?._id === currentUser._id;
+          const mine = isMyMessage(msg);
 
           return (
             <div
@@ -204,54 +201,22 @@ export default function ChatWindow() {
               className={`flex ${mine ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`group max-w-sm px-4 py-3 rounded-2xl relative ${
-                  mine ? "bg-blue-600" : "bg-[#1f2937]"
+                className={`max-w-[70%] px-4 py-3 rounded-2xl ${
+                  mine ? "bg-blue-600 text-right" : "bg-[#1f2937] text-left"
                 }`}
               >
-                {/* REPLY PREVIEW */}
-                {msg.replyTo && (
-                  <div className="bg-black/30 text-xs px-2 py-1 rounded mb-2">
-                    ↪ {msg.replyTo.text}
-                  </div>
-                )}
-
-                {/* CONTENT */}
                 {msg.type === "text" && <p>{msg.text}</p>}
+
                 {msg.type === "image" && (
                   <img
                     src={`http://localhost:4000${msg.imageUrl}`}
-                    className="rounded-lg max-w-xs mt-1"
+                    className="rounded-lg max-w-xs mt-2"
                   />
                 )}
 
-                {/* FOOTER */}
-                <p className="text-[11px] mt-1 text-right opacity-60">
+                <p className="text-xs mt-1 opacity-60">
                   {formatTime(msg.createdAt)}
-                  {mine &&
-                    msg.status === "seen" &&
-                    ` • Seen at ${formatTime(msg.seenAt)}`}
                 </p>
-
-                {/* ACTIONS */}
-                {mine && (
-                  <div className="hidden group-hover:flex absolute -top-3 -right-3 bg-black/70 p-1 rounded-full gap-1">
-                    <FaReply
-                      className="cursor-pointer"
-                      onClick={() => setReplyTo(msg)}
-                    />
-                    <FaEdit
-                      className="cursor-pointer"
-                      onClick={() => {
-                        setEditMsg(msg);
-                        setNewMessage(msg.text);
-                      }}
-                    />
-                    <FaTrash
-                      className="cursor-pointer"
-                      onClick={() => deleteMessage(msg._id)}
-                    />
-                  </div>
-                )}
               </div>
             </div>
           );
@@ -260,42 +225,19 @@ export default function ChatWindow() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* REPLY BAR */}
-      {replyTo && (
-        <div className="bg-[#1e293b] p-2 flex justify-between items-center text-sm">
-          <span>Replying to: {replyTo.text}</span>
-          <FaTimes
-            className="cursor-pointer"
-            onClick={() => setReplyTo(null)}
-          />
-        </div>
-      )}
-
-      {/* EMOJI PICKER */}
-      {showEmoji && (
-        <div ref={emojiRef} className="absolute bottom-20 left-6 z-50">
-          <Picker
-            data={data}
-            onEmojiSelect={(e) => setNewMessage((prev) => prev + e.native)}
-          />
-        </div>
-      )}
-
-      {/* INPUT BAR */}
+      {/* INPUT */}
       <form
         onSubmit={sendMessage}
         className="flex items-center gap-3 px-4 py-3 bg-[#111827] border-t border-blue-900"
       >
         <FaSmile
-          onClick={() => setShowEmoji(!showEmoji)}
+          onClick={() => setShowEmoji((prev) => !prev)}
           className="cursor-pointer"
         />
-
         <FaImage
           onClick={() => fileRef.current.click()}
           className="cursor-pointer"
         />
-
         <input type="file" hidden ref={fileRef} onChange={handleImage} />
 
         <input
@@ -309,6 +251,16 @@ export default function ChatWindow() {
           <FaPaperPlane />
         </button>
       </form>
+
+      {/* EMOJIS */}
+      {showEmoji && (
+        <div className="absolute bottom-24 left-6 z-50">
+          <Picker
+            data={data}
+            onEmojiSelect={(e) => setNewMessage((prev) => prev + e.native)}
+          />
+        </div>
+      )}
     </div>
   );
 }

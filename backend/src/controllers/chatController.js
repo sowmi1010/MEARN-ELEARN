@@ -1,3 +1,4 @@
+// backend/controllers/chatController.js
 const Chat = require("../models/Chat");
 const Message = require("../models/Message");
 const User = require("../models/User");
@@ -15,28 +16,58 @@ async function findAnyUser(userId) {
   );
 }
 
-// ================= ACCESS CHAT ===================
+// ================= ACCESS CHAT (create if not exists) ===================
 exports.accessChat = async (req, res) => {
   try {
     const { userId } = req.body;
     const currentUserId = req.user._id;
 
-    if (!userId)
+    if (!userId) {
       return res.status(400).json({ message: "UserId required" });
+    }
 
+    const otherUser = await findAnyUser(userId);
+    if (!otherUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // 1) Check if chat already exists
     let chat = await Chat.findOne({
       participants: { $all: [currentUserId, userId] },
       isGroup: false,
     });
 
+    // 2) If not, create new
     if (!chat) {
+      // current user model from token
+      const meModel =
+        req.user.role === "admin"
+          ? "Admin"
+          : req.user.role === "student"
+            ? "Student"
+            : req.user.role === "mentor"
+              ? "Mentor"
+              : "User";
+
+      // other user model using instance
+      const otherModel =
+        otherUser instanceof Admin
+          ? "Admin"
+          : otherUser instanceof Student
+            ? "Student"
+            : otherUser instanceof Mentor
+              ? "Mentor"
+              : "User";
+
       chat = await Chat.create({
         participants: [currentUserId, userId],
+        participantModels: [meModel, otherModel],
       });
     }
 
     res.json(chat);
   } catch (err) {
+    console.error("accessChat error:", err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -44,7 +75,7 @@ exports.accessChat = async (req, res) => {
 // ================= SEND MESSAGE ===================
 exports.sendMessage = async (req, res) => {
   try {
-    const { chatId, text, type } = req.body;
+    const { chatId, text, type, replyTo } = req.body;
     const senderId = req.user._id;
 
     if (!chatId) {
@@ -80,6 +111,8 @@ exports.sendMessage = async (req, res) => {
       imageUrl,
       voiceUrl,
       status: "delivered",
+      // optional fields – add to Message schema if not there
+      replyTo: replyTo || null,
     });
 
     await Chat.findByIdAndUpdate(chatId, {
@@ -89,19 +122,18 @@ exports.sendMessage = async (req, res) => {
 
     res.json(message);
   } catch (err) {
+    console.error("sendMessage error:", err);
     res.status(500).json({ error: err.message });
   }
 };
-
 
 // ================= GET MESSAGES ===================
 exports.getMessages = async (req, res) => {
   try {
     const { chatId } = req.params;
 
-    const messages = await Message.find({ chatId })
-      .sort({ createdAt: 1 })
-      .populate("senderId", "name firstName lastName photo profilePic");
+    const messages = await Message.find({ chatId }).sort({ createdAt: 1 });
+
 
     res.json(messages);
   } catch (err) {
@@ -147,7 +179,6 @@ exports.getAnyUser = async (req, res) => {
       lastName: user.lastName || "",
       photo: user.photo || user.profilePic || null,
     });
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -183,56 +214,11 @@ exports.editMessage = async (req, res) => {
       return res.status(403).json({ message: "Not allowed" });
 
     msg.text = text;
-    msg.isEdited = true;
+    msg.isEdited = true; // make sure Message schema has this
 
     await msg.save();
 
     res.json(msg);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-exports.accessChat = async (req, res) => {
-  try {
-    const { userId } = req.body;
-    const currentUserId = req.user._id;
-
-    if (!userId)
-      return res.status(400).json({ message: "UserId required" });
-
-    const user = await findAnyUser(userId);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    let chat = await Chat.findOne({
-      participants: { $all: [currentUserId, userId] },
-      isGroup: false,
-    });
-
-    if (!chat) {
-      chat = await Chat.create({
-        participants: [currentUserId, userId],
-        participantModel: [
-          req.user.role === "admin"
-            ? "Admin"
-            : req.user.role === "student"
-            ? "Student"
-            : req.user.role === "mentor"
-            ? "Mentor"
-            : "User",
-
-          user instanceof Admin
-            ? "Admin"
-            : user instanceof Student
-            ? "Student"
-            : user instanceof Mentor
-            ? "Mentor"
-            : "User",
-        ],
-      });
-    }
-
-    res.json(chat);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

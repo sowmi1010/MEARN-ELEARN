@@ -78,6 +78,17 @@ router.post(
   }
 );
 
+// PUBLIC LIST for chat
+router.get("/public-list", async (req, res) => {
+  try {
+    const students = await Student.find({}, "firstName lastName photo");
+    res.json(students);
+  } catch (err) {
+    res.status(500).json({ message: "Failed" });
+  }
+});
+
+
 // Get All Students
 router.get("/detailed-students", auth, checkPermission("students"), async (req, res) => {
   try {
