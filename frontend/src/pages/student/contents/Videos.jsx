@@ -1,76 +1,98 @@
 import React, { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import api from "../../../utils/api";
-import { Link } from "react-router-dom";
+
+import SubjectTabs from "../components/SubjectTabs";
 
 export default function Videos() {
-  const [videos, setVideos] = useState([]);
-  const [search, setSearch] = useState("");
+  const { subject } = useParams(); // subject from URL
 
-  // Selected course from dropdown (Java / 6th / NEET etc)
-  const activeCourse = localStorage.getItem("activeCourse");
+  const [videos, setVideos] = useState([]);
+  const [activeSubject, setActiveSubject] = useState(
+    subject || localStorage.getItem("activeSubject") || ""
+  );
 
   const token = localStorage.getItem("token");
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
+  const activeCourse = localStorage.getItem("activeCourse");
+  const activeGroup = localStorage.getItem("activeGroup");
   const activeStandard = localStorage.getItem("activeStandard");
   const activeBoard = localStorage.getItem("activeBoard");
   const activeLanguage = localStorage.getItem("activeLanguage");
-  const activeGroup = localStorage.getItem("activeGroup");
 
-  /* Load videos (filtered by active course + search) */
-  const loadVideos = async (query = search) => {
+  /* ===========================
+        LOAD VIDEOS
+  =========================== */
+  const loadVideos = async (selectedSubject) => {
     try {
+      const params = {
+        group: activeGroup?.toUpperCase(),
+        standard: activeStandard,
+        board: activeBoard,
+        language: activeLanguage,
+      };
+
+      // ✅ only attach subject if it exists
+      if (selectedSubject) {
+        params.subject = selectedSubject;
+      }
+
       const res = await api.get("/videos", {
         headers,
-        params: {
-          group: activeGroup?.toUpperCase(),
-          standard: activeStandard,
-          board: activeBoard,
-          language: activeLanguage,
-        },
+        params,
       });
 
-      setVideos(res.data);
+      setVideos(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      console.error("Error fetching videos:", err);
+      console.error("Error loading videos:", err);
+      setVideos([]);
     }
   };
 
-  /* Load all videos on first mount */
+  /* ===========================
+        FIRST LOAD
+  =========================== */
   useEffect(() => {
-    loadVideos();
-  }, []);
+    const initialSubject =
+      subject || localStorage.getItem("activeSubject") || null;
 
-  /* Listen to global search */
-  useEffect(() => {
-    const handleSearch = (e) => {
-      const query = e.detail;
-      setSearch(query);
-      loadVideos(query);
-    };
+    setActiveSubject(initialSubject);
+    loadVideos(initialSubject);
 
-    window.addEventListener("global-search", handleSearch);
-    return () => window.removeEventListener("global-search", handleSearch);
-  }, []);
+  }, [subject]); // ✅ Reload when URL subject changes
+
+  /* ===========================
+      WHEN SUBJECT CHANGES (tabs)
+  =========================== */
+  const handleSubjectChange = (sub) => {
+    setActiveSubject(sub);
+    loadVideos(sub);
+  };
 
   return (
     <div className="min-h-screen p-6 text-gray-100 bg-[#0b0f1a]">
-      {/* PAGE HEADING */}
+
+      {/* ================= HEADER ================= */}
       {activeCourse && (
         <p className="mb-6 text-sm text-gray-400">
           Showing content for:
-          <span className="text-purple-400 font-bold ml-1">{activeCourse}</span>
+          <span className="text-purple-400 font-bold ml-1">
+            {activeCourse}
+            {activeSubject && ` • ${activeSubject}`}
+          </span>
         </p>
       )}
 
-      {/* ========================================================
-            VIDEO CARD GRID — Premium Design
-      ======================================================== */}
+      {/* ================= SUBJECT TABS ================= */}
+      <SubjectTabs onChange={handleSubjectChange} />
+
+      {/* ================= VIDEOS GRID ================= */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
         {videos.map((v) => (
           <Link
-            to={`/student/video/${v._id}`}
             key={v._id}
+            to={`/student/video/${v._id}`}
             className="
               bg-[#0d0d17] rounded-2xl overflow-hidden
               border border-purple-900/20 shadow-lg
@@ -85,7 +107,6 @@ export default function Videos() {
                 className="w-full h-44 object-cover"
               />
 
-              {/* Category badge */}
               <span
                 className="
                   absolute top-3 right-3
@@ -93,18 +114,18 @@ export default function Videos() {
                   px-3 py-1 rounded-full shadow
                 "
               >
-                {v.category}
+                {v.category || "Lesson"}
               </span>
             </div>
 
-            {/* Card Body */}
+            {/* Body */}
             <div className="p-4">
               <h3 className="text-lg font-bold text-purple-300 leading-tight">
                 {v.title}
               </h3>
 
               <p className="text-xs text-gray-400 mt-2">
-                {v.subject} • {v.lesson}
+                {(v.subject || activeSubject || activeGroup)} • {v.lesson}
               </p>
 
               {v.duration && (
@@ -117,12 +138,14 @@ export default function Videos() {
         ))}
       </div>
 
-      {/* NO VIDEOS FOUND */}
+      {/* ================= EMPTY STATE ================= */}
       {videos.length === 0 && (
         <p className="text-center text-gray-500 mt-10 text-lg">
           No videos found for {activeCourse}
+          {activeSubject && ` (${activeSubject})`}
         </p>
       )}
+
     </div>
   );
 }

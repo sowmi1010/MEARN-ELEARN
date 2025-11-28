@@ -1,36 +1,24 @@
 import React, { useEffect, useState } from "react";
 import api from "../../../utils/api";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
-const activeGroup = localStorage.getItem("activeGroup");
-const activeStandard = localStorage.getItem("activeStandard");
-const activeBoard = localStorage.getItem("activeBoard");
-const activeLanguage = localStorage.getItem("activeLanguage");
-const activeCourse = localStorage.getItem("activeCourse");
+import SubjectTabs from "../components/SubjectTabs";
 
 export default function Books() {
   const navigate = useNavigate();
+  const { subject } = useParams();   // ✅ subject from URL
+
   const [books, setBooks] = useState([]);
+  const [activeSubject, setActiveSubject] = useState(subject || null);
 
-  const [globalSearch, setGlobalSearch] = useState("");
+  const activeGroup = localStorage.getItem("activeGroup");
+  const activeStandard = localStorage.getItem("activeStandard");
+  const activeBoard = localStorage.getItem("activeBoard");
+  const activeLanguage = localStorage.getItem("activeLanguage");
+  const activeCourse = localStorage.getItem("activeCourse");
 
-  /* Listen for global search (broadcast) */
-  useEffect(() => {
-    const handler = (e) => {
-      setGlobalSearch(e.detail);
-      fetchBooks(e.detail);
-    };
-
-    window.addEventListener("global-search", handler);
-    return () => window.removeEventListener("global-search", handler);
-  }, []);
-
-  /* Initial load */
-  useEffect(() => {
-    fetchBooks("");
-  }, []);
-
-  async function fetchBooks(searchValue = "") {
+  /* ✅ LOAD BOOKS */
+  const fetchBooks = async (currentSubject) => {
     try {
       const token = localStorage.getItem("token");
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -42,27 +30,61 @@ export default function Books() {
           standard: activeStandard,
           board: activeBoard,
           language: activeLanguage,
-          search: searchValue,
+          subject: currentSubject, // ✅ subject filtering
         },
       });
 
       setBooks(res.data || []);
     } catch (err) {
-      console.error("Failed to load books", err);
+      console.error("Failed to load books:", err);
     }
-  }
+  };
+
+  /* ✅ FIRST LOAD */
+  useEffect(() => {
+    const saved = subject || localStorage.getItem("activeSubject");
+    setActiveSubject(saved || null);
+
+    fetchBooks(saved);
+  }, [subject]);
+
+  /* ✅ WHEN SUBJECT TAB CLICKS */
+  const handleSubjectChange = (newSubject) => {
+    setActiveSubject(newSubject);
+    fetchBooks(newSubject);
+  };
 
   return (
     <div className="min-h-screen p-6 bg-[#0b0f1a] text-gray-100">
-      {/* PAGE TITLE */}
-      <h1 className="text-3xl font-bold mb-6 text-purple-400">Explore Books - {activeCourse}
-</h1>
 
-      {/* BOOK GRID */}
+      {/* ================= HEADER ================= */}
+      <p className="mb-6 text-sm text-gray-400">
+        Showing Books for:
+        <span className="text-purple-400 font-bold ml-2">
+          {activeCourse}
+        </span>
+        {activeSubject && (
+          <>
+            {"  /  "}
+            <span className="text-blue-400">
+              {activeSubject}
+            </span>
+          </>
+        )}
+      </p>
+
+      {/* ✅ SUBJECT TABS */}
+      <SubjectTabs onChange={handleSubjectChange} />
+
+      {/* ================= BOOK GRID ================= */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+
         {books.length === 0 && (
           <p className="text-gray-400 text-center col-span-3 mt-10">
-            No books found.
+            No books found for{" "}
+            <span className="text-purple-400 font-semibold">
+              {activeSubject || "this course"}
+            </span>
           </p>
         )}
 
@@ -76,7 +98,7 @@ export default function Books() {
               transition-all duration-300
             "
           >
-            {/* Thumbnail */}
+            {/* THUMBNAIL */}
             <div className="h-56 overflow-hidden">
               <img
                 src={`${import.meta.env.VITE_BASE_URL}/${book.thumbnail}`}
@@ -84,7 +106,7 @@ export default function Books() {
               />
             </div>
 
-            {/* Content */}
+            {/* CONTENT */}
             <div className="p-4">
               <h2 className="text-xl font-bold text-purple-300">
                 {book.title}
@@ -94,7 +116,6 @@ export default function Books() {
                 {book.subject} • Std {book.standard}
               </p>
 
-              {/* View Button */}
               <button
                 className="
                   mt-4 w-full py-2 rounded-xl

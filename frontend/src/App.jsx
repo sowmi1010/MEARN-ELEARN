@@ -149,9 +149,9 @@ const ViewTest = React.lazy(() =>
   import("./pages/admin/course/view/ViewTests")
 );
 
-const ViewBook = React.lazy(() => import("./pages/admin/course/view/ViewBook"))
+const ViewBook = React.lazy(() => import("./pages/admin/course/view/ViewBook"));
 
-const ViewQuiz = React.lazy(() => import("./pages/admin/course/view/ViewQuiz"))
+const ViewQuiz = React.lazy(() => import("./pages/admin/course/view/ViewQuiz"));
 
 // 🔹 CHAT
 import ChatList from "./pages/admin/chat/ChatList";
@@ -292,15 +292,30 @@ function AnimatedRoutes() {
           }
         >
           <Route index element={<StudentDashboard />} />
+
+          {/* VIDEOS */}
           <Route path="videos" element={<Videos />} />
+          <Route path="videos/:subject" element={<Videos />} />
           <Route path="video/:id" element={<VideoPlayer />} />
+
+          {/* BOOKS */}
           <Route path="books" element={<Books />} />
+          <Route path="books/:subject" element={<Books />} />
           <Route path="books/view/:id" element={<BookViewer />} />
+
+          {/* NOTES */}
           <Route path="notes" element={<Notes />} />
+          <Route path="notes/:subject" element={<Notes />} />
           <Route path="notes/view/:id" element={<NoteViewer />} />
+
+          {/* TESTS */}
           <Route path="tests" element={<Tests />} />
+          <Route path="tests/:subject" element={<Tests />} />
           <Route path="tests/view/:id" element={<TestViewer />} />
+
+          {/* QUIZ */}
           <Route path="quiz" element={<Quiz />} />
+          <Route path="quiz/:subject" element={<Quiz />} />
           <Route path="quiz/play/:id" element={<QuizPlayer />} />
           <Route path="quiz/result" element={<QuizResult />} />
           <Route path="live" element={<Live />} />
@@ -379,8 +394,7 @@ function AnimatedRoutes() {
           <Route path="courses/view/note/:id" element={<ViewNotes />} />
           <Route path="courses/view/test/:id" element={<ViewTest />} />
           <Route path="courses/view/book/:id" element={<ViewBook />} />
-          <Route path="courses/view/qui/:id" element={< ViewQuiz />} />
-
+          <Route path="courses/view/qui/:id" element={<ViewQuiz />} />
 
           {/* CHAT */}
           <Route path="team" element={<ChatList />} />

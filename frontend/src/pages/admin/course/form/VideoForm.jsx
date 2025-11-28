@@ -10,22 +10,17 @@ import {
   subjectMap,
   lessonOptions,
 } from "../../../../utils/courseOptions";
-import {
-  FaArrowLeft,
-  FaVideo,
-  FaUpload,
-  FaInfoCircle,
-} from "react-icons/fa";
+import { FaVideo } from "react-icons/fa";
 
 export default function VideoForm() {
   const navigate = useNavigate();
-  const { id } = useParams(); // ✅ if exists = edit
-
+  const { id } = useParams();
   const isEdit = Boolean(id);
 
   const [formData, setFormData] = useState({
     group: "",
     standard: "",
+    groupCode: "", // ✅ VERY IMPORTANT for 11th / 12th
     board: "",
     language: "",
     subject: "",
@@ -74,6 +69,9 @@ export default function VideoForm() {
     fetchVideo();
   }, [id]);
 
+  /* =========================
+      HANDLE CHANGE
+  ========================= */
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -82,14 +80,68 @@ export default function VideoForm() {
         ...formData,
         group: value,
         standard: "",
+        groupCode: "",
         subject: "",
         lesson: "",
       });
-    } else {
+    }
+
+    else if (name === "standard") {
+      setFormData({
+        ...formData,
+        standard: value,
+        subject: "",
+      });
+    }
+
+    else if (name === "groupCode") {
+      setFormData({
+        ...formData,
+        groupCode: value,
+        subject: "",
+      });
+    }
+
+    else {
       setFormData({ ...formData, [name]: value });
     }
   };
 
+  /* =========================
+      GET SUBJECTS (SMART WAY)
+  ========================= */
+  const getSubjects = () => {
+    const { group, standard, groupCode } = formData;
+
+    if (!group) return [];
+
+    // ROOT / STEM / FLOWER / FRUIT / SEED
+    if (group !== "LEAF") {
+      return subjectMap[group] || [];
+    }
+
+    // LEAF = 9,10,11,12
+    if (!standard) return [];
+
+    // 9th / 10th
+    if (standard === "9th" || standard === "10th") {
+      return subjectMap.LEAF[standard] || [];
+    }
+
+    // 11th / 12th
+    if (standard === "11th" || standard === "12th") {
+      if (!groupCode) return [];
+
+      const key = `${standard}-${groupCode.toUpperCase()}`;
+      return subjectMap.LEAF[key] || [];
+    }
+
+    return [];
+  };
+
+  /* =========================
+      FILE HANDLING
+  ========================= */
   const handleFileChange = (e) => {
     if (e.target.name === "thumbnail") {
       const file = e.target.files[0];
@@ -100,7 +152,9 @@ export default function VideoForm() {
     }
   };
 
-  /* ✅ HANDLE SUBMIT */
+  /* =========================
+      SUBMIT
+  ========================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -119,13 +173,11 @@ export default function VideoForm() {
       const token = localStorage.getItem("token");
 
       if (isEdit) {
-        // ✅ UPDATE
         await api.put(`/videos/${id}`, form, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setMessage("✅ Video updated successfully!");
       } else {
-        // ✅ ADD
         await api.post(`/videos/upload`, form, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -133,6 +185,7 @@ export default function VideoForm() {
       }
 
       setTimeout(() => navigate(-1), 1200);
+
     } catch (err) {
       console.error("Upload Error:", err.response?.data || err);
       setMessage("❌ Failed. Try again.");
@@ -142,62 +195,87 @@ export default function VideoForm() {
   };
 
   return (
-    <div className="p-8 bg-gradient-to-b from-[#0b1120] via-[#0f172a] to-[#1e293b] text-white min-h-screen">
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-8">
-        <button
-          onClick={() => navigate(-1)}
-          className="bg-gray-800 px-4 py-2 rounded-lg"
-        >
-          <FaArrowLeft /> Back
-        </button>
-
-        <h1 className="text-3xl font-bold text-blue-400 flex items-center gap-2">
-          <FaVideo /> {isEdit ? "Edit Video" : "Add Video"}
-        </h1>
-      </div>
+    <div className="p-8 bg-[#0b1120] text-white min-h-screen">
+      <h1 className="text-3xl font-bold text-blue-400 mb-8 flex items-center gap-2">
+        <FaVideo /> {isEdit ? "Edit Video" : "Add Video"}
+      </h1>
 
       <form
         onSubmit={handleSubmit}
-        className="bg-gray-900/90 p-10 rounded-2xl max-w-6xl mx-auto space-y-8"
+        className="bg-gray-900 p-10 rounded-2xl max-w-6xl mx-auto space-y-8"
       >
-        {/* Row 1 */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-          <Dropdown label="Group" name="group" value={formData.group}
-            options={groupOptions} onChange={handleChange} required />
 
-          <Dropdown label="Standard" name="standard"
+        {/* ================= ROW 1 ================= */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
+
+          <Dropdown
+            label="Group"
+            name="group"
+            value={formData.group}
+            options={groupOptions}
+            onChange={handleChange}
+            required
+          />
+
+          <Dropdown
+            label="Standard"
+            name="standard"
             value={formData.standard}
             options={standardOptions[formData.group] || []}
             onChange={handleChange}
-            required />
+            required
+          />
 
-          <Dropdown label="Board" name="board"
+          {/* ✅ GROUP CODE ONLY FOR 11 & 12 */}
+          {(formData.standard === "11th" || formData.standard === "12th") && (
+            <Dropdown
+              label="Group Code"
+              name="groupCode"
+              value={formData.groupCode}
+              options={["BIO MATHS", "COMPUTER", "COMMERCE"]}
+              onChange={handleChange}
+              required
+            />
+          )}
+
+          <Dropdown
+            label="Board"
+            name="board"
             value={formData.board}
             options={boardOptions}
             onChange={handleChange}
-            required />
+            required
+          />
 
-          <Dropdown label="Language" name="language"
+          <Dropdown
+            label="Language"
+            name="language"
             value={formData.language}
             options={languageOptions}
             onChange={handleChange}
-            required />
+            required
+          />
         </div>
 
-        {/* Row 2 */}
+        {/* ================= ROW 2 ================= */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-          <Dropdown label="Subject" name="subject"
+          <Dropdown
+            label="Subject"
+            name="subject"
             value={formData.subject}
-            options={subjectMap[formData.group] || []}
+            options={getSubjects()}
             onChange={handleChange}
-            required />
+            required
+          />
 
-          <Dropdown label="Lesson" name="lesson"
+          <Dropdown
+            label="Lesson"
+            name="lesson"
             value={formData.lesson}
             options={lessonOptions}
             onChange={handleChange}
-            required />
+            required
+          />
 
           <Dropdown
             label="Category"

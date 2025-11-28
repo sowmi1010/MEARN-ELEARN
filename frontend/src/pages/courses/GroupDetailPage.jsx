@@ -30,8 +30,8 @@ export default function GroupDetailPage() {
     seed: seedBanner,
   };
 
-  const boardOptions = ["CBSE", "ICSE", "NIOS", "Tamil Nadu", "Kerala"];
-  const languageOptions = ["English", "Tamil", "Hindi", "Malayalam", "Telugu"];
+const boardOptions = ["Tamil Nadu", "CBSE"];
+const languageOptions = ["Tamil", "English"];
 
   const standards = {
     root: ["1st", "2nd", "3rd", "4th"],

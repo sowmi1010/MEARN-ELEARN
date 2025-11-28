@@ -1,4 +1,3 @@
-// src/pages/student/StudentDashboard.jsx
 import React, { useEffect, useState } from "react";
 import api from "../../../utils/api";
 
@@ -9,7 +8,24 @@ import UpcomingLive from "../../../components/student/UpcomingLive";
 
 import { FaChartLine, FaListUl, FaBolt, FaClock } from "react-icons/fa";
 
-/* ================== FIXED FUNCTION ================== */
+/* ================== ALLOWED VALUES ================== */
+const ALLOWED_BOARDS = ["Tamil Nadu", "CBSE"];
+const ALLOWED_LANGUAGES = ["Tamil", "English"];
+
+/* ================== FILTER FUNCTION ================== */
+function isAllowedCourse(course) {
+  if (!course) return false;
+
+  // Validate board
+  if (course.board && !ALLOWED_BOARDS.includes(course.board)) return false;
+
+  // Validate language
+  if (course.language && !ALLOWED_LANGUAGES.includes(course.language)) return false;
+
+  return true;
+}
+
+/* ================== COURSE NAME ================== */
 function getCourseName(c) {
   if (!c) return "";
 
@@ -25,6 +41,7 @@ function getCourseName(c) {
 
   return c.group?.toUpperCase() || "Course";
 }
+
 /* ==================================================== */
 
 export default function StudentDashboard() {
@@ -58,34 +75,34 @@ export default function StudentDashboard() {
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
         /* 📌 1. USER PAYMENTS */
-        const payRes = await api.get("/student/dashboard/payments", {
-          headers,
-        });
+        const payRes = await api.get("/student/dashboard/payments", { headers });
+
         const list = Array.isArray(payRes.data.payments)
           ? payRes.data.payments
           : [];
 
-        /* 📌 2. CREATE COURSE LIST */
+        /* 📌 2. CREATE + FILTER COURSE LIST */
         const purchased = [];
 
         list.forEach((p) => {
           const meta = p.metadata || {};
 
-          const uniqueKey = `${meta?.group}-${meta?.standard}-${meta?.groupCode}-${meta?.title}`;
+          const newCourse = {
+            key: `${meta?.group}-${meta?.standard}-${meta?.groupCode}-${meta?.title}`,
+            _id: p._id,
+            group: meta?.group,
+            standard: meta?.standard,
+            board: meta?.board,
+            language: meta?.language,
+            groupCode: meta?.groupCode,
+            title: meta?.title,
+          };
 
-          if (!purchased.find((x) => x.key === uniqueKey)) {
-            purchased.push({
-              key: uniqueKey,
-              _id: p._id,
-
-              group: meta?.group,
-              standard: meta?.standard,
-              board: meta?.board,
-              language: meta?.language,
-              groupCode: meta?.groupCode,
-
-              title: meta?.title,
-            });
+          // ✅ FILTER APPLIED HERE
+          if (isAllowedCourse(newCourse)) {
+            if (!purchased.find((x) => x.key === newCourse.key)) {
+              purchased.push(newCourse);
+            }
           }
         });
 
@@ -133,6 +150,7 @@ export default function StudentDashboard() {
         /* 📌 5. LOAD TODOS */
         const todoRes = await api.get("/todos", { headers });
         setTodos(todoRes.data?.todos || []);
+
         setProgress((prev) => ({
           ...prev,
           todosCompleted: todoRes.data?.completed || 0,
@@ -186,6 +204,10 @@ export default function StudentDashboard() {
               localStorage.setItem("activeBoard", course.board || "");
               localStorage.setItem("activeLanguage", course.language || "");
               localStorage.setItem("activeSubject", course.title || "");
+                localStorage.setItem("activeGroupCode", course.groupCode || ""); // ✅ ADD THIS
+
+              
+              window.location.reload(); // ✅ Refresh video list
             }}
           />
         </div>
@@ -193,7 +215,6 @@ export default function StudentDashboard() {
 
       {/* MAIN CONTENT */}
       <div className="max-w-6xl mx-auto space-y-10">
-        {/* PERFORMANCE + STATS */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <section className="lg:col-span-2 bg-[#0d0d17] p-5 rounded-2xl border border-purple-900/20 shadow-lg">
             <div className="flex items-center gap-2 mb-4">
@@ -207,7 +228,6 @@ export default function StudentDashboard() {
           </section>
 
           <aside className="space-y-6">
-            {/* QUICK STATS */}
             <div className="bg-[#0d0d17] p-5 rounded-2xl border border-purple-900/20 shadow-lg">
               <div className="flex items-center gap-2 mb-3">
                 <FaBolt className="text-yellow-400 text-lg" />
@@ -228,9 +248,7 @@ export default function StudentDashboard() {
           </aside>
         </div>
 
-        {/* TODO + LIVE TODAY */}
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* ✅ LIVE TODOS */}
           <div className="lg:col-span-2 bg-[#0d0d17] p-5 rounded-2xl border border-purple-900/20 shadow-lg">
             <div className="flex items-center gap-2 mb-4">
               <FaListUl className="text-purple-400" />
@@ -238,27 +256,22 @@ export default function StudentDashboard() {
                 To-Do List
               </h3>
             </div>
-         {todos.filter(todo => !todo.completed).length === 0 ? (
-  <p className="text-gray-400">No pending tasks 🎉</p>
-) : (
-  <ul className="space-y-3 text-gray-300">
-    {todos
-      .filter(todo => !todo.completed)   // ✅ ONLY INCOMPLETE
-      .map((todo) => (
-        <li
-          key={todo._id}
-          className="p-3 rounded-lg border
-                     bg-[#11111f] border-purple-900/20"
-        >
-          {todo.text}
-        </li>
-      ))}
-  </ul>
-)}
 
+            {todos.filter((todo) => !todo.completed).length === 0 ? (
+              <p className="text-gray-400">No pending tasks 🎉</p>
+            ) : (
+              <ul className="space-y-3 text-gray-300">
+                {todos
+                  .filter((todo) => !todo.completed)
+                  .map((todo) => (
+                    <li key={todo._id} className="p-3 rounded-lg border bg-[#11111f] border-purple-900/20">
+                      {todo.text}
+                    </li>
+                  ))}
+              </ul>
+            )}
           </div>
 
-          {/* ✅ LIVE TODAY */}
           <div className="bg-[#0d0d17] p-5 rounded-2xl border border-purple-900/20 shadow-lg">
             <div className="flex items-center gap-2 mb-4">
               <FaClock className="text-purple-400" />

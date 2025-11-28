@@ -89,7 +89,7 @@ export default function AddStudent() {
       navigate("/admin/students");
     } catch (err) {
       console.error("Save error:", err.response?.data || err.message);
-      alert((err.response?.data?.message || "Failed to save student"));
+      alert(err.response?.data?.message || "Failed to save student");
     } finally {
       setLoading(false);
     }
@@ -253,11 +253,22 @@ export default function AddStudent() {
             className={inputClass}
           >
             <option value="">Standard</option>
-            {["1st","2nd","3rd","4th","5th","6th","7th","8th","9th","10th","11th","12th"].map(
-              (std) => (
-                <option key={std}>{std}</option>
-              )
-            )}
+            {[
+              "1st",
+              "2nd",
+              "3rd",
+              "4th",
+              "5th",
+              "6th",
+              "7th",
+              "8th",
+              "9th",
+              "10th",
+              "11th",
+              "12th",
+            ].map((std) => (
+              <option key={std}>{std}</option>
+            ))}
           </select>
           <select
             name="group"
@@ -278,10 +289,21 @@ export default function AddStudent() {
             className={inputClass}
           >
             <option value="">Board</option>
+            <option>Tamil Nadu</option>
             <option>CBSE</option>
-            <option>ICSE</option>
-            <option>State</option>
           </select>
+
+          <select
+            name="language"
+            value={formData.language}
+            onChange={handleChange}
+            className={inputClass}
+          >
+            <option value="">Language</option>
+            <option>Tamil</option>
+            <option>English</option>
+          </select>
+
           <input
             name="language"
             placeholder="Language"

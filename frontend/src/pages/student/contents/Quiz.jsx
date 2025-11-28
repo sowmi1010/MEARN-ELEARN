@@ -1,48 +1,93 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import api from "../../../utils/api";
+import SubjectTabs from "../components/SubjectTabs";
+import { subjectMap } from "../../../utils/courseOptions";
 
 const activeGroup = localStorage.getItem("activeGroup");
 const activeStandard = localStorage.getItem("activeStandard");
 const activeBoard = localStorage.getItem("activeBoard");
 const activeLanguage = localStorage.getItem("activeLanguage");
 const activeCourse = localStorage.getItem("activeCourse");
+const activeGroupCode = localStorage.getItem("activeGroupCode");
 
-export default function QuizWheel() {
+export default function Quiz() {
   const navigate = useNavigate();
-  const [quizzes, setQuizzes] = useState([]);
+  const { subject } = useParams();
+
+  const [allQuizzes, setAllQuizzes] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [activeSubject, setActiveSubject] = useState(subject || null);
   const [filter, setFilter] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Load all quiz questions
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        const token = localStorage.getItem("token");
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
-        const res = await api.get("/quizzes", {
-          headers,
-          params: {
-            group: activeGroup?.toUpperCase(),
-            standard: activeStandard,
-            board: activeBoard,
-            language: activeLanguage,
-          },
-        });
+  /* ================= SUBJECT LIST ================= */
+  const getSubjects = () => {
+    const group = activeGroup?.toUpperCase();
+    const standard = activeStandard;
+    const code = (activeGroupCode || "").toUpperCase();
 
-        setQuizzes(Array.isArray(res.data) ? res.data : []);
-      } catch (err) {
-        console.error("Failed to load quizzes", err);
-        setQuizzes([]);
-      } finally {
-        setLoading(false);
-      }
+    if (!group) return [];
+
+    if (group !== "LEAF") return subjectMap[group] || [];
+
+    if (standard === "9th" || standard === "10th")
+      return subjectMap.LEAF?.[standard] || [];
+
+    if (standard === "11th" || standard === "12th") {
+      if (code === "BIO MATHS")
+        return subjectMap.LEAF?.[`${standard}-BIO MATHS`] || [];
+
+      if (code === "COMPUTER")
+        return subjectMap.LEAF?.[`${standard}-COMPUTER`] || [];
+
+      if (code === "COMMERCE")
+        return subjectMap.LEAF?.[`${standard}-COMMERCE`] || [];
     }
-    load();
-  }, []);
 
-  // 🔍 Global search listener
+    return [];
+  };
+
+  /* ================= LOAD QUIZZES ================= */
+  const loadQuizzes = async () => {
+    try {
+      setLoading(true);
+
+      const token = localStorage.getItem("token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const res = await api.get("/quizzes", {
+        headers,
+        params: {
+          group: activeGroup?.toUpperCase(),
+          standard: activeStandard,
+          board: activeBoard,
+          language: activeLanguage,
+          groupCode: activeGroupCode,
+          subject: activeSubject || undefined,   // ✅ MAIN FIX
+        },
+      });
+
+      setAllQuizzes(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Failed to load quizzes", err);
+      setAllQuizzes([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ================= FIRST LOAD ================= */
+  useEffect(() => {
+    setSubjects(getSubjects());
+
+    const saved = subject || localStorage.getItem("activeSubject");
+    if (saved) setActiveSubject(saved);
+
+    loadQuizzes();
+  }, [subject, activeSubject]);
+
+  /* ================= GLOBAL SEARCH ================= */
   useEffect(() => {
     const handle = (e) => {
       const text = (e?.detail || "").toString().trim();
@@ -53,191 +98,138 @@ export default function QuizWheel() {
     return () => window.removeEventListener("global-search", handle);
   }, []);
 
-  // 🔥 Step 1 — Client-side filter
-  const filteredList = useMemo(() => {
-    if (!filter) return quizzes;
-    const q = filter.toLowerCase();
+  /* ================= CLICK TAB ================= */
+  const handleSubjectChange = (sub) => {
+    setActiveSubject(sub);
+    localStorage.setItem("activeSubject", sub);
+    setFilter("");
+  };
 
-    return quizzes.filter(
-      (z) =>
-        (z.subject || "").toLowerCase().includes(q) ||
-        (z.lesson || "").toLowerCase().includes(q) ||
-        (z.question || "").toLowerCase().includes(q)
-    );
-  }, [filter, quizzes]);
+  /* ================= FINAL FILTER ================= */
+  const filtered = useMemo(() => {
+    let list = [...allQuizzes];
 
-  // 🔥 Step 2 — Group by (subject + lesson)
+    if (activeSubject) {
+      list = list.filter(
+        (q) =>
+          (q.subject || "").toLowerCase().trim() ===
+          activeSubject.toLowerCase().trim()
+      );
+    }
+
+    if (filter) {
+      const f = filter.toLowerCase();
+      list = list.filter(
+        (q) =>
+          (q.subject || "").toLowerCase().includes(f) ||
+          (q.lesson || "").toLowerCase().includes(f) ||
+          (q.question || "").toLowerCase().includes(f)
+      );
+    }
+
+    return list;
+  }, [allQuizzes, activeSubject, filter]);
+
+  /* ================= GROUP BY LESSON ================= */
   const grouped = useMemo(() => {
     const g = {};
 
-    filteredList.forEach((item) => {
-      const key = `${item.subject}__${item.lesson || ""}`;
+    filtered.forEach((q) => {
+      const key = q.lesson || "General";
 
       if (!g[key]) {
         g[key] = {
-          subject: item.subject,
-          lesson: item.lesson,
-          title: `${item.subject} ${item.lesson ? "• " + item.lesson : ""}`,
+          subject: q.subject,
+          lesson: q.lesson,
+          total: 0,
           questions: [],
         };
       }
 
-      g[key].questions.push(item);
+      g[key].questions.push(q);
+      g[key].total++;
     });
 
-    return Object.values(g); // convert object → array
-  }, [filteredList]);
+    return Object.values(g);
+  }, [filtered]);
 
-  // 🔥 Step 3 — Apply wheel positions (circle layout)
-  const positions = useMemo(() => {
-    const n = grouped.length || 1;
-    const radius = 220;
-    const arr = [];
-
-    for (let i = 0; i < n; i++) {
-      const angle = (i / n) * Math.PI * 2;
-      const deg = (angle * 180) / Math.PI;
-
-      arr.push({
-        x: Math.cos(angle) * radius,
-        y: Math.sin(angle) * radius,
-        deg,
-      });
-    }
-    return arr;
-  }, [grouped.length]);
-
-  // Start quiz → pass group instead of one question
-  function handleStart(group) {
+  const handleStart = (group) => {
     navigate(
       `/student/quiz/play/${group.questions[0]._id}?count=${group.questions.length}`
     );
-  }
+  };
 
+  /* ================= UI ================= */
   return (
-    <main className="min-h-screen p-8 bg-gradient-to-b from-[#070712] to-[#090a11] text-gray-100">
-      {/* Header */}
-      <header className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-extrabold text-purple-400 tracking-tight">
-            Quiz – {activeCourse}
-          </h1>
-          <p className="text-gray-400 mt-1">
-            Spin the wheel — pick a quiz and conquer it. Use global search to
-            filter quizzes.
-          </p>
-        </div>
+    <div className="min-h-screen bg-[#0b0f1a] p-8 text-white">
 
-        <div className="text-sm text-gray-300">
-          <div className="inline-flex items-center gap-3 bg-[#0f1629] px-3 py-2 rounded-full border border-purple-800/30">
-            <span className="text-xs text-gray-400">Showing</span>
-            <div className="font-bold text-purple-300">{grouped.length}</div>
-            <span className="text-xs text-gray-400">topics</span>
-          </div>
-        </div>
-      </header>
+      <h1 className="text-3xl font-bold text-purple-400 mb-1">
+        Quiz – {activeCourse}
+      </h1>
 
-      {loading && (
-        <div className="text-center text-gray-400 py-20">Loading quizzes…</div>
+      <p className="text-gray-400 mb-4">
+        {activeGroup} • {activeStandard} • {activeBoard}
+        {activeSubject && (
+          <span className="text-blue-400 ml-2">/ {activeSubject}</span>
+        )}
+      </p>
+
+      <SubjectTabs
+        subjects={subjects}
+        activeSubject={activeSubject}
+        onChange={handleSubjectChange}
+      />
+
+      {activeSubject && (
+        <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-700/20 border border-purple-500/40">
+          <span className="text-purple-300 text-sm">Showing:</span>
+          <span className="font-semibold text-purple-400">
+            {activeSubject}
+          </span>
+        </div>
       )}
 
-      {/* MOBILE layout */}
-      <section className="lg:hidden space-y-4">
+      {loading && (
+        <p className="text-center text-gray-400 mt-10">
+          Loading quizzes...
+        </p>
+      )}
+
+      {!loading && grouped.length === 0 && (
+        <p className="text-gray-400 mt-10 text-center">
+          No quizzes found for{" "}
+          <span className="text-purple-400">{activeSubject}</span>
+        </p>
+      )}
+
+      <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {grouped.map((g, i) => (
-          <article
+          <div
             key={i}
-            className="bg-gradient-to-r from-[#0e1220] to-[#0b0f19] border border-purple-800/30 rounded-2xl p-4 shadow-lg"
+            className="bg-[#111827]/80 border border-purple-800/40 rounded-xl p-6 shadow-xl hover:border-purple-600 hover:shadow-purple-500/30 transition"
           >
-            <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-lg bg-purple-700 flex items-center justify-center text-white text-xl font-bold">
-                {g.questions.length}
-              </div>
-
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-purple-300">
-                  {g.title}
-                </h3>
-                <p className="text-sm text-gray-400">
-                  Total Questions: {g.questions.length}
-                </p>
-              </div>
-
-              <button
-                onClick={() => handleStart(g)}
-                className="bg-purple-600 px-4 py-2 rounded-lg"
-              >
-                Start
-              </button>
-            </div>
-          </article>
-        ))}
-      </section>
-
-      {/* DESKTOP Wheel */}
-      <section className="hidden lg:block relative h-[640px]">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="relative w-[520px] h-[520px] flex items-center justify-center">
-            {/* Center card */}
-            <div className="z-20 w-60 h-40 rounded-2xl bg-[#0b1020] border border-purple-800/40 shadow-lg flex flex-col items-center justify-center text-center p-4">
-              <div className="text-sm text-gray-400">Pick a Quiz</div>
-              <div className="text-xl font-extrabold text-purple-300 mt-2">
-                Spin & Learn
-              </div>
-              <div className="mt-3 text-xs text-gray-500">
-                Use global search to filter
-              </div>
+            <div className="flex justify-between">
+              <span className="px-3 py-1 bg-purple-700/30 rounded text-xs">
+                {g.subject}
+              </span>
+              <span className="px-3 py-1 bg-blue-700/30 rounded text-xs">
+                {g.total} Q
+              </span>
             </div>
 
-            {/* Wheel Ring */}
-            <div className="absolute inset-0 rounded-full border border-purple-900/20"></div>
+            <h2 className="mt-4 text-lg font-bold text-purple-300">
+              {g.lesson || "General Quiz"}
+            </h2>
 
-            {/* Items */}
-            {grouped.map((g, i) => {
-              const pos = positions[i];
-              const transform = `translate(${pos.x}px, ${pos.y}px) rotate(${pos.deg}deg)`;
-              const inner = `rotate(${-pos.deg}deg)`;
-
-              return (
-                <button
-                  key={i}
-                  onClick={() => handleStart(g)}
-                  className="absolute transform transition-all duration-500 hover:scale-110 focus:outline-none"
-                  style={{
-                    transform,
-                    top: "50%",
-                    left: "50%",
-                    transformOrigin: "center",
-                  }}
-                >
-                  <div
-                    className="w-48 h-28 rounded-xl bg-[#0f172a] border border-purple-800/40 shadow-lg flex items-center p-3"
-                    style={{ transform: inner }}
-                  >
-                    <div className="w-12 h-12 rounded-lg bg-purple-700 text-white font-bold flex items-center justify-center mr-3">
-                      {g.questions.length}
-                    </div>
-
-                    <div>
-                      <div className="text-sm font-semibold text-purple-300">
-                        {g.title}
-                      </div>
-                      <div className="text-xs text-gray-400">
-                        {g.subject} • {g.lesson}
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
+            <button
+              onClick={() => handleStart(g)}
+              className="mt-6 w-full py-2 bg-purple-600 hover:bg-purple-700 rounded-lg"
+            >
+              Start Quiz →
+            </button>
           </div>
-        </div>
-      </section>
-
-      <footer className="mt-10 text-center text-gray-500 text-sm">
-        {grouped.length === 0
-          ? "No quizzes match your search."
-          : "Tip: Hover a card — click to start."}
-      </footer>
-    </main>
+        ))}
+      </div>
+    </div>
   );
 }

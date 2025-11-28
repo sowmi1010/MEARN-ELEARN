@@ -23,6 +23,7 @@ export default function NotesForm() {
   const [formData, setFormData] = useState({
     group: "",
     standard: "",
+    groupCode: "",     // ✅ NEW
     board: "",
     language: "",
     subject: "",
@@ -52,7 +53,7 @@ export default function NotesForm() {
     "Others",
   ];
 
-  // ✅ LOAD FOR EDIT
+  /* ✅ LOAD FOR EDIT */
   useEffect(() => {
     if (!id) return;
 
@@ -64,6 +65,7 @@ export default function NotesForm() {
         setFormData({
           group: note.group || "",
           standard: note.standard || "",
+          groupCode: note.groupCode || "",
           board: note.board || "",
           language: note.language || "",
           subject: note.subject || "",
@@ -78,7 +80,9 @@ export default function NotesForm() {
           const fixed = note.thumbnail.replace(/\\/g, "/");
 
           setPreview(
-            fixed.startsWith("http") ? fixed : `http://localhost:4000/${fixed}`
+            fixed.startsWith("http")
+              ? fixed
+              : `http://localhost:4000/${fixed}`
           );
         }
       } catch (err) {
@@ -89,6 +93,9 @@ export default function NotesForm() {
     fetchNotes();
   }, [id]);
 
+  /* =========================
+        HANDLE INPUT CHANGE
+  ========================== */
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -97,12 +104,60 @@ export default function NotesForm() {
         ...formData,
         group: value,
         standard: "",
+        groupCode: "",
         subject: "",
         lesson: "",
       });
-    } else {
+    }
+
+    else if (name === "standard") {
+      setFormData({
+        ...formData,
+        standard: value,
+        subject: "",
+      });
+    }
+
+    else if (name === "groupCode") {
+      setFormData({
+        ...formData,
+        groupCode: value,
+        subject: "",
+      });
+    }
+
+    else {
       setFormData({ ...formData, [name]: value });
     }
+  };
+
+  /* =========================
+        GET SUBJECTS SMART
+  ========================== */
+  const getSubjects = () => {
+    const { group, standard, groupCode } = formData;
+
+    if (!group) return [];
+
+    // ROOT / STEM / FLOWER / FRUIT / SEED
+    if (group !== "LEAF") {
+      return subjectMap[group] || [];
+    }
+
+    if (!standard) return [];
+
+    // 9th & 10th
+    if (standard === "9th" || standard === "10th") {
+      return subjectMap.LEAF[standard] || [];
+    }
+
+    // 11th & 12th
+    if ((standard === "11th" || standard === "12th") && groupCode) {
+      const key = `${standard}-${groupCode.toUpperCase()}`;
+      return subjectMap.LEAF[key] || [];
+    }
+
+    return [];
   };
 
   const handleFileChange = (e) => {
@@ -155,25 +210,22 @@ export default function NotesForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#020617] via-[#0f172a] to-[#020617] text-white px-6 py-10">
-      {/* HEADER */}
+    <div className="min-h-screen bg-[#020617] text-white px-6 py-10">
+
       <div className="text-center mb-10">
-        <h1 className="text-4xl font-extrabold flex justify-center items-center gap-3 bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+        <h1 className="text-4xl font-bold flex justify-center items-center gap-3 text-purple-400">
           {isEdit ? <FaEdit /> : <FaStickyNote />}
           {isEdit ? "Edit Notes" : "Create New Notes"}
         </h1>
-        <p className="text-gray-400 mt-2">
-          Fill the details and upload notes materials
-        </p>
       </div>
 
-      {/* FORM */}
       <form
         onSubmit={handleSubmit}
-        className="max-w-6xl mx-auto bg-[#0f172a]/90 rounded-3xl p-10 border border-gray-800 shadow-2xl space-y-8 backdrop-blur-lg"
+        className="max-w-6xl mx-auto bg-[#0f172a] rounded-2xl p-10 space-y-8 border border-gray-800"
       >
-        {/* ========== ROW 1 ========== */}
-        <div className="grid md:grid-cols-4 gap-6">
+
+        {/* ROW 1 */}
+        <div className="grid md:grid-cols-5 gap-6">
           <Dropdown
             label="Group"
             name="group"
@@ -181,6 +233,7 @@ export default function NotesForm() {
             options={groupOptions}
             onChange={handleChange}
           />
+
           <Dropdown
             label="Standard"
             name="standard"
@@ -188,6 +241,18 @@ export default function NotesForm() {
             options={standardOptions[formData.group] || []}
             onChange={handleChange}
           />
+
+          {(formData.standard === "11th" ||
+            formData.standard === "12th") && (
+            <Dropdown
+              label="Group Code"
+              name="groupCode"
+              value={formData.groupCode}
+              options={["BIO MATHS", "COMPUTER", "COMMERCE"]}
+              onChange={handleChange}
+            />
+          )}
+
           <Dropdown
             label="Board"
             name="board"
@@ -195,6 +260,7 @@ export default function NotesForm() {
             options={boardOptions}
             onChange={handleChange}
           />
+
           <Dropdown
             label="Language"
             name="language"
@@ -204,15 +270,16 @@ export default function NotesForm() {
           />
         </div>
 
-        {/* ========== ROW 2 ========== */}
+        {/* ROW 2 */}
         <div className="grid md:grid-cols-3 gap-6">
           <Dropdown
             label="Subject"
             name="subject"
             value={formData.subject}
-            options={subjectMap[formData.group] || []}
+            options={getSubjects()}
             onChange={handleChange}
           />
+
           <Dropdown
             label="Lesson"
             name="lesson"
@@ -220,6 +287,7 @@ export default function NotesForm() {
             options={lessonOptions}
             onChange={handleChange}
           />
+
           <Dropdown
             label="Category"
             name="category"
@@ -229,14 +297,14 @@ export default function NotesForm() {
           />
         </div>
 
-        {/* ========== TEXT INPUTS ========== */}
+        {/* TEXT */}
         <input
           type="text"
           name="noteNumber"
-          placeholder="Note Number (optional)"
+          placeholder="Note Number"
           value={formData.noteNumber}
           onChange={handleChange}
-          className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-gray-700 focus:ring-2 focus:ring-blue-500"
+          className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700"
         />
 
         <input
@@ -245,64 +313,48 @@ export default function NotesForm() {
           placeholder="Note Title"
           value={formData.title}
           onChange={handleChange}
-          className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-gray-700 focus:ring-2 focus:ring-cyan-500"
+          className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700"
         />
 
         <textarea
           rows="3"
           name="description"
-          placeholder="Short description..."
+          placeholder="Description..."
           value={formData.description}
           onChange={handleChange}
-          className="w-full px-4 py-3 rounded-xl bg-[#1e293b] border border-gray-700 focus:ring-2 focus:ring-violet-500"
+          className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700"
         ></textarea>
 
-        {/* ========== FILE UPLOAD ========== */}
+        {/* FILES */}
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Thumbnail */}
-          <div className="border border-dashed border-gray-600 p-6 rounded-2xl bg-[#1e293b]/60 text-center hover:bg-[#1e293b] transition">
-            <FaUpload className="mx-auto text-blue-400 text-xl mb-2" />
-            <p className="mb-2 text-sm">Upload Thumbnail</p>
+          <div className="p-6 border border-dashed border-gray-600 rounded-xl">
+            <p className="mb-2">Thumbnail</p>
             <input type="file" name="thumbnail" onChange={handleFileChange} />
 
             {preview && (
-              <div className="mt-5 flex justify-center">
-                <div className="bg-[#0f172a] p-3 rounded-xl shadow-xl border border-white/10">
-                  <img
-                    src={preview}
-                    alt="Preview"
-                    className="h-40 w-52 object-cover rounded-lg"
-                  />
-                  <p className="text-xs text-center text-gray-400 mt-2">
-                    Thumbnail Preview
-                  </p>
-                </div>
-              </div>
+              <img
+                src={preview}
+                className="mt-4 h-40 w-56 object-cover rounded-lg"
+              />
             )}
           </div>
 
-          {/* Notes File */}
-          <div className="border border-dashed border-gray-600 p-6 rounded-2xl bg-[#1e293b]/60 text-center hover:bg-[#1e293b] transition">
-            <FaUpload className="mx-auto text-purple-400 text-xl mb-2" />
-            <p className="mb-2 text-sm">Upload Notes File</p>
+          <div className="p-6 border border-dashed border-gray-600 rounded-xl">
+            <p className="mb-2">Notes File</p>
             <input type="file" name="file" onChange={handleFileChange} />
           </div>
         </div>
 
-        {/* ========== SUBMIT BUTTON ========== */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 font-bold tracking-wide flex items-center justify-center gap-2 transition-all"
+          className="w-full py-3 rounded-lg bg-purple-600 font-bold"
         >
-          <FaSave />
           {loading ? "Saving..." : isEdit ? "Update Notes" : "Publish Notes"}
         </button>
 
         {message && (
-          <p className="text-center text-green-400 font-semibold text-lg">
-            {message}
-          </p>
+          <p className="text-center text-green-400 mt-4">{message}</p>
         )}
       </form>
     </div>
