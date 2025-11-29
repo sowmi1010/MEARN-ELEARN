@@ -105,6 +105,26 @@ router.put(
   }
 );
 
+
+/* =========================================================
+   ✅ GET SINGLE TEACHER BY ID (Required for Edit Page)
+========================================================= */
+router.get("/:id", auth, checkPermission("teachers"), async (req, res) => {
+  try {
+    const teacher = await Teacher.findById(req.params.id);
+
+    if (!teacher) {
+      return res.status(404).json({ message: "Teacher not found" });
+    }
+
+    res.json(teacher);
+  } catch (err) {
+    console.error("Get teacher by ID error:", err);
+    res.status(500).json({ message: "Failed to fetch teacher" });
+  }
+});
+
+
 /* =========================================================
    ✅ DELETE TEACHER (Admin or Mentor with "teachers" permission)
 ========================================================= */

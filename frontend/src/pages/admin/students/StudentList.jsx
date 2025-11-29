@@ -1,16 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../../utils/api";
-
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import Pagination from "../../../components/common/Pagination";
 
 import { FaUserPlus, FaComments, FaEdit, FaInfoCircle } from "react-icons/fa";
 
@@ -18,11 +9,18 @@ export default function StudentList() {
   const [students, setStudents] = useState([]);
   const [search, setSearch] = useState("");
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const perPage = 6;
+
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
   /* 🔎 GLOBAL SEARCH LISTENER */
   useEffect(() => {
-    const handler = (e) => setSearch(e.detail);
+    const handler = (e) => {
+      setSearch(e.detail);
+      setCurrentPage(1);
+    };
 
     window.addEventListener("admin-global-search", handler);
     return () => window.removeEventListener("admin-global-search", handler);
@@ -44,7 +42,7 @@ export default function StudentList() {
     }
   }
 
-  /* ✅ FILTERED STUDENTS */
+  /* FILTER STUDENTS */
   const filteredStudents = students.filter((s) =>
     `${s.firstName} ${s.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
     (s.standard || "").toLowerCase().includes(search.toLowerCase()) ||
@@ -52,73 +50,28 @@ export default function StudentList() {
     (s.phone || "").toLowerCase().includes(search.toLowerCase())
   );
 
-  const visitorData = [
-    { month: "Jan", visitors: 120 },
-    { month: "Feb", visitors: 200 },
-    { month: "Mar", visitors: 300 },
-    { month: "Apr", visitors: 240 },
-    { month: "May", visitors: 280 },
-    { month: "Jun", visitors: 330 },
-    { month: "Jul", visitors: 360 },
-    { month: "Aug", visitors: 410 },
-    { month: "Sep", visitors: 350 },
-    { month: "Oct", visitors: 380 },
-    { month: "Nov", visitors: 310 },
-    { month: "Dec", visitors: 450 },
-  ];
+  /* PAGINATION LOGIC */
+  const totalPages = Math.ceil(filteredStudents.length / perPage);
+  const indexOfLast = currentPage * perPage;
+  const indexOfFirst = indexOfLast - perPage;
+  const currentData = filteredStudents.slice(indexOfFirst, indexOfLast);
 
   return (
     <div className="min-h-screen bg-[#0B0F19] text-white p-8">
-      {/* ===== HEADER ===== */}
-      <div className="flex flex-col lg:flex-row justify-between gap-8 mb-10">
-        {/* Chart */}
-        <div className="bg-[#101828] border border-gray-700 rounded-2xl p-6 w-full shadow-xl">
-          <h2 className="text-lg font-semibold mb-4 text-blue-300">
-            📊 Student Registration Trend
-          </h2>
 
-          <ResponsiveContainer width="100%" height={240}>
-            <LineChart data={visitorData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-              <XAxis dataKey="month" stroke="#94a3b8" />
-              <YAxis stroke="#94a3b8" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#050b1b",
-                  border: "1px solid #334155",
-                  borderRadius: "10px",
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="visitors"
-                stroke="#38bdf8"
-                strokeWidth={3}
-                dot={{ fill: "#38bdf8", r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+      {/* HEADER ACTIONS */}
+      <div className="flex justify-between items-center mb-10">
+        <h1 className="text-3xl font-bold text-blue-300">Student List</h1>
 
-        {/* Right Cards */}
-        <div className="flex flex-col gap-4 w-full lg:w-[280px]">
-          <Link
-            to="/admin/students/new"
-            className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 px-5 py-3 rounded-xl shadow-lg font-semibold hover:scale-105 transition"
-          >
-            <FaUserPlus /> Add Student
-          </Link>
-
-          <div className="bg-[#101828] border border-gray-700 rounded-xl p-4 text-center shadow-lg">
-            <p className="text-sm text-gray-400 mb-1">Filtered Students</p>
-            <h2 className="text-4xl font-bold text-cyan-400">
-              {filteredStudents.length}
-            </h2>
-          </div>
-        </div>
+        <Link
+          to="/admin/students/new"
+          className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-cyan-500 px-5 py-3 rounded-xl shadow-lg font-semibold hover:scale-105 transition"
+        >
+          <FaUserPlus /> Add Student
+        </Link>
       </div>
 
-      {/* ===== TABLE ===== */}
+      {/* TABLE */}
       <div className="bg-[#101828] border border-gray-700 rounded-2xl shadow-2xl overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -135,7 +88,7 @@ export default function StudentList() {
           </thead>
 
           <tbody>
-            {filteredStudents.map((s, i) => (
+            {currentData.map((s, i) => (
               <tr
                 key={s._id}
                 className={`border-t border-gray-700 hover:bg-[#1E293B]/60 transition ${
@@ -143,7 +96,7 @@ export default function StudentList() {
                 }`}
               >
                 <td className="p-4 text-center text-gray-400">
-                  {i + 1}
+                  {indexOfFirst + i + 1}
                 </td>
 
                 {/* PROFILE */}
@@ -185,8 +138,6 @@ export default function StudentList() {
                 {/* ACTION BUTTONS */}
                 <td className="p-4">
                   <div className="flex justify-center gap-3">
-                    
-                    {/* 🟢 ABOUT BUTTON */}
                     <Link
                       to={`/admin/students/details/${s._id}`}
                       className="bg-cyan-500 hover:bg-cyan-600 px-3 py-1 rounded-md text-white text-sm flex items-center gap-1 shadow"
@@ -212,15 +163,22 @@ export default function StudentList() {
               </tr>
             ))}
 
-            {filteredStudents.length === 0 && (
+            {currentData.length === 0 && (
               <tr>
                 <td colSpan="8" className="py-12 text-center text-gray-500">
-                  No matching students found for "{search}"
+                  No matching students found.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+
+        {/* PAGINATION */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          setCurrentPage={setCurrentPage}
+        />
       </div>
     </div>
   );

@@ -105,13 +105,17 @@ const AboutStudent = React.lazy(() =>
 
 const AdminHomePage = React.lazy(() => import("./pages/admin/AdminHomePage"));
 
-const TeacherUpload = React.lazy(() =>
-  import("./pages/admin/teachers/TeacherUpload")
+const TeacherList = React.lazy(() =>
+  import("./pages/admin/teachers/TeacherList")
 );
-const FeedbackUpload = React.lazy(() =>
-  import("./pages/admin/feedbacks/FeedbackUpload")
+const TeacherAdd = React.lazy(() =>
+  import("./pages/admin/teachers/TeacherAdd")
 );
 
+const FeedbackList = React.lazy(() => import("./pages/admin/feedbacks/FeedbackList"));
+const FeedbackAdd = React.lazy(() =>
+  import("./pages/admin/feedbacks/FeedbackAdd")
+);
 const MentorList = React.lazy(() => import("./pages/admin/mentor/MentorList"));
 const MentorUpload = React.lazy(() =>
   import("./pages/admin/mentor/MentorUpload")
@@ -156,8 +160,7 @@ const ViewQuiz = React.lazy(() => import("./pages/admin/course/view/ViewQuiz"));
 // 🔹 CHAT
 import ChatList from "./pages/admin/chat/ChatList";
 import ChatWindow from "./pages/admin/chat/ChatWindow";
-          import ProfileSettings from "./pages/common/ProfileSettings";
-
+import ProfileSettings from "./pages/common/ProfileSettings";
 
 // ✨ Animation Wrapper
 function PageWrapper({ children }) {
@@ -329,11 +332,9 @@ function AnimatedRoutes() {
           <Route path="certificate/view/:id" element={<ViewCertificate />} />
           <Route path="/student/team" element={<StudentTeam />} />
 
-         <Route path="/student/team/:userId" element={<ChatWindow />} />
-         
+          <Route path="/student/team/:userId" element={<ChatWindow />} />
 
-            <Route path="settings" element={<ProfileSettings />} />  
-
+          <Route path="settings" element={<ProfileSettings />} />
         </Route>
 
         {/* ================= ADMIN ROUTES ================= */}
@@ -370,10 +371,14 @@ function AnimatedRoutes() {
           <Route path="mentor-access/:id" element={<MentorAccess />} />
 
           {/* TEACHER */}
-          <Route path="teachers/new" element={<TeacherUpload />} />
+          <Route path="teachers" element={<TeacherList />} />
+          <Route path="teachers/new" element={<TeacherAdd />} />
+          <Route path="teachers/edit/:id" element={<TeacherAdd />} />
 
           {/* FEEDBACK */}
-          <Route path="feedbacks/new" element={<FeedbackUpload />} />
+          <Route path="feedbacks" element={<FeedbackList />} />
+          <Route path="feedbacks/new" element={<FeedbackAdd />} />
+          <Route path="feedbacks/edit/:id" element={<FeedbackAdd />} />
 
           {/* COURSES */}
           <Route path="courses" element={<CourseHome />} />
@@ -403,9 +408,7 @@ function AnimatedRoutes() {
           <Route path="team" element={<ChatList />} />
           <Route path="team/:userId" element={<ChatWindow />} />
 
-
           <Route path="settings" element={<ProfileSettings />} />
-
         </Route>
 
         {/* Fallback */}

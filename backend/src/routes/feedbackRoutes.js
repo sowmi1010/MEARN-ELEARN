@@ -145,4 +145,21 @@ router.delete(
   }
 );
 
+
+// GET SINGLE FEEDBACK BY ID
+router.get("/:id", async (req, res) => {
+  try {
+    const doc = await Feedback.findById(req.params.id);
+    if (!doc) {
+      return res.status(404).json({ message: "Feedback not found" });
+    }
+
+    res.json(doc);
+  } catch (err) {
+    console.error("feedback get-one error:", err);
+    res.status(500).json({ message: "Failed to fetch feedback" });
+  }
+});
+
+
 module.exports = router;

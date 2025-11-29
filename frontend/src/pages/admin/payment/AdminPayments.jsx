@@ -6,6 +6,7 @@ import "jspdf-autotable";
 import { Link } from "react-router-dom";
 import { FaFilePdf, FaFileExcel, FaUserCircle } from "react-icons/fa";
 import useGlobalSearch from "../../../hooks/useGlobalSearch";
+import Pagination from "../../../components/common/Pagination";
 
 export default function AdminPayments() {
   const [payments, setPayments] = useState([]);
@@ -148,7 +149,6 @@ export default function AdminPayments() {
 
   return (
     <div className="p-8 min-h-screen bg-[#050b18] text-white">
-
       <h1 className="text-4xl font-extrabold mb-10 text-blue-400">
         Payments Dashboard
       </h1>
@@ -182,7 +182,6 @@ export default function AdminPayments() {
 
       {/* TABLE */}
       <div className="overflow-x-auto bg-[#071633] p-6 rounded-2xl shadow-2xl">
-
         <table className="min-w-full text-sm">
           <thead>
             <tr className="text-blue-300 border-b border-blue-800">
@@ -203,9 +202,7 @@ export default function AdminPayments() {
                 className="border-b border-blue-900 hover:bg-[#0b2a55] transition"
               >
                 <td className="p-3">
-                  <p className="font-semibold">
-                    {p.user?.name || "Student"}
-                  </p>
+                  <p className="font-semibold">{p.user?.name || "Student"}</p>
                   <p className="text-gray-400 text-xs">
                     {p.user?.email || p.user}
                   </p>
@@ -221,9 +218,7 @@ export default function AdminPayments() {
                   ₹ {p.amount}
                 </td>
 
-                <td className="p-3 uppercase text-blue-400">
-                  {p.provider}
-                </td>
+                <td className="p-3 uppercase text-blue-400">{p.provider}</td>
 
                 <td className="p-3">
                   <span
@@ -255,12 +250,17 @@ export default function AdminPayments() {
           </tbody>
         </table>
 
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          setCurrentPage={setCurrentPage}
+        />
+
         {currentPayments.length === 0 && (
           <p className="text-center p-10 text-gray-400">
             No payment records found.
           </p>
         )}
-
       </div>
     </div>
   );
