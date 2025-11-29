@@ -1,9 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
-import {
-  NavLink as RouterNavLink,
-  Outlet,
-  useNavigate,
-} from "react-router-dom";
+// src/layouts/AdminLayout.jsx
+import React, { useState, useEffect } from "react";
+import { NavLink as RouterNavLink, Outlet, useNavigate } from "react-router-dom";
 import api from "../utils/api";
 import {
   FaSignOutAlt,
@@ -11,6 +8,8 @@ import {
   FaArrowLeft,
   FaArrowRight,
   FaSearch,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa";
 import {
   HiOutlineUserGroup,
@@ -20,166 +19,147 @@ import {
   HiOutlineCurrencyRupee,
   HiOutlineAcademicCap,
   HiOutlineHome,
+  HiOutlineCog,
 } from "react-icons/hi";
 
 export default function AdminLayout() {
   const navigate = useNavigate();
-  const fileInputRef = useRef(null);
 
   const [user, setUser] = useState(null);
   const [search, setSearch] = useState("");
+  const [collapsed, setCollapsed] = useState(false);
 
-  // ✅ Always dark mode
-  useEffect(() => {
-    document.documentElement.classList.add("dark");
-  }, []);
-
-  // ✅ Fetch User
-  useEffect(() => {
-    async function fetchUser() {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      try {
-        const res = await api.get("/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setUser(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    fetchUser();
-  }, []);
-
-  // ✅ GLOBAL SEARCH BROADCAST
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setSearch(value);
-
-    // 🔥 Broadcast to ALL admin pages
-    window.dispatchEvent(
-      new CustomEvent("admin-global-search", {
-        detail: value,
-      })
-    );
-  };
-
-  // ✅ Logout
   const handleLogout = () => {
     localStorage.clear();
     navigate("/login");
   };
 
-  const navLinks = [
-    { to: "home", label: "Home", icon: <HiOutlineHome /> },
-    { to: "dashboard", label: "Dashboard", icon: <HiOutlineChartBar /> },
-    { to: "courses", label: "Courses", icon: <HiOutlineBookOpen /> },
-    { to: "admins", label: "Admins", icon: <HiOutlineUser /> },
-    { to: "mentors", label: "Mentors", icon: <HiOutlineAcademicCap /> },
-    { to: "students", label: "Students", icon: <HiOutlineUserGroup /> },
-    { to: "payments", label: "Payments", icon: <HiOutlineCurrencyRupee /> },
-    { to: "team", label: "Team", icon: <HiOutlineUserGroup /> },
-        { to: "settings", label: "Settings", icon: <HiOutlineUser /> },
+  useEffect(() => {
+    document.documentElement.classList.add("dark");
+  }, []);
 
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await api.get("/auth/me");
+        setUser(res.data);
+      } catch (err) {
+        // ignore - will handle when user isn't logged in
+      }
+    }
+    load();
+  }, []);
+
+  // dispatch global-search event for pages to listen
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearch(value);
+    window.dispatchEvent(new CustomEvent("global-search", { detail: value }));
+  };
+
+  const navLinks = [
+    { to: "home", label: "Home", icon: <HiOutlineHome size={20} /> },
+    { to: "dashboard", label: "Dashboard", icon: <HiOutlineChartBar size={20} /> },
+    { to: "courses", label: "Courses", icon: <HiOutlineBookOpen size={20} /> },
+    { to: "admins", label: "Admins", icon: <HiOutlineUser size={20} /> },
+    { to: "mentors", label: "Mentors", icon: <HiOutlineAcademicCap size={20} /> },
+    { to: "students", label: "Students", icon: <HiOutlineUserGroup size={20} /> },
+    { to: "payments", label: "Payments", icon: <HiOutlineCurrencyRupee size={20} /> },
+    { to: "team", label: "Team", icon: <HiOutlineUserGroup size={20} /> },
+    { to: "settings", label: "Settings", icon: <HiOutlineCog size={20} /> },
   ];
 
   return (
-    <div className="flex h-screen w-full bg-[#070b1a] text-gray-100">
-      {/* ================= SIDEBAR ================= */}
-      <aside className="w-64 bg-gradient-to-b from-[#0c1633] to-[#050815] border-r border-blue-900/40 flex flex-col">
-        {/* PROFILE */}
-        <div className="p-6 text-center border-b border-blue-900/40">
-          <img
-            src={
-              user?.profilePic
-                ? `http://localhost:4000${user.profilePic}`
-                : "/default-avatar.png"
-            }
-            className="w-24 h-24 rounded-full border-2 border-blue-600 mx-auto object-cover"
-          />
+    <div className="flex h-screen bg-[#05060d] text-gray-100">
+      <aside className={`transition-all duration-300 ${collapsed ? "w-20" : "w-64"} bg-[#0b1124]/95 border-r border-white/10`}>
+        <div className="h-full flex flex-col">
+          <div className="flex items-center justify-between px-4 py-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center font-bold text-white">L</div>
+              {!collapsed && (
+                <div>
+                  <p className="font-semibold text-[15px]">Last Try Academy</p>
+                  <p className="text-[11px] text-gray-400">Admin Panel</p>
+                </div>
+              )}
+            </div>
 
-          <h2 className="text-lg font-bold mt-2">{user?.name || "Admin"}</h2>
-          <p className="text-xs text-blue-400">{user?.role}</p>
-        </div>
+            <button onClick={() => setCollapsed(!collapsed)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 border border-white/10">
+              {collapsed ? <FaChevronRight size={13} /> : <FaChevronLeft size={13} />}
+            </button>
+          </div>
 
-        {/* NAVIGATION */}
-        <nav className="flex-1 p-4 space-y-2">
-          {navLinks.map((link) => (
-            <RouterNavLink
-              key={link.to}
-              to={`/admin/${link.to}`}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-xl transition 
-                ${
-                  isActive
-                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg"
-                    : "text-gray-400 hover:bg-blue-800/40 hover:text-white"
-                }`
-              }
-            >
-              <span className="text-lg">{link.icon}</span>
-              <span>{link.label}</span>
-            </RouterNavLink>
-          ))}
-        </nav>
+          <div className={`mx-3 mb-4 ${collapsed ? "flex justify-center" : "flex items-center gap-3 px-3 py-2"} bg-white/5 border border-white/10 rounded-xl`}>
+            <img src={user?.profilePic ? `${(import.meta.env.VITE_API_URL || "http://localhost:4000")}${user.profilePic}` : "/default-avatar.png"} alt="profile" className={`${collapsed ? "w-10 h-10" : "w-12 h-12"} rounded-full border-2 border-blue-500 object-cover`} />
+            {!collapsed && (
+              <div>
+                <p className="text-sm font-semibold">{user?.name || "Admin"}</p>
+                <p className="text-xs text-blue-400">{user?.role || "Administrator"}</p>
+              </div>
+            )}
+          </div>
 
-        {/* LOGOUT */}
-        <div className="p-4 border-t border-blue-900/40">
-          <button
-            onClick={handleLogout}
-            className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-semibold"
-          >
-            <FaSignOutAlt className="inline mr-2" />
-            Logout
-          </button>
+          <nav className="flex-1 overflow-y-auto px-2 space-y-1">
+            {navLinks.map((link) => (
+              <RouterNavLink
+                key={link.to}
+                to={`/admin/${link.to}`}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 rounded-xl ${collapsed ? "justify-center py-3" : "px-4 py-3"} ${isActive ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white" : "text-gray-300 hover:bg-white/5"}`
+                }
+              >
+                <span className="text-[20px]">{link.icon}</span>
+                {!collapsed && <span className="text-[14px]">{link.label}</span>}
+              </RouterNavLink>
+            ))}
+          </nav>
+
+          <div className="p-4 mt-2">
+            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-red-600 hover:bg-red-700 transition">
+              <FaSignOutAlt />
+              {!collapsed && <span>Logout</span>}
+            </button>
+          </div>
         </div>
       </aside>
 
-      {/* ================= MAIN AREA ================= */}
       <div className="flex-1 flex flex-col">
-        {/* ================= HEADER ================= */}
-        <header className="h-16 px-6 bg-[#0c1633] border-b border-blue-900/40 flex items-center justify-between">
-          {/* ✅ GLOBAL SEARCH BAR */}
-          <div className="flex items-center bg-[#060a15] border border-blue-700/50 rounded-full px-4 py-2 w-[450px] shadow-md">
-            <FaSearch className="text-blue-400 mr-2" />
-            <input
-              value={search}
-              onChange={handleSearchChange}
-              className="bg-transparent w-full outline-none text-sm text-white placeholder:text-gray-500"
-              placeholder="Search videos, books, notes, tests, students..."
-            />
+        <header className="sticky top-0 z-40 h-20 flex items-center justify-between px-8 bg-[#0b1124]/95 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center"><FaArrowLeft /></button>
+            <button onClick={() => navigate(1)} className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center"><FaArrowRight /></button>
           </div>
 
-          {/* ACTION BUTTONS */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(-1)}
-              className="bg-blue-600 w-10 h-10 rounded-full flex items-center justify-center hover:bg-blue-700 transition"
-            >
-              <FaArrowLeft />
-            </button>
+          <div className="w-full max-w-lg px-4">
+            <div className="flex items-center gap-3 px-4 py-3 rounded-full bg-white/5 border border-white/10">
+              <FaSearch className="text-blue-400" />
+              <input
+                value={search}
+                onChange={handleSearch}
+                placeholder="Search courses, videos, students, mentors, payments..."
+                className="bg-transparent outline-none w-full text-sm placeholder-gray-400"
+              />
+            </div>
+          </div>
 
-            <button
-              onClick={() => navigate(1)}
-              className="bg-blue-600 w-10 h-10 rounded-full flex items-center justify-center hover:bg-blue-700 transition"
-            >
-              <FaArrowRight />
-            </button>
-
+          <div className="flex items-center gap-5">
             <div className="relative">
-              <FaBell className="text-blue-400 text-xl" />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-xs px-1 rounded-full">
-                6
-              </span>
+              <FaBell className="text-blue-400" />
+              <span className="absolute -top-1 -right-1 text-[10px] px-1 rounded-full bg-red-500">6</span>
+            </div>
+
+            <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2 rounded-full">
+              <p className="text-sm">{user?.name?.split?.(" ")?.[0] || "Admin"}</p>
+              <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">{user?.name ? user.name[0] : "A"}</div>
             </div>
           </div>
         </header>
 
-        {/* ================= CONTENT ================= */}
-        <main className="flex-1 p-8 bg-[#040711] overflow-y-auto">
-          <Outlet />
+        <main className="flex-1  bg-[#04060f] overflow-y-auto">
+          {/* p-6 rounded-2xl bg-white/5 border border-white/10 shadow-xl */}
+          <div className="">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

@@ -7,7 +7,7 @@ export default function AdminHomePage() {
   const navigate = useNavigate();
 
   return (
-    <div className="text-gray-900 dark:text-gray-100">
+    <div className="text-gray-900 dark:text-gray-100 p-8">
       <h1 className="text-3xl font-extrabold mb-6">Welcome, Admin</h1>
       <p className="text-gray-500 dark:text-gray-400 mb-10">
         Quick actions to manage your academy efficiently.

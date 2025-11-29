@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../../../utils/api";
 import Dropdown from "../../../../components/common/Dropdown";
+
 import {
   groupOptions,
   standardOptions,
@@ -10,7 +11,8 @@ import {
   subjectMap,
   lessonOptions,
 } from "../../../../utils/courseOptions";
-import { FaVideo } from "react-icons/fa";
+
+import { FaVideo, FaUpload, FaSave } from "react-icons/fa";
 
 export default function VideoForm() {
   const navigate = useNavigate();
@@ -20,7 +22,7 @@ export default function VideoForm() {
   const [formData, setFormData] = useState({
     group: "",
     standard: "",
-    groupCode: "", // ✅ VERY IMPORTANT for 11th / 12th
+    groupCode: "",
     board: "",
     language: "",
     subject: "",
@@ -49,7 +51,7 @@ export default function VideoForm() {
     "Others",
   ];
 
-  /* ✅ FETCH DATA IF EDIT */
+  /* ----------------- FETCH VIDEO IF EDIT ----------------- */
   useEffect(() => {
     if (!id) return;
 
@@ -59,7 +61,9 @@ export default function VideoForm() {
         setFormData(res.data);
 
         if (res.data.thumbnail) {
-          setThumbnailPreview(`http://localhost:4000/${res.data.thumbnail}`);
+          setThumbnailPreview(
+            `http://localhost:4000/${res.data.thumbnail.replace(/\\/g, "/")}`
+          );
         }
       } catch (err) {
         console.error(err);
@@ -69,12 +73,11 @@ export default function VideoForm() {
     fetchVideo();
   }, [id]);
 
-  /* =========================
-      HANDLE CHANGE
-  ========================= */
+  /* ----------------- SMART INPUT HANDLER ----------------- */
   const handleChange = (e) => {
     const { name, value } = e.target;
 
+    // Reset dependent fields when main fields change
     if (name === "group") {
       setFormData({
         ...formData,
@@ -84,54 +87,35 @@ export default function VideoForm() {
         subject: "",
         lesson: "",
       });
-    }
-
-    else if (name === "standard") {
+    } else if (name === "standard") {
       setFormData({
         ...formData,
         standard: value,
         subject: "",
       });
-    }
-
-    else if (name === "groupCode") {
+    } else if (name === "groupCode") {
       setFormData({
         ...formData,
         groupCode: value,
         subject: "",
       });
-    }
-
-    else {
+    } else {
       setFormData({ ...formData, [name]: value });
     }
   };
 
-  /* =========================
-      GET SUBJECTS (SMART WAY)
-  ========================= */
+  /* ----------------- SUBJECT LOADER (SMART) ----------------- */
   const getSubjects = () => {
     const { group, standard, groupCode } = formData;
-
     if (!group) return [];
 
-    // ROOT / STEM / FLOWER / FRUIT / SEED
-    if (group !== "LEAF") {
-      return subjectMap[group] || [];
-    }
+    if (group !== "LEAF") return subjectMap[group] || [];
 
-    // LEAF = 9,10,11,12
     if (!standard) return [];
-
-    // 9th / 10th
-    if (standard === "9th" || standard === "10th") {
+    if (standard === "9th" || standard === "10th")
       return subjectMap.LEAF[standard] || [];
-    }
 
-    // 11th / 12th
-    if (standard === "11th" || standard === "12th") {
-      if (!groupCode) return [];
-
+    if ((standard === "11th" || standard === "12th") && groupCode) {
       const key = `${standard}-${groupCode.toUpperCase()}`;
       return subjectMap.LEAF[key] || [];
     }
@@ -139,9 +123,7 @@ export default function VideoForm() {
     return [];
   };
 
-  /* =========================
-      FILE HANDLING
-  ========================= */
+  /* ----------------- HANDLE FILES ----------------- */
   const handleFileChange = (e) => {
     if (e.target.name === "thumbnail") {
       const file = e.target.files[0];
@@ -152,9 +134,7 @@ export default function VideoForm() {
     }
   };
 
-  /* =========================
-      SUBMIT
-  ========================= */
+  /* ----------------- SUBMIT ----------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -162,10 +142,7 @@ export default function VideoForm() {
 
     try {
       const form = new FormData();
-
-      Object.entries(formData).forEach(([key, value]) =>
-        form.append(key, value)
-      );
+      Object.entries(formData).forEach(([k, v]) => form.append(k, v));
 
       if (thumbnail) form.append("thumbnail", thumbnail);
       if (file) form.append("file", file);
@@ -184,49 +161,46 @@ export default function VideoForm() {
         setMessage("✅ Video uploaded successfully!");
       }
 
-      setTimeout(() => navigate(-1), 1200);
-
+      setTimeout(() => navigate("/admin/courses"), 1200);
     } catch (err) {
-      console.error("Upload Error:", err.response?.data || err);
-      setMessage("❌ Failed. Try again.");
+      console.error("Upload Error:", err);
+      setMessage("❌ Failed to save video");
     } finally {
       setLoading(false);
     }
   };
 
+  /* ----------------- UI ----------------- */
   return (
-    <div className="p-8 bg-[#0b1120] text-white min-h-screen">
-      <h1 className="text-3xl font-bold text-blue-400 mb-8 flex items-center gap-2">
-        <FaVideo /> {isEdit ? "Edit Video" : "Add Video"}
-      </h1>
+    <div className="min-h-screen px-6 py-10 bg-gradient-to-br from-[#020617] via-[#0a1124] to-[#1e293b] text-white">
 
+      {/* HEADER */}
+      <div className="flex justify-center mb-10">
+        <h1 className="flex items-center gap-3 text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-sky-400 drop-shadow-xl">
+          <FaVideo className="text-blue-400 drop-shadow" />
+          {isEdit ? "Edit Video" : "Upload New Video"}
+        </h1>
+      </div>
+
+      {/* CARD */}
       <form
         onSubmit={handleSubmit}
-        className="bg-gray-900 p-10 rounded-2xl max-w-6xl mx-auto space-y-8"
+        className="
+          max-w-6xl mx-auto 
+          bg-[#0f172a]/70 
+          backdrop-blur-xl 
+          shadow-2xl shadow-blue-900/20 
+          border border-white/10 
+          rounded-3xl 
+          p-10 
+          space-y-10
+        "
       >
+        {/* ROW 1 */}
+        <div className="grid md:grid-cols-5 gap-6">
+          <Dropdown label="Group" name="group" value={formData.group} options={groupOptions} onChange={handleChange}/>
+          <Dropdown label="Standard" name="standard" value={formData.standard} options={standardOptions[formData.group] || []} onChange={handleChange}/>
 
-        {/* ================= ROW 1 ================= */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
-
-          <Dropdown
-            label="Group"
-            name="group"
-            value={formData.group}
-            options={groupOptions}
-            onChange={handleChange}
-            required
-          />
-
-          <Dropdown
-            label="Standard"
-            name="standard"
-            value={formData.standard}
-            options={standardOptions[formData.group] || []}
-            onChange={handleChange}
-            required
-          />
-
-          {/* ✅ GROUP CODE ONLY FOR 11 & 12 */}
           {(formData.standard === "11th" || formData.standard === "12th") && (
             <Dropdown
               label="Group Code"
@@ -234,105 +208,86 @@ export default function VideoForm() {
               value={formData.groupCode}
               options={["BIO MATHS", "COMPUTER", "COMMERCE"]}
               onChange={handleChange}
-              required
             />
           )}
 
-          <Dropdown
-            label="Board"
-            name="board"
-            value={formData.board}
-            options={boardOptions}
-            onChange={handleChange}
-            required
-          />
-
-          <Dropdown
-            label="Language"
-            name="language"
-            value={formData.language}
-            options={languageOptions}
-            onChange={handleChange}
-            required
-          />
+          <Dropdown label="Board" name="board" value={formData.board} options={boardOptions} onChange={handleChange}/>
+          <Dropdown label="Language" name="language" value={formData.language} options={languageOptions} onChange={handleChange}/>
         </div>
 
-        {/* ================= ROW 2 ================= */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-          <Dropdown
-            label="Subject"
-            name="subject"
-            value={formData.subject}
-            options={getSubjects()}
-            onChange={handleChange}
-            required
-          />
-
-          <Dropdown
-            label="Lesson"
-            name="lesson"
-            value={formData.lesson}
-            options={lessonOptions}
-            onChange={handleChange}
-            required
-          />
-
-          <Dropdown
-            label="Category"
-            name="category"
-            value={formData.category}
-            options={categoryOptions}
-            onChange={handleChange}
-            required
-          />
+        {/* ROW 2 */}
+        <div className="grid md:grid-cols-4 gap-6">
+          <Dropdown label="Subject" name="subject" value={formData.subject} options={getSubjects()} onChange={handleChange}/>
+          <Dropdown label="Lesson" name="lesson" value={formData.lesson} options={lessonOptions} onChange={handleChange}/>
+          <Dropdown label="Category" name="category" value={formData.category} options={categoryOptions} onChange={handleChange}/>
 
           <input
             name="videoNumber"
+            placeholder="Video Number"
             type="number"
             value={formData.videoNumber}
             onChange={handleChange}
-            placeholder="Video No"
-            className="p-3 bg-gray-800 border border-gray-700 rounded"
+            className="p-3 bg-[#111827]/60 border border-white/10 rounded-lg"
           />
         </div>
 
+        {/* TITLE + ABOUT */}
         <input
           name="title"
           placeholder="Video Title"
           value={formData.title}
           onChange={handleChange}
-          className="w-full p-3 bg-gray-800 rounded"
+          className="w-full p-3 bg-[#111827]/60 border border-white/10 rounded-lg"
         />
 
         <textarea
           name="aboutCourse"
-          placeholder="About Video"
+          placeholder="About the Video..."
           value={formData.aboutCourse}
           onChange={handleChange}
-          className="w-full p-3 bg-gray-800 rounded"
+          rows="3"
+          className="w-full p-3 bg-[#111827]/60 border border-white/10 rounded-lg"
         />
 
-        {/* UPLOADS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div>
-            <label>Thumbnail</label>
+        {/* FILE UPLOAD */}
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Thumbnail */}
+          <div className="p-5 bg-[#111827]/60 border border-white/10 rounded-xl">
+            <p className="mb-2 flex items-center gap-2 text-gray-300">
+              <FaUpload className="text-blue-400" /> Thumbnail
+            </p>
             <input type="file" name="thumbnail" onChange={handleFileChange} />
             {thumbnailPreview && (
-              <img src={thumbnailPreview} className="mt-3 w-40 rounded" />
+              <img src={thumbnailPreview} className="mt-4 w-40 h-28 object-cover rounded-lg shadow border border-blue-400/30" />
             )}
           </div>
 
-          <div>
-            <label>Video File</label>
+          {/* Video File */}
+          <div className="p-5 bg-[#111827]/60 border border-white/10 rounded-xl">
+            <p className="mb-2 flex items-center gap-2 text-gray-300">
+              <FaUpload className="text-blue-400" /> Video File
+            </p>
             <input type="file" name="file" onChange={handleFileChange} />
           </div>
         </div>
 
-        <button type="submit" className="w-full bg-blue-600 py-3 rounded">
+        {/* SUBMIT */}
+        <button
+          type="submit"
+          disabled={loading}
+          className="
+            w-full text-lg font-bold py-4 rounded-xl
+            bg-gradient-to-r from-blue-600 to-cyan-500
+            shadow-lg shadow-blue-700/40
+            hover:brightness-110 transition
+            flex items-center justify-center gap-2
+          "
+        >
+          <FaSave />
           {loading ? "Saving..." : isEdit ? "Update Video" : "Upload Video"}
         </button>
 
-        {message && <p className="text-center mt-4">{message}</p>}
+        {message && <p className="text-center text-green-400">{message}</p>}
       </form>
     </div>
   );

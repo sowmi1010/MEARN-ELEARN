@@ -20,20 +20,21 @@ export default function ChatWindow() {
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
   const fileRef = useRef(null);
-  const connectedRef = useRef(false); // ✅ IMPORTANT
+  const connectedRef = useRef(false);
 
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 
-  /* ===== MY MESSAGE CHECK ===== */
   const isMyMessage = (msg) => {
     const sender =
       typeof msg.senderId === "object" ? msg.senderId._id : msg.senderId;
     return sender === currentUser._id;
   };
 
-  /* ================= SOCKET INIT ================= */
+  /* ======================================================
+     SOCKET INIT
+  ====================================================== */
   useEffect(() => {
-    if (connectedRef.current) return; // ✅ blocks double execution (React StrictMode)
+    if (connectedRef.current) return;
     connectedRef.current = true;
 
     socketRef.current = io("http://localhost:4000", {
@@ -43,29 +44,19 @@ export default function ChatWindow() {
     });
 
     socketRef.current.on("connect", () => {
-      console.log("✅ SOCKET CONNECTED:", socketRef.current.id);
       if (currentUser?._id) {
         socketRef.current.emit("joinUser", currentUser._id);
       }
     });
 
-    socketRef.current.on("disconnect", () => {
-      console.log("❌ SOCKET DISCONNECTED");
-    });
-
-    socketRef.current.on("connect_error", (err) => {
-      console.warn("⚠️ Socket error:", err.message);
-    });
-
     return () => {
-      // ❌ DO NOT fully destroy during dev refreshes
-      if (socketRef.current) {
-        socketRef.current.off();
-      }
+      if (socketRef.current) socketRef.current.off();
     };
   }, []);
 
-  /* ================= LOAD CHAT ================= */
+  /* ======================================================
+     LOAD CHAT
+  ====================================================== */
   useEffect(() => {
     if (!userId) return;
 
@@ -80,10 +71,7 @@ export default function ChatWindow() {
         const msgRes = await api.get(`/chat/message/${chatRes.data._id}`);
         setMessages(msgRes.data);
 
-        if (socketRef.current && chatRes.data._id) {
-          socketRef.current.emit("joinChat", chatRes.data._id);
-          console.log("✅ JOINED ROOM:", chatRes.data._id);
-        }
+        socketRef.current.emit("joinChat", chatRes.data._id);
       } catch (err) {
         console.error("CHAT LOAD ERROR:", err);
       }
@@ -92,45 +80,45 @@ export default function ChatWindow() {
     loadChat();
   }, [userId]);
 
-  /* ================= SCROLL + SEEN ================= */
+  /* ======================================================
+     AUTO SCROLL & SEEN
+  ====================================================== */
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
-    if (chatId && socketRef.current) {
+    if (chatId) {
       api.post("/chat/seen", { chatId });
-
       socketRef.current.emit("messageSeen", {
         chatId,
         userId: currentUser._id,
       });
     }
-  }, [messages, chatId]);
+  }, [messages]);
 
-  /* ================= RECEIVE MESSAGE ================= */
+  /* ======================================================
+     RECEIVE MESSAGE
+  ====================================================== */
   useEffect(() => {
     if (!socketRef.current) return;
 
-    const handleReceive = (msg) => {
-      setMessages((prev) => {
-        if (prev.find((m) => m._id === msg._id)) return prev;
-        return [...prev, msg];
-      });
+    const receiveHandler = (msg) => {
+      setMessages((prev) =>
+        prev.find((m) => m._id === msg._id) ? prev : [...prev, msg]
+      );
     };
 
-    socketRef.current.on("receiveMessage", handleReceive);
+    socketRef.current.on("receiveMessage", receiveHandler);
 
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.off("receiveMessage", handleReceive);
-      }
-    };
+    return () => socketRef.current.off("receiveMessage", receiveHandler);
   }, []);
 
-  /* ================= SEND TEXT ================= */
+  /* ======================================================
+     SEND TEXT
+  ====================================================== */
   const sendMessage = async (e) => {
     e.preventDefault();
 
-    if (!newMessage.trim() || !chatId || !socketRef.current) return;
+    if (!newMessage.trim()) return;
 
     try {
       const { data } = await api.post("/chat/message/text", {
@@ -140,103 +128,138 @@ export default function ChatWindow() {
       });
 
       socketRef.current.emit("sendMessage", data);
-
       setMessages((prev) => [...prev, data]);
       setNewMessage("");
-      setShowEmoji(false);
-    } catch (error) {
-      console.error("SEND ERROR:", error);
+    } catch (err) {
+      console.error("SEND ERROR:", err);
     }
   };
 
-  /* ================= IMAGE UPLOAD ================= */
+  /* ======================================================
+     SEND IMAGE
+  ====================================================== */
   const handleImage = async (e) => {
     const file = e.target.files[0];
-    if (!file || !chatId || !socketRef.current) return;
+    if (!file) return;
 
     try {
-      const formData = new FormData();
-      formData.append("image", file);
-      formData.append("chatId", chatId);
-      formData.append("type", "image");
+      const fd = new FormData();
+      fd.append("image", file);
+      fd.append("chatId", chatId);
+      fd.append("type", "image");
 
-      const { data } = await api.post("/chat/message/image", formData);
+      const { data } = await api.post("/chat/message/image", fd);
 
       socketRef.current.emit("sendMessage", data);
       setMessages((prev) => [...prev, data]);
-    } catch (error) {
-      console.error("IMAGE ERROR:", error);
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  const formatTime = (date) =>
-    new Date(date).toLocaleTimeString("en-IN", {
+  /* ======================================================
+     FORMAT TIME
+  ====================================================== */
+  const formatTime = (d) =>
+    new Date(d).toLocaleTimeString("en-IN", {
       hour: "2-digit",
       minute: "2-digit",
     });
 
+  /* ======================================================
+     UI STARTS — ★ ULTRA MODERN CHAT UI ★
+  ====================================================== */
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)] bg-[#0b0f19] text-white rounded-xl overflow-hidden">
-      {/* HEADER */}
-      <div className="flex items-center gap-4 px-6 py-4 bg-[#111827] border-b border-blue-900">
+    <div className="flex flex-col h-[calc(100vh-95px)] bg-gradient-to-br from-[#05080f] to-[#0a0f1d] text-white relative">
+
+      {/* =============== HEADER =============== */}
+      <div className="
+        flex items-center gap-4 px-6 py-4
+        bg-white/5 backdrop-blur-xl
+        border-b border-white/10 
+        shadow-lg shadow-black/30 sticky top-0 z-20
+      ">
         <img
           src={
             user?.photo
               ? `http://localhost:4000${user.photo}`
               : "/default-avatar.png"
           }
-          className="w-10 h-10 rounded-full border border-blue-500 object-cover"
+          className="
+            w-12 h-12 rounded-full object-cover 
+            border border-blue-500 shadow-lg shadow-blue-700/40
+          "
         />
-        <h2 className="font-bold text-lg">{user?.firstName || user?.name}</h2>
+        <div>
+          <h2 className="text-xl font-semibold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+            {user?.firstName || user?.name}
+          </h2>
+          <p className="text-xs text-gray-400">Active now</p>
+        </div>
       </div>
 
-      {/* MESSAGES */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 bg-[#0f172a] space-y-4">
+      {/* =============== MESSAGES =============== */}
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
         {messages.map((msg) => {
           const mine = isMyMessage(msg);
 
           return (
             <div
               key={msg._id}
-              className={`flex ${mine ? "justify-end" : "justify-start"}`}
+              className={`flex ${mine ? "justify-end" : "justify-start"} group`}
             >
               <div
-                className={`max-w-[70%] px-4 py-3 rounded-2xl ${
-                  mine ? "bg-blue-600 text-right" : "bg-[#1f2937] text-left"
-                }`}
+                className={`
+                  max-w-[70%] px-4 py-3 rounded-2xl shadow-xl
+                  backdrop-blur-lg
+                  transition-all 
+                  ${mine
+                    ? "bg-gradient-to-br from-blue-600 to-blue-800 text-right rounded-tr-none"
+                    : "bg-white/10 border border-white/10 rounded-tl-none"}
+                `}
               >
-                {msg.type === "text" && <p>{msg.text}</p>}
+                {/* TEXT */}
+                {msg.type === "text" && (
+                  <p className="leading-relaxed tracking-wide">{msg.text}</p>
+                )}
 
+                {/* IMAGE */}
                 {msg.type === "image" && (
                   <img
                     src={`http://localhost:4000${msg.imageUrl}`}
-                    className="rounded-lg max-w-xs mt-2"
+                    className="rounded-xl max-w-xs mt-2 border border-white/20 shadow-lg"
                   />
                 )}
 
-                <p className="text-xs mt-1 opacity-60">
+                {/* TIME */}
+                <p className="text-[10px] mt-1 text-gray-300">
                   {formatTime(msg.createdAt)}
                 </p>
               </div>
             </div>
           );
         })}
-
         <div ref={messagesEndRef} />
       </div>
 
-      {/* INPUT */}
+      {/* =============== INPUT BAR =============== */}
       <form
         onSubmit={sendMessage}
-        className="flex items-center gap-3 px-4 py-3 bg-[#111827] border-t border-blue-900"
+        className="
+          flex items-center gap-3 px-4 py-4 
+          bg-white/5 backdrop-blur-md 
+          border-t border-white/10 shadow-inner
+          sticky bottom-0 z-20
+        "
       >
         <FaSmile
-          onClick={() => setShowEmoji((prev) => !prev)}
-          className="cursor-pointer"
+          onClick={() => setShowEmoji((p) => !p)}
+          className="text-2xl text-yellow-400 cursor-pointer hover:scale-110 transition"
         />
+
         <FaImage
           onClick={() => fileRef.current.click()}
-          className="cursor-pointer"
+          className="text-xl text-green-400 cursor-pointer hover:scale-110 transition"
         />
         <input type="file" hidden ref={fileRef} onChange={handleImage} />
 
@@ -244,20 +267,33 @@ export default function ChatWindow() {
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Type a message..."
-          className="flex-1 px-4 py-2 rounded-full bg-[#1e293b] outline-none"
+          className="
+            flex-1 px-4 py-3 rounded-full text-sm
+            bg-[#0f1a2b] border border-white/10 
+            focus:ring-2 focus:ring-blue-600
+            outline-none shadow-inner
+          "
         />
 
-        <button className="text-blue-500">
+        <button
+          className="
+            bg-gradient-to-r from-blue-500 to-cyan-500 
+            px-4 py-3 rounded-full text-black 
+            shadow-lg shadow-blue-500/40 
+            hover:opacity-90 active:scale-95 transition
+          "
+        >
           <FaPaperPlane />
         </button>
       </form>
 
-      {/* EMOJIS */}
+      {/* =============== EMOJI PICKER =============== */}
       {showEmoji && (
-        <div className="absolute bottom-24 left-6 z-50">
+        <div className="absolute bottom-24 left-4 z-50 animate-fade-in">
           <Picker
             data={data}
-            onEmojiSelect={(e) => setNewMessage((prev) => prev + e.native)}
+            onEmojiSelect={(e) => setNewMessage((p) => p + e.native)}
+            theme="dark"
           />
         </div>
       )}

@@ -14,10 +14,8 @@ export default function ViewTest() {
 
   const getFile = (path) => {
     if (!path) return "";
-    const clean = path.replace(/\\/g, "/");
-    if (clean.startsWith("http")) return clean;
-    if (clean.startsWith("/")) return `${BASE}${clean}`;
-    return `${BASE}/${clean}`;
+    const clean = path.replace(/\\/g, "/").replace(/^.*uploads\//, "uploads/");
+    return clean.startsWith("http") ? clean : `${BASE}/${clean}`;
   };
 
   useEffect(() => {
@@ -26,7 +24,7 @@ export default function ViewTest() {
         const res = await api.get(`/tests/${id}`);
         setTest(res.data);
       } catch (err) {
-        console.error(err);
+        console.error("Test load failed:", err);
       } finally {
         setLoading(false);
       }
@@ -37,47 +35,63 @@ export default function ViewTest() {
 
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center text-white bg-black">
+      <div className="min-h-screen flex justify-center items-center bg-[#020617] text-orange-400 text-xl">
         Loading Test...
       </div>
     );
 
   if (!test)
     return (
-      <div className="min-h-screen flex items-center justify-center text-red-400 bg-black">
+      <div className="min-h-screen flex justify-center items-center bg-[#020617] text-red-400 text-xl">
         Test not found
       </div>
     );
 
   return (
-    <div className="min-h-screen bg-[#050813] text-white px-6 py-10">
-
+    <div className="min-h-screen bg-gradient-to-br from-[#020617] via-[#0a1124] to-[#1e293b] text-white px-6 py-10">
       {/* MAIN CARD */}
-      <div className="max-w-6xl mx-auto backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-2xl grid md:grid-cols-3 gap-6">
-
-        {/* TEST PREVIEW */}
-        <div className="md:col-span-2 space-y-5">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <FaFileAlt className="text-orange-400" />
+      <div
+        className="
+        max-w-8xl mx-auto
+        bg-white/5 backdrop-blur-xl 
+        border border-white/10 
+        rounded-3xl p-8 
+        shadow-2xl shadow-orange-900/20
+        grid md:grid-cols-3 gap-6
+      "
+      >
+        {/* LEFT — TEST FILE VIEW */}
+        <div className="md:col-span-2 space-y-6">
+          <h1 className="text-3xl font-bold flex items-center gap-3 text-orange-400 drop-shadow">
+            <FaFileAlt />
             {test.title}
           </h1>
 
-          <iframe
-            src={getFile(test.file)}
-            title="Test Preview"
-            className="w-full h-[520px] rounded-xl border border-orange-500/20 bg-black"
-          />
-
+          {test.file ? (
+            <iframe
+              src={getFile(test.file)}
+              title="Test PDF"
+              className="w-full h-[520px] rounded-xl border border-orange-400/20 bg-black shadow-md shadow-black/40"
+            />
+          ) : (
+            <p className="text-gray-400">No test file available</p>
+          )}
         </div>
 
-        {/* INFO PANEL */}
-        <div className="space-y-5 bg-black/40 p-6 rounded-xl border border-white/10">
-
+        {/* RIGHT — INFO PANEL */}
+        <div
+          className="
+          space-y-5 
+          bg-black/40 p-6 rounded-xl 
+          border border-white/10 
+          shadow-lg shadow-black/30
+        "
+        >
           {test.thumbnail && (
             <img
               src={getFile(test.thumbnail)}
               alt="Thumbnail"
-              className="w-full h-40 object-cover rounded-lg border border-white/10"
+              className="w-full h-44 object-cover rounded-lg border border-white/10 shadow"
             />
           )}
 
@@ -88,16 +102,15 @@ export default function ViewTest() {
           <Info label="Subject" value={test.subject} />
           <Info label="Category" value={test.category} />
         </div>
-
       </div>
     </div>
   );
 }
 
-/* Small info row */
+/* Reusable Info Component */
 const Info = ({ label, value }) => (
   <div>
-    <p className="text-xs text-gray-500">{label}</p>
-    <p className="text-sm font-medium">{value || "-"}</p>
+    <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
+    <p className="text-sm font-semibold text-orange-300 mt-1">{value || "-"}</p>
   </div>
 );

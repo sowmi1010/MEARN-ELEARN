@@ -1,4 +1,4 @@
-// ProfileSettings.jsx — FINAL UPDATED VERSION
+// src/pages/profile/ProfileSettings.jsx
 import React, { useEffect, useState, useRef } from "react";
 import api from "../../utils/api";
 import { FaCamera, FaChevronDown, FaChevronUp } from "react-icons/fa";
@@ -18,14 +18,10 @@ export default function ProfileSettings() {
   const [openPersonal, setOpenPersonal] = useState(true);
   const [openContact, setOpenContact] = useState(true);
   const [openAcademic, setOpenAcademic] = useState(false);
-  const [openParents, setOpenParents] = useState(false);
-  const [openWork, setOpenWork] = useState(false);
   const [openAddress, setOpenAddress] = useState(true);
   const [openAccount, setOpenAccount] = useState(false);
 
-  /* ============================================================
-      LOAD PROFILE
-  ============================================================ */
+  /* ---------------------- LOAD PROFILE ---------------------- */
   useEffect(() => {
     loadProfile();
   }, []);
@@ -49,19 +45,13 @@ export default function ProfileSettings() {
     setLoading(false);
   }
 
-  /* ============================================================
-      CHANGE HANDLER
-  ============================================================ */
+  /* ---------------------- INPUT CHANGE HANDLER ---------------------- */
   const change = (e) => {
     const { name, value } = e.target;
     setForm((p) => ({ ...p, [name]: value }));
 
-    // auto age calculate from dob
     if (name === "dob") {
-      if (value) {
-        const age = calcAge(value);
-        setForm((p) => ({ ...p, age }));
-      }
+      setForm((p) => ({ ...p, age: calcAge(value) }));
     }
   };
 
@@ -78,25 +68,21 @@ export default function ProfileSettings() {
       const diff = Date.now() - dob.getTime();
       const ageDt = new Date(diff);
       return Math.abs(ageDt.getUTCFullYear() - 1970);
-    } catch (e) {
+    } catch {
       return form.age || "";
     }
   };
 
-  /* ============================================================
-      VALIDATIONS
-  ============================================================ */
+  /* ---------------------- VALIDATION ---------------------- */
   const validate = () => {
     if (!form.email || !/^\S+@\S+\.\S+$/.test(form.email)) {
       toast.error("Enter a valid email");
       return false;
     }
-
     if (!form.phone || !/^[0-9]{7,15}$/.test(form.phone)) {
-      toast.error("Enter a valid phone number");
+      toast.error("Enter valid phone number");
       return false;
     }
-
     if (form.pincode && !/^\d{6}$/.test(form.pincode)) {
       toast.error("Pincode must be 6 digits");
       return false;
@@ -104,12 +90,11 @@ export default function ProfileSettings() {
     return true;
   };
 
-  /* ============================================================
-      SAVE PROFILE (IMPORTANT FIX INCLUDED)
-  ============================================================ */
+  /* ---------------------- SAVE PROFILE ---------------------- */
   async function saveProfile(e) {
     e.preventDefault();
     if (!validate()) return;
+
     setSaving(true);
 
     const data = new FormData();
@@ -127,14 +112,9 @@ export default function ProfileSettings() {
       });
 
       const updated = res.data;
-
-      // Update current page
       setForm(updated);
 
-      // Update global storage
       localStorage.setItem("user", JSON.stringify(updated));
-
-      // Tell StudentLayout to refresh sidebar
       window.dispatchEvent(new Event("user-updated"));
 
       toast.success("Profile updated successfully");
@@ -146,62 +126,80 @@ export default function ProfileSettings() {
     setSaving(false);
   }
 
-  /* ============================================================
-      UTIL
-  ============================================================ */
+  /* ---------------------- INPUT UI CLASS ---------------------- */
   const box =
-    "bg-[#111827] border border-gray-700 px-4 py-3 rounded-lg w-full text-sm text-gray-300";
+    "bg-[#111827]/60 backdrop-blur-lg border border-white/10 px-4 py-3 rounded-xl w-full text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition";
 
-  const getFirstName = () => {
-    if (form.firstName) return form.firstName;
-    if (form.name) return form.name.split(" ")[0];
-    return "";
-  };
-
-  const getLastName = () => {
-    if (form.lastName) return form.lastName;
-    if (form.name && form.name.split(" ").length > 1)
-      return form.name.split(" ")[1];
-    return "";
-  };
+  const getFirstName = () =>
+    form.firstName || form.name?.split(" ")[0] || "";
+  const getLastName = () =>
+    form.lastName ||
+    (form.name?.split(" ").length > 1 ? form.name.split(" ")[1] : "");
 
   const isStudent = role === "student";
-  const isAdmin = role === "admin";
-  const isMentor = role === "mentor";
-  const isUser = role === "user";
 
   if (loading)
-    return <div className="text-white p-10 text-xl">Loading profile...</div>;
+    return (
+      <div className="text-white p-10 text-xl">Loading profile…</div>
+    );
 
-  /* ============================================================
+  /* -------------------------------------------------------------
+      COLLAPSIBLE SECTION COMPONENT
+  ------------------------------------------------------------- */
+  const Section = ({ title, open, toggle, children }) => (
+    <div className="bg-[#0b1220] p-5 rounded-xl border border-white/10 shadow-lg">
+      <header
+        className="flex justify-between items-center cursor-pointer"
+        onClick={toggle}
+      >
+        <h4 className="text-xl font-semibold">{title}</h4>
+        {open ? <FaChevronUp /> : <FaChevronDown />}
+      </header>
+
+      {open && <div className="mt-5">{children}</div>}
+    </div>
+  );
+
+  /* -------------------------------------------------------------
       UI STARTS
-  ============================================================ */
+  ------------------------------------------------------------- */
 
   return (
     <div className="max-w-5xl mx-auto mt-6 p-6 text-white">
       <Toaster position="top-right" />
 
-      <h1 className="text-3xl font-bold mb-6">Profile Settings</h1>
+      {/* Page Title */}
+      <div className="mb-6 pb-4 border-b border-white/10">
+        <h1 className="text-4xl font-extrabold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+          Profile Settings
+        </h1>
+        <p className="text-gray-400 mt-1">
+          Manage your profile and personal details.
+        </p>
+      </div>
 
+      {/* Main Container */}
       <form
         onSubmit={saveProfile}
-        className="border border-blue-500 rounded-xl p-6 bg-[#05070d] space-y-6"
+        className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-8 space-y-10 shadow-2xl"
       >
-        {/* ================= PROFILE PHOTO ================= */}
+        {/* ---------------- PROFILE PHOTO ---------------- */}
         <div className="flex items-center gap-6">
           <div
             onClick={() => fileRef.current.click()}
-            className="w-24 h-24 rounded-full bg-gray-800 cursor-pointer relative overflow-hidden border-2 border-blue-600"
+            className="w-28 h-28 rounded-full relative cursor-pointer group border-4 border-blue-500/40 overflow-hidden hover:border-blue-500 transition"
           >
             <img
               src={preview || "/default-avatar.png"}
-              alt="avatar"
+              alt="Avatar"
               className="w-full h-full object-cover"
             />
-            <div className="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full">
-              <FaCamera />
+
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex justify-center items-center transition">
+              <FaCamera className="text-white text-xl" />
             </div>
           </div>
+
           <input
             type="file"
             ref={fileRef}
@@ -211,290 +209,248 @@ export default function ProfileSettings() {
           />
 
           <div>
-            <h3 className="text-2xl font-semibold">{getFirstName()}</h3>
-            <p className="text-gray-400">{role}</p>
+            <h3 className="text-2xl font-bold">{getFirstName()}</h3>
+            <p className="text-blue-400 capitalize">{role}</p>
           </div>
         </div>
 
-        {/* ##################################################
-                PERSONAL DETAILS
-        ################################################## */}
-        <section className="bg-[#0b1220] p-4 rounded-lg">
-          <header
-            className="flex justify-between items-center cursor-pointer"
-            onClick={() => setOpenPersonal((s) => !s)}
-          >
-            <h4 className="font-semibold">Personal Details</h4>
-            {openPersonal ? <FaChevronUp /> : <FaChevronDown />}
-          </header>
+        {/* ---------------- PERSONAL DETAILS ---------------- */}
+        <Section
+          title="Personal Details"
+          open={openPersonal}
+          toggle={() => setOpenPersonal(!openPersonal)}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <input
+              name="firstName"
+              className={box}
+              placeholder="First Name"
+              value={getFirstName()}
+              onChange={change}
+            />
 
-          {openPersonal && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-              <input
-                name="firstName"
-                placeholder="First Name"
-                className={box}
-                value={getFirstName()}
-                onChange={change}
-              />
+            <input
+              name="lastName"
+              className={box}
+              placeholder="Last Name"
+              value={getLastName()}
+              onChange={change}
+            />
 
-              <input
-                name="lastName"
-                placeholder="Last Name"
-                className={box}
-                value={getLastName()}
-                onChange={change}
-              />
+            <div />
 
-              <div />
+            <input
+              name="dob"
+              type="date"
+              className={box}
+              value={form.dob?.substring(0, 10) || ""}
+              onChange={change}
+            />
 
-              {/* DOB, AGE, GENDER */}
-              <input
-                name="dob"
-                type="date"
-                className={box}
-                value={form.dob?.substring(0, 10) || ""}
-                onChange={change}
-              />
+            <input
+              name="age"
+              className={box}
+              placeholder="Age"
+              value={form.age || ""}
+              onChange={change}
+            />
 
-              <input
-                name="age"
-                placeholder="Age"
-                className={box}
-                value={form.age || ""}
-                onChange={change}
-              />
-
-              <select
-                name="gender"
-                className={box}
-                value={form.gender || ""}
-                onChange={change}
-              >
-                <option value="">Select Gender</option>
-                <option>Male</option>
-                <option>Female</option>
-                <option>Other</option>
-              </select>
-
-              <input
-                name="blood"
-                placeholder="Blood Group"
-                className={box}
-                value={form.blood || ""}
-                onChange={change}
-              />
-
-              <input
-                name="handicap"
-                placeholder="Handicap"
-                className={box}
-                value={form.handicap || ""}
-                onChange={change}
-              />
-            </div>
-          )}
-        </section>
-
-        {/* ##################################################
-                CONTACT DETAILS
-        ################################################## */}
-        <section className="bg-[#0b1220] p-4 rounded-lg">
-          <header
-            className="flex justify-between items-center cursor-pointer"
-            onClick={() => setOpenContact((s) => !s)}
-          >
-            <h4 className="font-semibold">Contact Details</h4>
-            {openContact ? <FaChevronUp /> : <FaChevronDown />}
-          </header>
-
-          {openContact && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-              <input
-                name="email"
-                placeholder="Email"
-                className={box}
-                value={form.email || ""}
-                onChange={change}
-              />
-
-              <input
-                name="phone"
-                placeholder="Phone Number"
-                className={box}
-                value={form.phone || ""}
-                onChange={change}
-              />
-
-              <input
-                name="altPhone"
-                placeholder="Alternate Phone"
-                className={box}
-                value={form.altPhone || ""}
-                onChange={change}
-              />
-            </div>
-          )}
-        </section>
-
-        {/* ##################################################
-                STUDENT ACADEMIC (Only Student)
-        ################################################## */}
-        {isStudent && (
-          <section className="bg-[#0b1220] p-4 rounded-lg">
-            <header
-              className="flex justify-between items-center cursor-pointer"
-              onClick={() => setOpenAcademic((s) => !s)}
+            <select
+              name="gender"
+              className={box}
+              value={form.gender || ""}
+              onChange={change}
             >
-              <h4 className="font-semibold">Academic Details</h4>
-              {openAcademic ? <FaChevronUp /> : <FaChevronDown />}
-            </header>
+              <option value="">Select Gender</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Other</option>
+            </select>
 
-            {openAcademic && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                <input
-                  name="institutionName"
-                  placeholder="Institution Name"
-                  className={box}
-                  value={form.institutionName || ""}
-                  onChange={change}
-                />
+            <input
+              name="blood"
+              placeholder="Blood Group"
+              className={box}
+              value={form.blood || ""}
+              onChange={change}
+            />
 
-                <input
-                  name="standard"
-                  placeholder="Standard"
-                  className={box}
-                  value={form.standard || ""}
-                  onChange={change}
-                />
+            <input
+              name="handicap"
+              placeholder="Handicap"
+              className={box}
+              value={form.handicap || ""}
+              onChange={change}
+            />
+          </div>
+        </Section>
 
-                <input
-                  name="group"
-                  placeholder="Group"
-                  className={box}
-                  value={form.group || ""}
-                  onChange={change}
-                />
+        {/* ---------------- CONTACT ---------------- */}
+        <Section
+          title="Contact Details"
+          open={openContact}
+          toggle={() => setOpenContact(!openContact)}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <input
+              name="email"
+              className={box}
+              placeholder="Email"
+              value={form.email || ""}
+              onChange={change}
+            />
 
-                <input
-                  name="board"
-                  placeholder="Board"
-                  className={box}
-                  value={form.board || ""}
-                  onChange={change}
-                />
+            <input
+              name="phone"
+              className={box}
+              placeholder="Phone"
+              value={form.phone || ""}
+              onChange={change}
+            />
 
-                <input
-                  name="type"
-                  placeholder="Type"
-                  className={box}
-                  value={form.type || ""}
-                  onChange={change}
-                />
+            <input
+              name="altPhone"
+              className={box}
+              placeholder="Alternate Phone"
+              value={form.altPhone || ""}
+              onChange={change}
+            />
+          </div>
+        </Section>
 
-                <input
-                  name="language"
-                  placeholder="Language"
-                  className={box}
-                  value={form.language || ""}
-                  onChange={change}
-                />
-              </div>
-            )}
-          </section>
+        {/* ---------------- STUDENT ACADEMIC ---------------- */}
+        {isStudent && (
+          <Section
+            title="Academic Details"
+            open={openAcademic}
+            toggle={() => setOpenAcademic(!openAcademic)}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <input
+                name="institutionName"
+                className={box}
+                placeholder="Institution Name"
+                value={form.institutionName || ""}
+                onChange={change}
+              />
+
+              <input
+                name="standard"
+                className={box}
+                placeholder="Standard"
+                value={form.standard || ""}
+                onChange={change}
+              />
+
+              <input
+                name="group"
+                className={box}
+                placeholder="Group"
+                value={form.group || ""}
+                onChange={change}
+              />
+
+              <input
+                name="board"
+                className={box}
+                placeholder="Board"
+                value={form.board || ""}
+                onChange={change}
+              />
+
+              <input
+                name="type"
+                className={box}
+                placeholder="Type"
+                value={form.type || ""}
+                onChange={change}
+              />
+
+              <input
+                name="language"
+                className={box}
+                placeholder="Language"
+                value={form.language || ""}
+                onChange={change}
+              />
+            </div>
+          </Section>
         )}
 
-        {/* ##################################################
-                ADDRESS SECTION
-        ################################################## */}
-        <section className="bg-[#0b1220] p-4 rounded-lg">
-          <header
-            className="flex justify-between items-center cursor-pointer"
-            onClick={() => setOpenAddress((s) => !s)}
-          >
-            <h4 className="font-semibold">Address</h4>
-            {openAddress ? <FaChevronUp /> : <FaChevronDown />}
-          </header>
+        {/* ---------------- ADDRESS ---------------- */}
+        <Section
+          title="Address"
+          open={openAddress}
+          toggle={() => setOpenAddress(!openAddress)}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <input
+              name="address"
+              className={box}
+              placeholder="Address"
+              value={form.address || ""}
+              onChange={change}
+            />
 
-          {openAddress && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <input
+              name="district"
+              className={box}
+              placeholder="District"
+              value={form.district || ""}
+              onChange={change}
+            />
+
+            <input
+              name="state"
+              className={box}
+              placeholder="State"
+              value={form.state || ""}
+              onChange={change}
+            />
+
+            <input
+              name="pincode"
+              className={box}
+              placeholder="Pincode"
+              value={form.pincode || ""}
+              onChange={change}
+            />
+          </div>
+        </Section>
+
+        {/* ---------------- ACCOUNT ---------------- */}
+        <Section
+          title="Account"
+          open={openAccount}
+          toggle={() => setOpenAccount(!openAccount)}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {form.userId && (
               <input
-                name="address"
-                placeholder="Address"
-                className={box}
-                value={form.address || ""}
-                onChange={change}
+                className={box + " bg-gray-900"}
+                value={form.userId}
+                readOnly
               />
+            )}
 
-              <input
-                name="district"
-                placeholder="District"
-                className={box}
-                value={form.district || ""}
-                onChange={change}
-              />
+            <input
+              name="password"
+              type="password"
+              className={box}
+              placeholder="New Password"
+              onChange={change}
+            />
+          </div>
+        </Section>
 
-              <input
-                name="state"
-                placeholder="State"
-                className={box}
-                value={form.state || ""}
-                onChange={change}
-              />
-
-              <input
-                name="pincode"
-                placeholder="Pincode"
-                className={box}
-                value={form.pincode || ""}
-                onChange={change}
-              />
-            </div>
-          )}
-        </section>
-
-        {/* ##################################################
-                ACCOUNT SECTION
-        ################################################## */}
-        <section className="bg-[#0b1220] p-4 rounded-lg">
-          <header
-            className="flex justify-between items-center cursor-pointer"
-            onClick={() => setOpenAccount((s) => !s)}
-          >
-            <h4 className="font-semibold">Account</h4>
-            {openAccount ? <FaChevronUp /> : <FaChevronDown />}
-          </header>
-
-          {openAccount && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-              {form.userId && (
-                <input
-                  name="userId"
-                  className={box + " bg-gray-900"}
-                  value={form.userId}
-                  readOnly
-                />
-              )}
-
-              <input
-                name="password"
-                type="password"
-                placeholder="New Password"
-                className={box}
-                onChange={change}
-              />
-
-              <div />
-            </div>
-          )}
-        </section>
-
-        {/* SAVE BUTTON */}
-        <div className="flex justify-end mt-4">
+        {/* ---------------- SAVE BUTTON ---------------- */}
+        <div className="flex justify-end">
           <button
             type="submit"
-            className="bg-blue-600 px-8 py-2 rounded-lg hover:bg-blue-700 text-lg disabled:opacity-60"
             disabled={saving}
+            className="px-10 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 
+              hover:opacity-90 text-white text-lg font-semibold shadow-lg shadow-blue-600/30 
+              transition disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save Changes"}
           </button>

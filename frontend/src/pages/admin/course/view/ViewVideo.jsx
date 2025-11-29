@@ -14,10 +14,8 @@ export default function ViewVideo() {
 
   const handlePath = (p) => {
     if (!p) return "";
-    const clean = p.replace(/\\/g, "/");
-    if (clean.startsWith("http")) return clean;
-    if (clean.startsWith("/")) return `${BASE}${clean}`;
-    return `${BASE}/${clean}`;
+    const clean = p.replace(/\\/g, "/").replace(/^.*uploads\//, "uploads/");
+    return clean.startsWith("http") ? clean : `${BASE}/${clean}`;
   };
 
   useEffect(() => {
@@ -26,7 +24,7 @@ export default function ViewVideo() {
         const res = await api.get(`/videos/${id}`);
         setVideo(res.data);
       } catch (err) {
-        console.error(err);
+        console.error("Failed to fetch video:", err);
       } finally {
         setLoading(false);
       }
@@ -36,47 +34,81 @@ export default function ViewVideo() {
 
   if (loading)
     return (
-      <div className="h-screen flex items-center justify-center text-white bg-black">
-        Loading...
+      <div className="min-h-screen flex items-center justify-center bg-[#020617] text-white text-xl">
+        Loading Video...
       </div>
     );
 
   if (!video)
     return (
-      <div className="h-screen flex items-center justify-center text-red-400 bg-black">
+      <div className="min-h-screen flex items-center justify-center text-red-400 bg-[#020617] text-xl">
         Video not found
       </div>
     );
 
   return (
-    <div className="min-h-screen bg-[#050813] text-white px-6 py-10">
-      {/* MAIN CARD */}
-      <div className="max-w-6xl mx-auto backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-2xl grid md:grid-cols-3 gap-6">
-        {/* VIDEO AREA */}
-        <div className="md:col-span-2 space-y-4">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <FaRegPlayCircle className="text-cyan-400" />
-            {video.title}
+    <div className="min-h-screen bg-gradient-to-br from-[#020617] via-[#0a1124] to-[#1e293b] text-white px-6 py-10">
+      {/* MAIN WRAPPER */}
+      <div
+        className="
+        max-w-6xl mx-auto
+        bg-white/5 backdrop-blur-xl 
+        border border-white/10 
+        rounded-3xl p-8 
+        shadow-2xl shadow-cyan-900/30
+        grid md:grid-cols-3 gap-8
+      "
+      >
+        {/* LEFT — VIDEO CONTENT */}
+        <div className="md:col-span-2 space-y-6">
+          {/* TITLE */}
+          <h1 className="text-3xl font-bold flex items-center gap-3 text-cyan-400 drop-shadow">
+            <FaRegPlayCircle /> {video.title}
           </h1>
 
+          {/* PLAYER */}
           <video
             controls
             src={handlePath(video.file)}
-            className="w-full rounded-xl border border-cyan-400/20"
+            className="
+              w-full h-[420px] rounded-xl 
+              border border-cyan-400/20 
+              bg-black shadow-xl shadow-black/40
+            "
           />
 
-          <p className="text-gray-400">
-            {video.aboutCourse || "No description provided"}
-          </p>
+          {/* DESCRIPTION */}
+          <div className="bg-black/40 p-4 rounded-xl border border-white/10">
+            <h3 className="text-lg font-semibold text-cyan-300 mb-1">
+              About Video
+            </h3>
+            <p className="text-gray-300">
+              {video.aboutCourse || "No description provided"}
+            </p>
+          </div>
         </div>
 
-        {/* INFO PANEL */}
-        <div className="space-y-5 bg-black/30 p-6 rounded-xl border border-white/10">
-          <img
-            src={handlePath(video.thumbnail)}
-            alt="Thumbnail"
-            className="w-full h-48 object-cover rounded-lg mb-4 border border-white/10"
-          />
+        {/* RIGHT — INFO PANEL */}
+        <div
+          className="
+          space-y-5 
+          bg-black/40 p-6 rounded-xl 
+          border border-white/10 
+          shadow-lg shadow-black/30
+        "
+        >
+          {/* THUMBNAIL */}
+          {video.thumbnail && (
+            <img
+              src={handlePath(video.thumbnail)}
+              alt="Thumbnail"
+              className="
+                w-full h-44 object-cover mb-4 
+                rounded-xl border border-white/10 
+                shadow shadow-black/40
+              "
+            />
+          )}
 
           <Info label="Group" value={video.group} />
           <Info label="Standard" value={video.standard} />
@@ -92,10 +124,12 @@ export default function ViewVideo() {
   );
 }
 
-// SMALL COMPONENT
+/* ============================
+   SMALL INFO ROW COMPONENT
+============================= */
 const Info = ({ label, value }) => (
   <div>
-    <p className="text-xs text-gray-500">{label}</p>
-    <p className="text-sm font-medium">{value || "-"}</p>
+    <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
+    <p className="text-sm font-semibold text-cyan-300 mt-1">{value || "-"}</p>
   </div>
 );

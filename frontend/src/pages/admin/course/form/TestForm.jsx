@@ -21,7 +21,7 @@ export default function TestForm() {
   const [formData, setFormData] = useState({
     group: "",
     standard: "",
-    groupCode: "",     // ✅ NEW
+    groupCode: "", // ✅ NEW
     board: "",
     language: "",
     subject: "",
@@ -77,7 +77,6 @@ export default function TestForm() {
 
           setPreview(imageUrl);
         }
-
       } catch (err) {
         console.error("Fetch Error:", err);
       }
@@ -85,7 +84,6 @@ export default function TestForm() {
 
     fetchTest();
   }, [id]);
-
 
   /* =========================
         HANDLE CHANGE
@@ -101,30 +99,23 @@ export default function TestForm() {
         groupCode: "",
         subject: "",
       });
-    }
-
-    else if (name === "standard") {
+    } else if (name === "standard") {
       setFormData({
         ...formData,
         standard: value,
         groupCode: "",
         subject: "",
       });
-    }
-
-    else if (name === "groupCode") {
+    } else if (name === "groupCode") {
       setFormData({
         ...formData,
         groupCode: value,
         subject: "",
       });
-    }
-
-    else {
+    } else {
       setFormData({ ...formData, [name]: value });
     }
   };
-
 
   /* =========================
        SMART SUBJECTS
@@ -147,17 +138,13 @@ export default function TestForm() {
     }
 
     // 11th & 12th (BIO / COMPUTER / COMMERCE)
-    if (
-      (standard === "11th" || standard === "12th") &&
-      groupCode
-    ) {
+    if ((standard === "11th" || standard === "12th") && groupCode) {
       const key = `${standard}-${groupCode.toUpperCase()}`;
       return subjectMap.LEAF[key] || [];
     }
 
     return [];
   };
-
 
   /* ✅ FILE CHANGE */
   const handleFileChange = (e) => {
@@ -171,7 +158,6 @@ export default function TestForm() {
       setFile(selected);
     }
   };
-
 
   /* ✅ SUBMIT */
   const handleSubmit = async (e) => {
@@ -203,7 +189,6 @@ export default function TestForm() {
       }
 
       setTimeout(() => navigate("/admin/courses"), 1200);
-
     } catch (err) {
       console.error("Save Error:", err);
       setMessage("❌ Failed to save test");
@@ -212,21 +197,40 @@ export default function TestForm() {
     }
   };
 
-
   return (
-    <div className="p-10 bg-[#0b1120] text-white min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-[#020617] via-[#0a1025] to-[#111827] text-white px-6 py-10">
+      {/* HEADER */}
+      <div className="max-w-5xl mx-auto flex flex-col items-center mb-10">
+        <div className="flex items-center gap-4">
+          <FaFileAlt className="text-4xl text-orange-400 drop-shadow-lg" />
 
-      <h1 className="text-3xl font-bold text-center mb-10 text-orange-400 flex items-center justify-center gap-2">
-        <FaFileAlt />
-        {isEdit ? "Edit Test Paper" : "Add New Test Paper"}
-      </h1>
+          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-orange-400 via-amber-300 to-yellow-400 bg-clip-text text-transparent tracking-wide">
+            {isEdit ? "Edit Test Paper" : "Add New Test Paper"}
+          </h1>
+        </div>
 
+        <p className="text-gray-400 mt-2 text-sm">
+          Upload test papers with subject, category & thumbnail.
+        </p>
+      </div>
+
+      {/* FORM CARD */}
       <form
         onSubmit={handleSubmit}
-        className="bg-gray-900/90 max-w-6xl mx-auto rounded-2xl p-10 space-y-6 border border-gray-800"
+        className="
+        max-w-5xl mx-auto
+        bg-[#0f172a]/70
+        backdrop-blur-xl
+        rounded-3xl
+        border border-white/10
+        shadow-2xl shadow-orange-900/20
+        p-10
+        space-y-10
+      "
       >
-
-        {/* ROW 1 */}
+        {/* ========================== */}
+        {/*        BASIC FIELDS        */}
+        {/* ========================== */}
         <div className="grid md:grid-cols-5 gap-6">
           <Dropdown
             label="Group"
@@ -244,8 +248,7 @@ export default function TestForm() {
             onChange={handleChange}
           />
 
-          {(formData.standard === "11th" ||
-            formData.standard === "12th") && (
+          {(formData.standard === "11th" || formData.standard === "12th") && (
             <Dropdown
               label="Group Code"
               name="groupCode"
@@ -272,7 +275,9 @@ export default function TestForm() {
           />
         </div>
 
-        {/* ROW 2 */}
+        {/* ========================== */}
+        {/*     SUBJECT & CATEGORY     */}
+        {/* ========================== */}
         <div className="grid md:grid-cols-3 gap-6">
           <Dropdown
             label="Subject"
@@ -296,45 +301,84 @@ export default function TestForm() {
             placeholder="Test Title"
             value={formData.title}
             onChange={handleChange}
-            className="p-3 rounded-lg bg-gray-800 border border-gray-700"
+            className="
+            p-3 rounded-lg
+            bg-[#111827]/70
+            border border-white/10
+            focus:border-orange-500
+            focus:outline-none
+            transition
+          "
           />
         </div>
 
-        {/* FILES */}
+        {/* ========================== */}
+        {/*           FILES            */}
+        {/* ========================== */}
         <div className="grid md:grid-cols-2 gap-6">
-
-          <div className="bg-gray-800 p-5 rounded-xl">
-            <p className="mb-2 flex items-center gap-2">
-              <FaUpload /> Thumbnail
+          {/* Thumbnail Upload */}
+          <div
+            className="
+            p-5 rounded-xl
+            bg-[#111827]/70 
+            border border-white/10
+            hover:border-orange-500
+            transition
+          "
+          >
+            <p className="mb-2 flex items-center gap-2 text-gray-300">
+              <FaUpload className="text-orange-400" /> Upload Thumbnail
             </p>
+
             <input type="file" name="thumbnail" onChange={handleFileChange} />
 
             {preview && (
               <img
                 src={preview}
-                className="mt-4 w-40 h-28 object-cover rounded-lg"
+                className="mt-4 h-36 w-48 object-cover rounded-lg shadow-lg border border-orange-400/30"
               />
             )}
           </div>
 
-          <div className="bg-gray-800 p-5 rounded-xl">
-            <p className="mb-2 flex items-center gap-2">
-              <FaUpload /> Test File
+          {/* Test File Upload */}
+          <div
+            className="
+            p-5 rounded-xl
+            bg-[#111827]/70 
+            border border-white/10
+            hover:border-orange-500
+            transition
+          "
+          >
+            <p className="mb-2 flex items-center gap-2 text-gray-300">
+              <FaUpload className="text-orange-400" /> Upload Test File
             </p>
+
             <input type="file" name="file" onChange={handleFileChange} />
           </div>
         </div>
 
+        {/* ========================== */}
+        {/*           SUBMIT           */}
+        {/* ========================== */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-orange-600 py-3 rounded-lg font-bold flex items-center justify-center gap-2"
+          className="
+          w-full py-4 rounded-xl
+          flex items-center justify-center gap-3
+          text-lg font-semibold
+          bg-gradient-to-r from-orange-600 to-yellow-500
+          hover:brightness-110 transition 
+          shadow-lg shadow-orange-700/30
+        "
         >
+          <FaSave />
           {loading ? "Saving..." : isEdit ? "Update Test" : "Add Test"}
         </button>
 
         {message && (
-          <p className="text-center mt-4 text-green-400">{message}</p>
+          <p className="text-center text-green-400 mt-2">{message}</p>
         )}
       </form>
     </div>

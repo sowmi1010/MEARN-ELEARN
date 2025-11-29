@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+
 import {
   HiPlusCircle,
   HiUser,
-  HiUserGroup,
-  HiPencil,
   HiKey,
+  HiPencil,
   HiTrash,
 } from "react-icons/hi2";
+
 import api from "../../../utils/api";
 import Pagination from "../../../components/common/Pagination";
 
@@ -16,25 +17,24 @@ export default function MentorList() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ------------------ PAGINATION ------------------
   const [currentPage, setCurrentPage] = useState(1);
   const perPage = 5;
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
   const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-  /* LISTEN ADMIN GLOBAL SEARCH */
+  /* GLOBAL SEARCH (fixed) */
   useEffect(() => {
     const handler = (e) => {
       setSearch(e.detail);
       setCurrentPage(1);
     };
 
-    window.addEventListener("admin-global-search", handler);
-    return () => window.removeEventListener("admin-global-search", handler);
+    window.addEventListener("global-search", handler);
+    return () => window.removeEventListener("global-search", handler);
   }, []);
 
-  /* FETCH ALL MENTORS */
+  /* FETCH MENTORS */
   useEffect(() => {
     fetchMentors();
   }, []);
@@ -46,21 +46,17 @@ export default function MentorList() {
       const res = await api.get("/mentor", {
         headers: { Authorization: `Bearer ${token}` },
       });
-
       setMentors(res.data);
     } catch (err) {
-      console.error(
-        "Error fetching mentors:",
-        err.response?.data || err.message
-      );
+      console.error(err);
     } finally {
       setLoading(false);
     }
   }
 
-  /* DELETE */
+  /* DELETE MENTOR */
   async function handleDelete(id) {
-    if (!window.confirm("Delete this mentor?")) return;
+    if (!window.confirm("Are you sure you want to delete this mentor?")) return;
 
     try {
       const token = localStorage.getItem("token");
@@ -71,55 +67,58 @@ export default function MentorList() {
       setMentors((prev) => prev.filter((m) => m._id !== id));
       alert("Mentor deleted successfully");
     } catch (err) {
-      alert("Delete failed");
+      alert("Failed to delete mentor");
     }
   }
 
   /* ACCESS PERMISSION */
-  function handleAccess(mentor) {
-    navigate(`/admin/mentor-access/${mentor._id}`);
+  function handleAccess(m) {
+    navigate(`/admin/mentor-access/${m._id}`);
   }
 
-  /* FILTERED LIST */
-  const filteredMentors = mentors.filter(
-    (m) =>
-      `${m.firstName} ${m.lastName}`
-        .toLowerCase()
-        .includes(search.toLowerCase()) ||
-      m.department?.toLowerCase().includes(search.toLowerCase()) ||
-      m.type?.toLowerCase().includes(search.toLowerCase())
+  /* FILTER */
+  const filteredMentors = mentors.filter((m) =>
+    `${m.firstName} ${m.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
+    (m.department || "").toLowerCase().includes(search.toLowerCase()) ||
+    (m.type || "").toLowerCase().includes(search.toLowerCase())
   );
 
-  /* PAGINATION CALCULATIONS */
+  /* PAGINATION */
   const totalPages = Math.ceil(filteredMentors.length / perPage);
   const indexOfLast = currentPage * perPage;
   const indexOfFirst = indexOfLast - perPage;
   const currentData = filteredMentors.slice(indexOfFirst, indexOfLast);
 
   return (
-    <div className="min-h-screen bg-[#0B0F19] text-white p-6">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* HEADER */}
+    <div className="min-h-screen bg-[#050812] text-white p-6">
+      <div className="max-w-8xl mx-auto space-y-8">
+
+        {/* ================= HEADER ================= */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gradient">
+            <h1 className="text-4xl font-extrabold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent drop-shadow">
               Mentor Management
             </h1>
-            <p className="text-gray-400 text-sm mt-1">
-              Search using global bar – name, department, type...
+            <p className="text-gray-400 text-sm mt-2">
+              View, edit, delete & manage mentor access permissions.
             </p>
           </div>
 
           <div className="flex items-center gap-4">
             <Link
               to="/admin/mentors/new"
-              className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-teal-400 px-5 py-2.5 rounded-xl font-semibold shadow-md hover:scale-105 transition"
+              className="
+                flex items-center gap-2 px-6 py-3 rounded-xl 
+                bg-gradient-to-r from-blue-500 to-cyan-500 
+                shadow-lg hover:scale-105 transition
+              "
             >
-              <HiPlusCircle className="text-xl" /> Add New
+              <HiPlusCircle className="text-xl" />
+              Add Mentor
             </Link>
 
-            <div className="bg-white/5 px-5 py-3 rounded-xl border border-blue-500/10 flex items-center gap-3">
-              <HiUserGroup className="text-teal-400 text-2xl" />
+            <div className="bg-white/5 px-6 py-3 rounded-xl border border-white/10 flex items-center gap-3 shadow">
+              <HiUser className="text-cyan-400 text-2xl" />
               <span className="text-2xl font-bold">
                 {filteredMentors.length}
               </span>
@@ -127,11 +126,12 @@ export default function MentorList() {
           </div>
         </div>
 
-        {/* TABLE */}
-        <div className="bg-white/5 backdrop-blur-xl border border-blue-500/10 rounded-2xl shadow-xl overflow-hidden">
+        {/* ================= TABLE ================= */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-xl overflow-hidden">
+
           <table className="w-full text-left">
-            <thead className="bg-[#020617] text-blue-400 uppercase text-xs">
-              <tr>
+            <thead>
+              <tr className="bg-white/10 text-cyan-300 uppercase text-xs tracking-wider">
                 <th className="p-4">#</th>
                 <th className="p-4">Profile</th>
                 <th className="p-4">Name</th>
@@ -147,7 +147,7 @@ export default function MentorList() {
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan="9" className="p-10 text-center text-blue-400">
+                  <td colSpan="9" className="p-10 text-center text-cyan-300">
                     Loading mentors...
                   </td>
                 </tr>
@@ -157,61 +157,88 @@ export default function MentorList() {
                 currentData.map((m, i) => (
                   <tr
                     key={m._id}
-                    className="border-b border-blue-500/5 hover:bg-blue-500/10 transition"
+                    className="border-b border-white/5 hover:bg-white/10 transition"
                   >
                     <td className="p-4 text-gray-400">
                       {indexOfFirst + i + 1}
                     </td>
 
+                    {/* PROFILE */}
                     <td className="p-4">
                       {m.photo ? (
                         <img
                           src={`${API_URL}${m.photo}`}
-                          className="w-10 h-10 rounded-full object-cover border border-blue-500"
+                          className="w-12 h-12 rounded-full border border-cyan-400 object-cover shadow"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center">
-                          <HiUser />
+                        <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center">
+                          <HiUser className="text-gray-400" />
                         </div>
                       )}
                     </td>
 
+                    {/* NAME */}
                     <td className="p-4 font-semibold">
                       {m.firstName} {m.lastName}
                     </td>
 
-                    <td className="p-4 text-blue-400">{m.department || "—"}</td>
+                    {/* DEPARTMENT */}
+                    <td className="p-4 text-cyan-300">
+                      {m.department || "—"}
+                    </td>
 
+                    {/* TYPE */}
                     <td className="p-4">
-                      <span className="px-3 py-1 text-xs bg-indigo-500/20 border border-indigo-500/30 rounded-full">
+                      <span
+                        className="
+                          px-3 py-1 text-xs rounded-full 
+                          bg-cyan-500/20 border border-cyan-500/40
+                        "
+                      >
                         {m.type || "—"}
                       </span>
                     </td>
 
-                    <td className="p-4 text-gray-400">{m.phone || "—"}</td>
+                    {/* PHONE */}
+                    <td className="p-4 text-gray-300">{m.phone || "—"}</td>
 
+                    {/* ACCESS BTN */}
                     <td className="p-4 text-center">
                       <button
                         onClick={() => handleAccess(m)}
-                        className="px-3 py-1 bg-teal-500 rounded-lg flex gap-2 items-center justify-center"
+                        className="
+                          px-3 py-1.5 rounded-lg bg-teal-500/20 
+                          border border-teal-400/40 text-teal-300 
+                          hover:bg-teal-500/30 transition flex items-center gap-2 justify-center
+                        "
                       >
                         <HiKey /> Access
                       </button>
                     </td>
 
+                    {/* EDIT BTN */}
                     <td className="p-4 text-center">
                       <Link
                         to={`/admin/mentors/edit/${m._id}`}
-                        className="px-3 py-1 bg-blue-600 rounded-lg flex gap-2 justify-center"
+                        className="
+                          px-3 py-1.5 rounded-lg bg-blue-500/20 
+                          border border-blue-400/40 text-blue-300 
+                          hover:bg-blue-500/30 transition flex items-center gap-2 justify-center
+                        "
                       >
                         <HiPencil /> Edit
                       </Link>
                     </td>
 
+                    {/* DELETE BTN */}
                     <td className="p-4 text-center">
                       <button
                         onClick={() => handleDelete(m._id)}
-                        className="px-3 py-1 bg-red-600 rounded-lg flex gap-2 justify-center"
+                        className="
+                          px-3 py-1.5 rounded-lg bg-red-500/20 
+                          border border-red-400/40 text-red-300 
+                          hover:bg-red-500/30 transition flex items-center gap-2 justify-center
+                        "
                       >
                         <HiTrash /> Delete
                       </button>
@@ -221,8 +248,8 @@ export default function MentorList() {
 
               {!loading && filteredMentors.length === 0 && (
                 <tr>
-                  <td colSpan="9" className="p-10 text-center text-gray-500">
-                    No mentors match your search 🔍
+                  <td colSpan="9" className="p-10 text-center text-gray-500 text-lg">
+                    No mentors found.
                   </td>
                 </tr>
               )}
@@ -230,11 +257,13 @@ export default function MentorList() {
           </table>
 
           {/* PAGINATION */}
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            setCurrentPage={setCurrentPage}
-          />
+          <div className="p-4">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              setCurrentPage={setCurrentPage}
+            />
+          </div>
         </div>
       </div>
     </div>

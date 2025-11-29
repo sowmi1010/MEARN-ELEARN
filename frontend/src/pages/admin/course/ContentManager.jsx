@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import api from "./../../../utils/api";
 import Dropdown from "../../../components/common/Dropdown";
 import Pagination from "../../../components/common/Pagination";
+import useGlobalSearch from "../../../hooks/useGlobalSearch";
 
 import {
   standardOptions,
@@ -23,9 +24,7 @@ import {
   FaPlus,
 } from "react-icons/fa";
 
-/* ---------------------------------------------------
-   CONSTANT DATA
---------------------------------------------------- */
+/* CONSTANTS */
 const categories = [
   "Lesson",
   "One Word",
@@ -66,79 +65,52 @@ export default function ContentManager() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  /* ---------------------------------------------------
-     PAGINATION STATE
-  --------------------------------------------------- */
+  /* 🔍 GLOBAL SEARCH */
+  const { search } = useGlobalSearch("global-search");
+  const safeSearch = typeof search === "string" ? search.toLowerCase().trim() : "";
+
+  /* PAGINATION */
   const [currentPage, setCurrentPage] = useState(1);
   const perPage = 10;
 
-  /* ---------------------------------------------------
-     SMART SUBJECT RESOLVER
-  --------------------------------------------------- */
+  /* SUBJECT RESOLVER */
   const getSubjects = () => {
     if (!groupName) return [];
-
-    if (groupName !== "LEAF") {
-      return Array.isArray(subjectMap[groupName]) ? subjectMap[groupName] : [];
-    }
+    if (groupName !== "LEAF") return subjectMap[groupName] || [];
 
     const { standard } = filters;
     if (!standard) return [];
 
-    if (standard === "9th" || standard === "10th") {
-      return subjectMap.LEAF[standard] || [];
-    }
+    if (standard === "9th" || standard === "10th") return subjectMap.LEAF[standard];
 
-    const groupCodes = items.map((i) => (i.groupCode || "").toUpperCase());
-
-    if (groupCodes.includes("BIO MATHS")) {
-      return subjectMap.LEAF[`${standard}-BIO MATHS`] || [];
-    }
-    if (groupCodes.includes("COMPUTER")) {
-      return subjectMap.LEAF[`${standard}-COMPUTER`] || [];
-    }
-    if (groupCodes.includes("COMMERCE")) {
-      return subjectMap.LEAF[`${standard}-COMMERCE`] || [];
-    }
+    const groupCodes = items.map((i) => i.groupCode?.toUpperCase());
+    if (groupCodes.includes("BIO MATHS")) return subjectMap.LEAF[`${standard}-BIO MATHS`];
+    if (groupCodes.includes("COMPUTER")) return subjectMap.LEAF[`${standard}-COMPUTER`];
+    if (groupCodes.includes("COMMERCE")) return subjectMap.LEAF[`${standard}-COMMERCE`];
 
     return [];
   };
 
-  /* ---------------------------------------------------
-     API ENDPOINT FOR EACH TAB
-  --------------------------------------------------- */
-  const getEndpoint = () => {
-    if (activeTab === "videos") return "/videos";
-    if (activeTab === "books") return "/books";
-    if (activeTab === "notes") return "/notes";
-    if (activeTab === "tests") return "/tests";
-    if (activeTab === "quiz") return "/quizzes";
-  };
+  /* ENDPOINT */
+  const getEndpoint = () => ({
+    videos: "/videos",
+    books: "/books",
+    notes: "/notes",
+    tests: "/tests",
+    quiz: "/quizzes",
+  }[activeTab]);
 
-  /* ---------------------------------------------------
-     ITEM ACTION ROUTES
-  --------------------------------------------------- */
-  const getViewRoute = (id) =>
-    `/admin/courses/view/${activeTab.slice(0, -1)}/${id}`;
+  /* ROUTES */
+  const getViewRoute = (id) => `/admin/courses/view/${activeTab.slice(0, -1)}/${id}`;
+  const getEditRoute = (id) => `/admin/courses/${activeTab}/edit/${id}`;
 
-  const getEditRoute = (id) =>
-    `/admin/courses/${activeTab}/edit/${id}`;
+  /* THUMBNAIL FIXER */
+  const getThumbnailUrl = (item) =>
+    item?.thumbnail ? `${fileBase}/${item.thumbnail.replace(/\\/g, "/")}` : "/default-thumb.png";
 
-  /* ---------------------------------------------------
-     IMAGE THUMBNAIL FIXER
-  --------------------------------------------------- */
-  const getThumbnailUrl = (item) => {
-    if (!item?.thumbnail) return "/default-thumb.png";
-    return `${fileBase}/${item.thumbnail.replace(/\\/g, "/")}`;
-  };
-
-  /* ---------------------------------------------------
-     FETCH DATA
-  --------------------------------------------------- */
+  /* API CALL */
   useEffect(() => {
-    const delay = setTimeout(() => {
-      fetchData();
-    }, 300);
+    const delay = setTimeout(fetchData, 300);
     return () => clearTimeout(delay);
   }, [filters, activeTab]);
 
@@ -147,14 +119,11 @@ export default function ContentManager() {
       setLoading(true);
 
       const res = await api.get(getEndpoint(), {
-        params: {
-          group: groupName,
-          ...filters,
-        },
+        params: { group: groupName, ...filters },
       });
 
       setItems(Array.isArray(res.data) ? res.data : []);
-      setCurrentPage(1); // reset when filter changes
+      setCurrentPage(1);
     } catch (err) {
       console.error(err);
       setItems([]);
@@ -163,41 +132,40 @@ export default function ContentManager() {
     }
   };
 
-  /* ---------------------------------------------------
-     DELETE
-  --------------------------------------------------- */
+  /* DELETE */
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure?")) return;
+    if (!window.confirm("Delete this item?")) return;
     await api.delete(`${getEndpoint()}/${id}`);
     setItems((prev) => prev.filter((i) => i._id !== id));
   };
 
-  /* ---------------------------------------------------
-     FILTER CHANGE
-  --------------------------------------------------- */
-  const handleChange = (e) => {
-    setFilters((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
+  /* FILTER CHANGE */
+  const handleChange = (e) =>
+    setFilters((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  /* ---------------------------------------------------
-     PAGINATION LOGIC
-  --------------------------------------------------- */
-  const totalPages = Math.ceil(items.length / perPage);
+  /* GLOBAL SEARCH FILTERING */
+  const filteredItems = items.filter((item) => {
+    if (!safeSearch) return true;
+
+    return (
+      item?.title?.toLowerCase().includes(safeSearch) ||
+      item?.question?.toLowerCase().includes(safeSearch) ||
+      item?.subject?.toLowerCase().includes(safeSearch) ||
+      item?.category?.toLowerCase().includes(safeSearch)
+    );
+  });
+
+  /* PAGINATION LOGIC */
+  const totalPages = Math.ceil(filteredItems.length / perPage);
   const indexOfLast = currentPage * perPage;
   const indexOfFirst = indexOfLast - perPage;
-  const currentItems = items.slice(indexOfFirst, indexOfLast);
+  const currentItems = filteredItems.slice(indexOfFirst, indexOfLast);
 
-  /* ---------------------------------------------------
-     MAIN RETURN UI
-  --------------------------------------------------- */
   return (
     <div className="p-8 bg-[#040711] text-white min-h-screen">
 
       {/* HEADER */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+      <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold text-blue-400">
           {groupName} – Content Manager ({activeTab})
         </h1>
@@ -219,7 +187,7 @@ export default function ContentManager() {
       </div>
 
       {/* TABS */}
-      <div className="flex flex-wrap gap-3 mb-8">
+      <div className="flex gap-3 mb-8">
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -235,49 +203,25 @@ export default function ContentManager() {
         ))}
       </div>
 
-      {/* FILTERS */}
+      {/* FILTER BOX */}
       <div className="bg-[#020617]/80 p-6 rounded-2xl border border-gray-800 mb-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
 
-          <Dropdown
-            label="Standard"
-            name="standard"
-            value={filters.standard}
-            options={standardOptions[groupName] || []}
-            onChange={handleChange}
-          />
+          <Dropdown label="Standard" name="standard" value={filters.standard}
+            options={standardOptions[groupName] || []} onChange={handleChange} />
 
-          <Dropdown
-            label="Board"
-            name="board"
-            value={filters.board}
-            options={boardOptions}
-            onChange={handleChange}
-          />
+          <Dropdown label="Board" name="board" value={filters.board}
+            options={boardOptions} onChange={handleChange} />
 
-          <Dropdown
-            label="Language"
-            name="language"
-            value={filters.language}
-            options={languageOptions}
-            onChange={handleChange}
-          />
+          <Dropdown label="Language" name="language" value={filters.language}
+            options={languageOptions} onChange={handleChange} />
 
-          <Dropdown
-            label="Subject"
-            name="subject"
-            value={filters.subject}
-            options={getSubjects()}
-            onChange={handleChange}
-          />
+          <Dropdown label="Subject" name="subject" value={filters.subject}
+            options={getSubjects()} onChange={handleChange} />
 
-          <Dropdown
-            label="Category"
-            name="category"
-            value={filters.category}
-            options={categories}
-            onChange={handleChange}
-          />
+          <Dropdown label="Category" name="category" value={filters.category}
+            options={categories} onChange={handleChange} />
+
         </div>
       </div>
 
@@ -286,7 +230,7 @@ export default function ContentManager() {
         <p className="text-center text-blue-400 mt-10">Loading...</p>
       ) : currentItems.length === 0 ? (
         <p className="text-center text-gray-500 mt-10">
-          No {activeTab} found.
+          No content found.
         </p>
       ) : (
         <>
@@ -307,11 +251,8 @@ export default function ContentManager() {
 
               <tbody>
                 {currentItems.map((item, idx) => (
-                  <tr
-                    key={item._id}
-                    className="border-t border-gray-800 hover:bg-[#0b1120]"
-                  >
-                    <td className="p-4 text-gray-400">
+                  <tr key={item._id} className="border-t border-gray-800 hover:bg-[#0b1120]">
+                    <td className="p-4 text-gray-500">
                       {indexOfFirst + idx + 1}
                     </td>
 
@@ -335,23 +276,21 @@ export default function ContentManager() {
                     <td className="p-4">{item.subject}</td>
                     <td className="p-4">{item.category}</td>
 
-                    <td className="p-4 flex justify-center gap-3">
-                      <FaEye
-                        className="cursor-pointer text-blue-400"
+                    <td className="p-4 flex justify-center gap-4">
+                      <FaEye className="cursor-pointer text-blue-400 text-lg"
                         onClick={() => navigate(getViewRoute(item._id))}
                       />
-                      <FaEdit
-                        className="cursor-pointer text-yellow-400"
+                      <FaEdit className="cursor-pointer text-yellow-400 text-lg"
                         onClick={() => navigate(getEditRoute(item._id))}
                       />
-                      <FaTrash
-                        className="cursor-pointer text-red-400"
+                      <FaTrash className="cursor-pointer text-red-400 text-lg"
                         onClick={() => handleDelete(item._id)}
                       />
                     </td>
                   </tr>
                 ))}
               </tbody>
+
             </table>
           </div>
 

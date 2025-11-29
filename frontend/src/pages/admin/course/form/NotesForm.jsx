@@ -210,101 +210,131 @@ export default function NotesForm() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white px-6 py-10">
+  <div className="min-h-screen bg-gradient-to-br from-[#020617] via-[#0a1025] to-[#111827] text-white px-6 py-10">
 
-      <div className="text-center mb-10">
-        <h1 className="text-4xl font-bold flex justify-center items-center gap-3 text-purple-400">
-          {isEdit ? <FaEdit /> : <FaStickyNote />}
+    {/* PAGE HEADER */}
+    <div className="max-w-6xl mx-auto flex flex-col items-center mb-10">
+      <div className="flex items-center gap-4">
+        <FaStickyNote className="text-4xl text-purple-400 drop-shadow-lg" />
+
+        <h1 className="text-4xl font-extrabold bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent tracking-wide">
           {isEdit ? "Edit Notes" : "Create New Notes"}
         </h1>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="max-w-6xl mx-auto bg-[#0f172a] rounded-2xl p-10 space-y-8 border border-gray-800"
-      >
+      <p className="text-gray-400 mt-2 text-sm">
+        Fill in all details to publish your note content.
+      </p>
+    </div>
 
-        {/* ROW 1 */}
-        <div className="grid md:grid-cols-5 gap-6">
+    {/* FORM CONTAINER */}
+    <form
+      onSubmit={handleSubmit}
+      className="
+        max-w-6xl mx-auto
+        bg-[#0f172a]/70
+        backdrop-blur-xl
+        rounded-3xl
+        border border-white/10
+        shadow-2xl shadow-purple-900/20
+        p-10
+        space-y-10
+      "
+    >
+      {/* ========================== */}
+      {/*       ROW 1 (SELECTS)      */}
+      {/* ========================== */}
+      <div className="grid md:grid-cols-5 gap-6">
+        <Dropdown
+          label="Group"
+          name="group"
+          value={formData.group}
+          options={groupOptions}
+          onChange={handleChange}
+        />
+
+        <Dropdown
+          label="Standard"
+          name="standard"
+          value={formData.standard}
+          options={standardOptions[formData.group] || []}
+          onChange={handleChange}
+        />
+
+        {(formData.standard === "11th" || formData.standard === "12th") && (
           <Dropdown
-            label="Group"
-            name="group"
-            value={formData.group}
-            options={groupOptions}
+            label="Group Code"
+            name="groupCode"
+            value={formData.groupCode}
+            options={["BIO MATHS", "COMPUTER", "COMMERCE"]}
             onChange={handleChange}
           />
+        )}
 
-          <Dropdown
-            label="Standard"
-            name="standard"
-            value={formData.standard}
-            options={standardOptions[formData.group] || []}
-            onChange={handleChange}
-          />
+        <Dropdown
+          label="Board"
+          name="board"
+          value={formData.board}
+          options={boardOptions}
+          onChange={handleChange}
+        />
 
-          {(formData.standard === "11th" ||
-            formData.standard === "12th") && (
-            <Dropdown
-              label="Group Code"
-              name="groupCode"
-              value={formData.groupCode}
-              options={["BIO MATHS", "COMPUTER", "COMMERCE"]}
-              onChange={handleChange}
-            />
-          )}
+        <Dropdown
+          label="Language"
+          name="language"
+          value={formData.language}
+          options={languageOptions}
+          onChange={handleChange}
+        />
+      </div>
 
-          <Dropdown
-            label="Board"
-            name="board"
-            value={formData.board}
-            options={boardOptions}
-            onChange={handleChange}
-          />
+      {/* ========================== */}
+      {/*      SUBJECT / CATEGORY    */}
+      {/* ========================== */}
+      <div className="grid md:grid-cols-3 gap-6">
+        <Dropdown
+          label="Subject"
+          name="subject"
+          value={formData.subject}
+          options={getSubjects()}
+          onChange={handleChange}
+        />
 
-          <Dropdown
-            label="Language"
-            name="language"
-            value={formData.language}
-            options={languageOptions}
-            onChange={handleChange}
-          />
-        </div>
+        <Dropdown
+          label="Lesson"
+          name="lesson"
+          value={formData.lesson}
+          options={lessonOptions}
+          onChange={handleChange}
+        />
 
-        {/* ROW 2 */}
-        <div className="grid md:grid-cols-3 gap-6">
-          <Dropdown
-            label="Subject"
-            name="subject"
-            value={formData.subject}
-            options={getSubjects()}
-            onChange={handleChange}
-          />
+        <Dropdown
+          label="Category"
+          name="category"
+          value={formData.category}
+          options={categoryOptions}
+          onChange={handleChange}
+        />
+      </div>
 
-          <Dropdown
-            label="Lesson"
-            name="lesson"
-            value={formData.lesson}
-            options={lessonOptions}
-            onChange={handleChange}
-          />
-
-          <Dropdown
-            label="Category"
-            name="category"
-            value={formData.category}
-            options={categoryOptions}
-            onChange={handleChange}
-          />
-        </div>
-
-        {/* TEXT */}
+      {/* ========================== */}
+      {/*        TEXT INPUTS         */}
+      {/* ========================== */}
+      <div className="space-y-6">
         <input
           type="text"
           name="noteNumber"
           placeholder="Note Number"
           value={formData.noteNumber}
           onChange={handleChange}
-          className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700"
+          className="
+            w-full p-4 rounded-xl 
+            bg-[#111827]/70 
+            border border-white/10
+            focus:border-purple-500
+            focus:outline-none
+            transition
+          "
         />
 
         <input
@@ -313,50 +343,112 @@ export default function NotesForm() {
           placeholder="Note Title"
           value={formData.title}
           onChange={handleChange}
-          className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700"
+          className="
+            w-full p-4 rounded-xl 
+            bg-[#111827]/70 
+            border border-white/10
+            focus:border-purple-500
+            focus:outline-none
+            transition
+          "
         />
 
         <textarea
-          rows="3"
+          rows="4"
           name="description"
           placeholder="Description..."
           value={formData.description}
           onChange={handleChange}
-          className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700"
+          className="
+            w-full p-4 rounded-xl 
+            bg-[#111827]/70 
+            border border-white/10
+            focus:border-purple-500
+            focus:outline-none
+            transition
+          "
         ></textarea>
+      </div>
 
-        {/* FILES */}
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="p-6 border border-dashed border-gray-600 rounded-xl">
-            <p className="mb-2">Thumbnail</p>
-            <input type="file" name="thumbnail" onChange={handleFileChange} />
+      {/* ========================== */}
+      {/*        FILE UPLOADS        */}
+      {/* ========================== */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Thumbnail Block */}
+        <div
+          className="
+            p-6 rounded-2xl
+            bg-[#0d1425]/70
+            border border-purple-400/20
+            hover:border-purple-400/40
+            transition
+            shadow-lg shadow-purple-900/20
+          "
+        >
+          <p className="mb-3 text-sm text-gray-300">Upload Thumbnail</p>
 
-            {preview && (
-              <img
-                src={preview}
-                className="mt-4 h-40 w-56 object-cover rounded-lg"
-              />
-            )}
-          </div>
+          <input
+            type="file"
+            name="thumbnail"
+            onChange={handleFileChange}
+            className="text-gray-300"
+          />
 
-          <div className="p-6 border border-dashed border-gray-600 rounded-xl">
-            <p className="mb-2">Notes File</p>
-            <input type="file" name="file" onChange={handleFileChange} />
-          </div>
+          {preview && (
+            <img
+              src={preview}
+              className="mt-5 h-40 w-56 rounded-xl object-cover border border-white/20 shadow-lg"
+            />
+          )}
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-3 rounded-lg bg-purple-600 font-bold"
+        {/* Notes file */}
+        <div
+          className="
+            p-6 rounded-2xl
+            bg-[#0d1425]/70
+            border border-purple-400/20
+            hover:border-purple-400/40
+            transition
+            shadow-lg shadow-purple-900/20
+          "
         >
-          {loading ? "Saving..." : isEdit ? "Update Notes" : "Publish Notes"}
-        </button>
+          <p className="mb-3 text-sm text-gray-300">Upload Notes File</p>
 
-        {message && (
-          <p className="text-center text-green-400 mt-4">{message}</p>
-        )}
-      </form>
-    </div>
-  );
+          <input
+            type="file"
+            name="file"
+            onChange={handleFileChange}
+            className="text-gray-300"
+          />
+        </div>
+      </div>
+
+      {/* ========================== */}
+      {/*         SUBMIT BUTTON      */}
+      {/* ========================== */}
+      <button
+        type="submit"
+        disabled={loading}
+        className="
+          w-full py-4 rounded-xl
+          flex items-center justify-center gap-3
+          text-lg font-semibold
+          bg-gradient-to-r from-purple-600 to-fuchsia-600
+          hover:brightness-110 transition 
+          shadow-lg shadow-purple-700/30
+        "
+      >
+        <FaSave />
+        {loading ? "Saving..." : isEdit ? "Update Notes" : "Publish Notes"}
+      </button>
+
+      {/* SUCCESS MESSAGE */}
+      {message && (
+        <p className="text-center text-green-400 mt-2">{message}</p>
+      )}
+    </form>
+  </div>
+);
+
 }

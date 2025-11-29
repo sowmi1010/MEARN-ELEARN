@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  HiOutlineUserAdd,
-  HiOutlineCamera,
-  HiOutlineMail,
-  HiOutlineOfficeBuilding,
-  HiOutlineUserCircle,
-} from "react-icons/hi";
+import { HiOutlineCamera, HiOutlineArrowLeft, HiOutlineUserCircle} from "react-icons/hi2";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../../utils/api";
 
@@ -13,7 +7,12 @@ export default function AddAdmin() {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const [formData, setFormData] = useState({
+  const [photo, setPhoto] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const [form, setForm] = useState({
     firstName: "",
     lastName: "",
     dob: "",
@@ -43,11 +42,9 @@ export default function AddAdmin() {
     password: "",
   });
 
-  const [photo, setPhoto] = useState(null);
-  const [existingPhoto, setExistingPhoto] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  // Edit mode load
+  /* ===============================================
+     LOAD ADMIN IN EDIT MODE
+  =================================================*/
   useEffect(() => {
     if (id) loadAdmin();
   }, [id]);
@@ -58,282 +55,337 @@ export default function AddAdmin() {
       const res = await api.get(`/admin/detailed-admins/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setFormData({ ...res.data, password: "" });
-      if (res.data.photo) setExistingPhoto(res.data.photo);
+
+      setForm({ ...res.data, password: "" });
+
+      if (res.data?.photo) {
+        const BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
+        setPreview(BASE + res.data.photo);
+      }
     } catch (err) {
-      console.error("Error loading admin:", err);
+      console.error("Load admin error:", err);
     }
   }
 
+  /* ===============================================
+     GLOBAL SEARCH SUPPORT
+  =================================================*/
+  useEffect(() => {
+    const listener = (e) => setSearch(e.detail);
+    window.addEventListener("global-search", listener);
+    return () => window.removeEventListener("global-search", listener);
+  }, []);
+
+  /* ===============================================
+     INPUT HANDLERS
+  =================================================*/
   const handleChange = (e) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  const handleFile = (e) => setPhoto(e.target.files[0]);
+  const handleFile = (e) => {
+    if (!e.target.files[0]) return;
+    setPhoto(e.target.files[0]);
+    setPreview(URL.createObjectURL(e.target.files[0]));
+  };
 
+  /* ===============================================
+     SUBMIT HANDLER
+  =================================================*/
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
+
     try {
       const token = localStorage.getItem("token");
-      const headers = { Authorization: `Bearer ${token}` };
       const data = new FormData();
-      Object.keys(formData).forEach((key) => {
-        if (formData[key]) data.append(key, formData[key]);
+
+      Object.keys(form).forEach((key) => {
+        if (form[key]) data.append(key, form[key]);
       });
+
       if (photo) data.append("photo", photo);
 
       if (id) {
-        await api.put(`/admin/detailed-admins/${id}`, data, { headers });
-        alert("Admin updated successfully!");
+        await api.put(`/admin/detailed-admins/${id}`, data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        alert("Admin Updated Successfully!");
       } else {
-        await api.post("/admin/detailed-admin", data, { headers });
-        alert("Admin added successfully!");
+        await api.post(`/admin/detailed-admin`, data, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        alert("Admin Added Successfully!");
       }
+
       navigate("/admin/admins");
     } catch (err) {
-      console.error("Save error:", err);
+      console.error(err);
       alert("Failed to save admin");
     } finally {
       setLoading(false);
     }
   }
 
+  /* ===============================================
+     UI COMPONENTS
+  =================================================*/
+  const Input = ({ className = "", ...props }) => (
+    <input
+      {...props}
+      className={`p-3 rounded-xl bg-white/5 border border-white/10 text-white outline-none focus:ring-2 focus:ring-blue-500 transition ${className}`}
+    />
+  );
+
+  const Select = ({ name, value, onChange, options, placeholder }) => (
+    <select
+      name={name}
+      value={value}
+      onChange={onChange}
+      className="p-3 rounded-xl bg-white/5 border border-white/10 text-white outline-none focus:ring-2 focus:ring-blue-500 transition"
+    >
+      <option value="">{placeholder}</option>
+      {options.map((o) => (
+        <option key={o}>{o}</option>
+      ))}
+    </select>
+  );
+
+  const Section = ({ title }) => (
+    <div className="lg:col-span-3 mt-10 mb-2">
+      <h2 className="tracking-wide text-blue-400 font-semibold text-xs border-b border-white/10 pb-2">
+        {title}
+      </h2>
+    </div>
+  );
+
+  /* ===============================================
+     PAGE UI
+  =================================================*/
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#020617] via-[#050b24] to-[#030712] py-16 px-6 text-white">
-      <div className="max-w-7xl mx-auto bg-white/5 backdrop-blur-xl rounded-3xl p-10 border border-blue-500/10 shadow-2xl">
-        {/* ========== HEADER ========== */}
-        <div className="flex items-center justify-between mb-10 border-b border-blue-500/20 pb-6">
+    <div className="min-h-screen bg-[#020617] text-white py-12 px-6">
+      <div className="max-w-6xl mx-auto rounded-3xl bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl p-10">
+        {/* HEADER */}
+        <div className="flex items-center justify-between mb-10">
           <div className="flex items-center gap-4">
-            <div className="bg-blue-600/20 p-4 rounded-2xl">
-              <HiOutlineUserAdd className="text-blue-400 text-3xl" />
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-teal-400 flex items-center justify-center shadow-lg">
+              <HiOutlineUserCircle className="text-3xl text-black" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold tracking-wide">
-                {id ? "Edit Admin Profile" : "Create New Admin"}
+              <h1 className="text-3xl font-bold">
+                {id ? "Edit Admin" : "Add New Admin"}
               </h1>
-              <p className="text-sm text-gray-400">
-                Fill the admin details properly
+              <p className="text-gray-400 text-sm">
+                Fill all admin details correctly
               </p>
             </div>
           </div>
         </div>
 
-        {/* ========== PHOTO UPLOAD ========== */}
+        {/* PHOTO UPLOAD */}
         <div className="flex justify-center mb-12">
-          <label className="relative w-36 h-36 rounded-full border-4 border-blue-500/50 shadow-lg cursor-pointer overflow-hidden group bg-black/50">
-            {photo ? (
-              <img
-                src={URL.createObjectURL(photo)}
-                alt="Preview"
-                className="w-full h-full object-cover"
-              />
-            ) : existingPhoto ? (
-              <img
-                src={`http://localhost:4000${existingPhoto}`}
-                alt="Existing"
-                className="w-full h-full object-cover"
-              />
+          <label className="relative w-40 h-40 rounded-full overflow-hidden border-4 border-blue-500/30 bg-black/40 flex items-center justify-center cursor-pointer group">
+            {preview ? (
+              <img src={preview} className="w-full h-full object-cover" />
             ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
+              <div className="flex flex-col items-center text-gray-400">
                 <HiOutlineCamera className="text-4xl mb-1" />
-                <span className="text-xs">Upload image</span>
+                <span className="text-sm">Upload Photo</span>
               </div>
             )}
 
             <input
               type="file"
-              className="hidden"
               accept="image/*"
+              className="hidden"
               onChange={handleFile}
             />
 
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-xs text-white tracking-widest">
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center tracking-widest text-xs">
               CHANGE
             </div>
           </label>
         </div>
 
-        {/* ========== FORM ========== */}
+        {/* FORM */}
         <form
           onSubmit={handleSubmit}
           className="grid grid-cols-1 lg:grid-cols-3 gap-6"
         >
-          {/* -------- PERSONAL -------- */}
-          <Section title="Personal Info" />
+          {/* PERSONAL */}
+          <Section title="PERSONAL INFORMATION" />
           <Input
             name="firstName"
+            value={form.firstName}
             placeholder="First Name"
-            value={formData.firstName}
             onChange={handleChange}
           />
           <Input
             name="lastName"
+            value={form.lastName}
             placeholder="Last Name"
-            value={formData.lastName}
             onChange={handleChange}
           />
           <Input
             type="date"
             name="dob"
-            value={formData.dob}
+            value={form.dob}
             onChange={handleChange}
           />
 
           <Input
             name="age"
             placeholder="Age"
-            value={formData.age}
+            value={form.age}
             onChange={handleChange}
           />
           <Select
             name="gender"
-            value={formData.gender}
+            value={form.gender}
             onChange={handleChange}
-            options={["Male", "Female", "Other"]}
             placeholder="Gender"
+            options={["Male", "Female", "Other"]}
           />
           <Input
             name="blood"
             placeholder="Blood Group"
-            value={formData.blood}
+            value={form.blood}
             onChange={handleChange}
           />
 
-          {/* -------- OFFICE -------- */}
-          <Section title="Office Info" />
+          {/* OFFICE */}
+          <Section title="OFFICE INFORMATION" />
           <Input
             name="branchName"
             placeholder="Branch Name"
-            value={formData.branchName}
+            value={form.branchName}
             onChange={handleChange}
           />
           <Input
             name="branchNo"
-            placeholder="Branch No"
-            value={formData.branchNo}
+            placeholder="Branch Number"
+            value={form.branchNo}
             onChange={handleChange}
           />
           <Input
             name="department"
             placeholder="Department"
-            value={formData.department}
+            value={form.department}
             onChange={handleChange}
           />
 
           <Input
             name="role"
             placeholder="Role"
-            value={formData.role}
+            value={form.role}
             onChange={handleChange}
           />
           <Input
             name="salary"
             placeholder="Salary"
-            value={formData.salary}
+            value={form.salary}
             onChange={handleChange}
           />
           <Select
             name="experience"
-            value={formData.experience}
+            value={form.experience}
             onChange={handleChange}
-            options={["Fresher", "1-3 years", "3-5 years", "5+ years"]}
+            options={["Fresher", "1-3 Years", "3-5 Years", "5+ Years"]}
             placeholder="Experience"
           />
 
-          {/* -------- CONTACT -------- */}
-          <Section title="Contact Info" />
+          {/* CONTACT */}
+          <Section title="CONTACT DETAILS" />
           <Input
             name="email"
-            type="email"
             placeholder="Email"
-            value={formData.email}
+            value={form.email}
             onChange={handleChange}
           />
           <Input
             name="phone"
             placeholder="Phone"
-            value={formData.phone}
+            value={form.phone}
             onChange={handleChange}
           />
           <Input
             name="altPhone"
             placeholder="Alternate Phone"
-            value={formData.altPhone}
+            value={form.altPhone}
             onChange={handleChange}
           />
 
-          {/* -------- ADDRESS -------- */}
-          <Section title="Address" />
+          {/* ADDRESS */}
+          <Section title="ADDRESS DETAILS" />
           <Input
             className="lg:col-span-3"
             name="address"
-            placeholder="Full Address"
-            value={formData.address}
+            placeholder="Complete Address"
+            value={form.address}
             onChange={handleChange}
           />
           <Input
             name="district"
             placeholder="District"
-            value={formData.district}
+            value={form.district}
             onChange={handleChange}
           />
           <Input
             name="state"
             placeholder="State"
-            value={formData.state}
+            value={form.state}
             onChange={handleChange}
           />
           <Input
             name="pincode"
             placeholder="Pincode"
-            value={formData.pincode}
+            value={form.pincode}
             onChange={handleChange}
           />
 
-          {/* -------- EXTRA -------- */}
-          <Section title="Extra Skills" />
+          {/* EXTRA */}
+          <Section title="ADDITIONAL DETAILS" />
           <Input
             name="language"
             placeholder="Languages Known"
-            value={formData.language}
+            value={form.language}
             onChange={handleChange}
           />
           <Input
             name="qualification"
             placeholder="Qualification"
-            value={formData.qualification}
+            value={form.qualification}
             onChange={handleChange}
           />
           <Input
             name="skills"
             placeholder="Skills"
-            value={formData.skills}
+            value={form.skills}
             onChange={handleChange}
           />
 
-          {/* -------- LOGIN -------- */}
-          <Section title="Login Credentials" />
+          {/* LOGIN */}
+          <Section title="LOGIN CREDENTIALS" />
           <Input
             name="userId"
-            placeholder="User ID"
-            value={formData.userId}
+            placeholder="Admin User ID"
+            value={form.userId}
             onChange={handleChange}
           />
           <Input
             type="password"
             name="password"
             placeholder={id ? "New Password (optional)" : "Password"}
-            value={formData.password}
+            value={form.password}
             onChange={handleChange}
             required={!id}
           />
 
-          {/* -------- BUTTON -------- */}
-          <div className="lg:col-span-3 flex justify-end pt-10">
+          {/* SUBMIT */}
+          <div className="lg:col-span-3 flex justify-end mt-10">
             <button
               type="submit"
               disabled={loading}
-              className="px-10 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:scale-105 transition font-semibold shadow-xl"
+              className="px-10 py-3 bg-gradient-to-r from-blue-600 to-teal-500 rounded-xl font-semibold shadow-xl hover:scale-105 transition"
             >
               {loading ? "Saving..." : id ? "Update Admin" : "Create Admin"}
             </button>
@@ -341,52 +393,5 @@ export default function AddAdmin() {
         </form>
       </div>
     </div>
-  );
-}
-
-/* Reusable Input */
-function Input({ className = "", ...props }) {
-  return (
-    <input
-      {...props}
-      className={`p-3 rounded-lg bg-gray-700 border border-gray-600 text-white focus:ring-2 focus:ring-blue-500 outline-none transition w-full ${className}`}
-    />
-  );
-}
-
-function Section({ title }) {
-  return (
-    <div className="lg:col-span-3 mt-6 mb-2">
-      <h3 className="text-blue-400 font-semibold tracking-widest text-sm border-b border-blue-500/20 pb-2">
-        {title.toUpperCase()}
-      </h3>
-    </div>
-  );
-}
-
-
-/* Reusable Select */
-function Select({
-  name,
-  value,
-  onChange,
-  options,
-  placeholder,
-  className = "",
-}) {
-  return (
-    <select
-      name={name}
-      value={value}
-      onChange={onChange}
-      className={`p-3 rounded-lg bg-gray-700 border border-gray-600 text-white focus:ring-2 focus:ring-blue-500 outline-none transition w-full ${className}`}
-    >
-      <option value="">{placeholder}</option>
-      {options.map((opt) => (
-        <option key={opt} value={opt}>
-          {opt}
-        </option>
-      ))}
-    </select>
   );
 }

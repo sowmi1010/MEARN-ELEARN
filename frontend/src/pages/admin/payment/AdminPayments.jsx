@@ -6,21 +6,22 @@ import "jspdf-autotable";
 import { Link } from "react-router-dom";
 import { FaFilePdf, FaFileExcel, FaUserCircle } from "react-icons/fa";
 import useGlobalSearch from "../../../hooks/useGlobalSearch";
-import Pagination from "../../../components/common/Pagination";
 
 export default function AdminPayments() {
+const { search } = useGlobalSearch("global-search");
+
   const [payments, setPayments] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const search = useGlobalSearch();
-
   const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(5);
+  const perPage = 6;
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-  // ✅ FETCH PAYMENTS
+  // =============================
+  //  FETCH PAYMENTS
+  // =============================
   useEffect(() => {
     async function fetchData() {
       if (!(user.role === "admin" || user.permissions?.includes("payments"))) {
@@ -50,34 +51,37 @@ export default function AdminPayments() {
         setLoading(false);
       }
     }
-
     fetchData();
   }, []);
 
-  // ✅ APPLY GLOBAL SEARCH FILTER (FIXED)
+  // =============================
+  //  GLOBAL SEARCH (string only)
+  // =============================
   useEffect(() => {
-    if (!search || typeof search !== "string") {
+    const value = String(search || "").toLowerCase();
+
+    if (!value.trim()) {
       setFiltered(payments);
       return;
     }
 
-    const f = search.toLowerCase();
+    const results = payments.filter((p) => {
+      return (
+        p?.user?.name?.toLowerCase().includes(value) ||
+        p?.user?.email?.toLowerCase().includes(value) ||
+        p?.metadata?.title?.toLowerCase().includes(value) ||
+        p?.metadata?.group?.toLowerCase().includes(value) ||
+        p?.amount?.toString().includes(value)
+      );
+    });
 
-    setFiltered(
-      payments.filter(
-        (p) =>
-          p?.user?.name?.toLowerCase().includes(f) ||
-          p?.user?.email?.toLowerCase().includes(f) ||
-          p?.metadata?.title?.toLowerCase().includes(f) ||
-          p?.metadata?.group?.toLowerCase().includes(f) ||
-          p?.amount?.toString().includes(f)
-      )
-    );
-
+    setFiltered(results);
     setCurrentPage(1);
   }, [search, payments]);
 
-  // ✅ EXPORT EXCEL
+  // =============================
+  //  EXPORT EXCEL
+  // =============================
   const exportExcel = () => {
     if (!filtered.length) return alert("No data");
 
@@ -87,13 +91,9 @@ export default function AdminPayments() {
         Email: p.user?.email || p.user,
         Group: p.metadata?.group,
         Course: p.metadata?.title,
-        Standard: p.metadata?.standard,
-        Board: p.metadata?.board,
-        Language: p.metadata?.language,
         Amount: p.amount,
         Method: p.provider,
         Status: p.status,
-        PaymentID: p.providerPaymentId,
       }))
     );
 
@@ -102,7 +102,9 @@ export default function AdminPayments() {
     XLSX.writeFile(wb, "payments.xlsx");
   };
 
-  // ✅ EXPORT PDF
+  // =============================
+  //  EXPORT PDF
+  // =============================
   const exportPDF = () => {
     if (!filtered.length) return alert("No data");
 
@@ -127,9 +129,11 @@ export default function AdminPayments() {
 
   const totalIncome = filtered.reduce((sum, p) => sum + (p.amount || 0), 0);
 
-  const indexOfLast = currentPage * perPage;
-  const indexOfFirst = indexOfLast - perPage;
-  const currentPayments = filtered.slice(indexOfFirst, indexOfLast);
+  // Pagination
+  const last = currentPage * perPage;
+  const first = last - perPage;
+  const currentPayments = filtered.slice(first, last);
+
   const totalPages = Math.ceil(filtered.length / perPage);
 
   if (loading)
@@ -139,6 +143,7 @@ export default function AdminPayments() {
       </div>
     );
 
+  // PERMISSION BLOCK
   if (!(user.role === "admin" || user.permissions?.includes("payments"))) {
     return (
       <div className="min-h-screen bg-[#050b18] text-red-500 flex justify-center items-center text-2xl">
@@ -149,41 +154,41 @@ export default function AdminPayments() {
 
   return (
     <div className="p-8 min-h-screen bg-[#050b18] text-white">
-      <h1 className="text-4xl font-extrabold mb-10 text-blue-400">
+
+      {/* TITLE */}
+      <h1 className="text-4xl font-extrabold mb-10 text-blue-400 drop-shadow-lg">
         Payments Dashboard
       </h1>
 
-      {/* ACTION BAR */}
+      {/* ACTION BUTTONS */}
       <div className="flex flex-wrap gap-4 mb-10">
         <button
           onClick={exportExcel}
-          className="px-6 py-3 bg-green-600 rounded-xl flex items-center gap-2 hover:scale-105 transition"
+          className="px-6 py-3 bg-green-600 text-white rounded-xl flex items-center gap-2 hover:scale-105 transition shadow-lg"
         >
           <FaFileExcel /> Export Excel
         </button>
 
         <button
           onClick={exportPDF}
-          className="px-6 py-3 bg-red-600 rounded-xl flex items-center gap-2 hover:scale-105 transition"
+          className="px-6 py-3 bg-red-600 text-white rounded-xl flex items-center gap-2 hover:scale-105 transition shadow-lg"
         >
           <FaFilePdf /> Export PDF
         </button>
       </div>
 
-      {/* SUMMARY */}
+      {/* SUMMARY CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <SummaryCard title="Total Income" value={`₹${totalIncome}`} />
         <SummaryCard title="Transactions" value={filtered.length} />
-        <SummaryCard
-          title="Students"
-          value={new Set(filtered.map((p) => p?.user)).size}
-        />
+        <SummaryCard title="Students" value={new Set(filtered.map((p) => p?.user)).size} />
       </div>
 
       {/* TABLE */}
-      <div className="overflow-x-auto bg-[#071633] p-6 rounded-2xl shadow-2xl">
+      <div className="overflow-x-auto bg-[#071633] p-6 rounded-2xl shadow-2xl border border-blue-500/20">
+
         <table className="min-w-full text-sm">
-          <thead>
+          <thead className="bg-[#0d1f3a]">
             <tr className="text-blue-300 border-b border-blue-800">
               <th className="p-3">Student</th>
               <th className="p-3">Group</th>
@@ -218,12 +223,13 @@ export default function AdminPayments() {
                   ₹ {p.amount}
                 </td>
 
-                <td className="p-3 uppercase text-blue-400">{p.provider}</td>
+                <td className="p-3 uppercase text-blue-400">
+                  {p.provider}
+                </td>
 
                 <td className="p-3">
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-bold
-                    ${
+                    className={`px-3 py-1 rounded-full text-xs font-bold ${
                       p.status === "successful"
                         ? "bg-green-600"
                         : p.status === "failed"
@@ -250,14 +256,9 @@ export default function AdminPayments() {
           </tbody>
         </table>
 
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          setCurrentPage={setCurrentPage}
-        />
-
+        {/* EMPTY STATE */}
         {currentPayments.length === 0 && (
-          <p className="text-center p-10 text-gray-400">
+          <p className="text-center p-10 text-gray-400 text-lg">
             No payment records found.
           </p>
         )}
@@ -268,8 +269,8 @@ export default function AdminPayments() {
 
 function SummaryCard({ title, value }) {
   return (
-    <div className="p-6 bg-gradient-to-br from-blue-700 to-indigo-800 rounded-2xl shadow-2xl hover:scale-105 transition">
-      <p className="text-white/70">{title}</p>
+    <div className="p-6 bg-gradient-to-br from-blue-700 via-indigo-700 to-purple-700 rounded-2xl shadow-2xl hover:scale-105 transition border border-blue-400/30">
+      <p className="text-white/70 text-sm">{title}</p>
       <h2 className="text-3xl font-bold mt-2">{value}</h2>
     </div>
   );

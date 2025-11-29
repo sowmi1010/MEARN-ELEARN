@@ -11,17 +11,21 @@ import {
 
 export default function TopCoursesChart({ courses = [] }) {
 
-  // ✅ SORT + FORMAT REAL DATA
+  // =====================================================
+  // ✔ Prepare clean + sorted + safe chart dataset
+  // =====================================================
   const data = useMemo(() => {
     if (!Array.isArray(courses)) return [];
 
     return courses
       .map((c) => ({
-        name: c?.title || "Untitled",
-        enrollments: c?.enrolledUsers?.length || 0,
+        name: c?.title?.length > 28 ? c.title.slice(0, 28) + "..." : c?.title || "Untitled",
+        enrollments: Array.isArray(c?.enrolledUsers)
+          ? c.enrolledUsers.length
+          : Number(c?.enrolledCount || 0),
       }))
-      .sort((a, b) => b.enrollments - a.enrollments) // ✅ highest first
-      .slice(0, 6); // ✅ top 6 only
+      .sort((a, b) => b.enrollments - a.enrollments)
+      .slice(0, 6); // top 6
   }, [courses]);
 
   return (
@@ -43,16 +47,18 @@ export default function TopCoursesChart({ courses = [] }) {
           No course data available
         </p>
       ) : (
-        <ResponsiveContainer width="100%" height={320}>
+        <ResponsiveContainer width="100%" height={330}>
           <BarChart
             layout="vertical"
             data={data}
-            margin={{ top: 10, right: 30, left: 50, bottom: 10 }}
+            barCategoryGap={20}
+            margin={{ top: 10, right: 30, left: 70, bottom: 10 }}
           >
+            {/* Blue Glow Gradient */}
             <defs>
               <linearGradient id="blueGlow" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#3b82f6" />
-                <stop offset="100%" stopColor="#38bdf8" />
+                <stop offset="0%" stopColor="#60a5fa" />
+                <stop offset="100%" stopColor="#3b82f6" />
               </linearGradient>
             </defs>
 
@@ -72,9 +78,10 @@ export default function TopCoursesChart({ courses = [] }) {
               tick={{ fill: "#9ca3af", fontSize: 12 }}
             />
 
+            {/* Tooltip */}
             <Tooltip
               cursor={{ fill: "#1e293b" }}
-              formatter={(value) => [`${value} Students`, "Enrolled"]}
+              formatter={(value) => [`${value} Students`, "Enrollments"]}
               contentStyle={{
                 backgroundColor: "#020617",
                 border: "1px solid #2563eb",
@@ -84,11 +91,14 @@ export default function TopCoursesChart({ courses = [] }) {
               }}
             />
 
+            {/* MAIN BAR */}
             <Bar
               dataKey="enrollments"
               fill="url(#blueGlow)"
               radius={[0, 12, 12, 0]}
-              barSize={20}
+              barSize={22}
+              animationDuration={1000}
+              animationBegin={200}
             />
           </BarChart>
         </ResponsiveContainer>

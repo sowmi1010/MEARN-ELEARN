@@ -12,11 +12,10 @@ export default function ViewNotes() {
 
   const BASE = "http://localhost:4000";
 
-  const getFile = (path) => {
+  const cleanPath = (path) => {
     if (!path) return "";
-    const clean = path.replace(/\\/g, "/").replace(/^.*uploads\//, "uploads/");
-    if (clean.startsWith("http")) return clean;
-    return `${BASE}/${clean}`;
+    const fixed = path.replace(/\\/g, "/").replace(/^.*uploads\//, "uploads/");
+    return fixed.startsWith("http") ? fixed : `${BASE}/${fixed}`;
   };
 
   useEffect(() => {
@@ -25,7 +24,7 @@ export default function ViewNotes() {
         const res = await api.get(`/notes/${id}`);
         setNote(res.data);
       } catch (err) {
-        console.error("Fetch error:", err);
+        console.error("Error loading notes:", err);
       } finally {
         setLoading(false);
       }
@@ -36,57 +35,71 @@ export default function ViewNotes() {
 
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050813] text-white">
+      <div className="min-h-screen bg-[#020617] text-cyan-400 flex items-center justify-center text-xl">
         Loading Notes...
       </div>
     );
 
   if (!note)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050813] text-red-400">
-        Notes not found
+      <div className="min-h-screen bg-[#020617] text-red-400 flex items-center justify-center text-xl">
+        Notes not found.
       </div>
     );
 
   return (
-    <div className="min-h-screen bg-[#050813] text-white px-6 py-10">
-      {/* MAIN */}
-      <div className="max-w-6xl mx-auto backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-2xl grid md:grid-cols-3 gap-6">
-        {/* NOTE VIEWER */}
-        <div className="md:col-span-2 space-y-5">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <FaStickyNote className="text-cyan-400" />
+    <div className="min-h-screen bg-gradient-to-br from-[#020617] via-[#0a1124] to-[#1e293b] text-white px-6 py-10">
+
+
+
+      {/* MAIN CARD */}
+      <div className="
+        max-w-8xl mx-auto 
+        grid md:grid-cols-3 gap-10 
+        p-10 
+        bg-white/5 backdrop-blur-xl 
+        border border-white/10 
+        rounded-3xl shadow-2xl shadow-cyan-900/30
+      ">
+
+        {/* LEFT SIDE — NOTES VIEW + TITLE */}
+        <div className="md:col-span-2 space-y-8">
+
+          {/* TITLE */}
+          <h1 className="text-4xl font-bold flex items-center gap-3 text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">
+            <FaStickyNote className="text-cyan-300 drop-shadow" />
             {note.title}
           </h1>
 
+          {/* PDF VIEW */}
           {note.file ? (
             <iframe
-              src={getFile(note.file)}
+              src={cleanPath(note.file)}
               title="Notes Viewer"
-              className="w-full h-[520px] rounded-xl border border-cyan-500/20 bg-black"
+              className="w-full h-[550px] rounded-2xl border border-cyan-400/30 bg-black shadow-lg"
             />
           ) : (
-            <p className="text-gray-400">No file uploaded.</p>
+            <p className="text-gray-400">No notes file available.</p>
           )}
 
           {/* DESCRIPTION */}
-          <div className="mt-4 bg-black/50 p-4 rounded-xl border border-white/10">
-            <h3 className="text-lg font-semibold mb-1 text-cyan-400">
-              Description
-            </h3>
-            <p className="text-gray-300">
-              {note.description || "No description provided"}
+          <div className="bg-black/40 p-6 rounded-xl border border-white/10">
+            <h3 className="text-lg font-bold text-cyan-300 mb-2">Description</h3>
+            <p className="text-gray-300 leading-relaxed">
+              {note.description || "No description provided."}
             </p>
           </div>
         </div>
 
-        {/* SIDE INFO */}
-        <div className="space-y-5 bg-black/40 p-6 rounded-xl border border-white/10">
+        {/* RIGHT SIDE — INFO PANEL */}
+        <div className="bg-black/40 p-6 rounded-2xl border border-white/10 shadow-xl space-y-6">
+
+          {/* THUMBNAIL */}
           {note.thumbnail && (
             <img
-              src={getFile(note.thumbnail)}
-              alt="Thumbnail"
-              className="w-full h-40 object-cover rounded-lg border border-white/10 mb-4"
+              src={cleanPath(note.thumbnail)}
+              alt="Notes Thumbnail"
+              className="w-full h-44 object-cover rounded-xl border border-cyan-400/20 shadow-lg"
             />
           )}
 
@@ -97,17 +110,18 @@ export default function ViewNotes() {
           <Info label="Subject" value={note.subject} />
           <Info label="Lesson" value={note.lesson} />
           <Info label="Category" value={note.category} />
-          <Info label="Note No" value={note.noteNumber || "-"} />
+          <Info label="Note Number" value={note.noteNumber || "-"} />
+
         </div>
       </div>
     </div>
   );
 }
 
-/* Info row */
+/* Reusable Info Component */
 const Info = ({ label, value }) => (
   <div>
-    <p className="text-xs text-gray-500">{label}</p>
-    <p className="text-sm font-medium">{value || "-"}</p>
+    <p className="text-xs text-gray-500 uppercase tracking-wider">{label}</p>
+    <p className="text-[15px] font-semibold text-cyan-300">{value || "-"}</p>
   </div>
 );

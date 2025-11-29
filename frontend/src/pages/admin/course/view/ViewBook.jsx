@@ -12,13 +12,11 @@ export default function ViewBook() {
 
   const BASE = "http://localhost:4000";
 
-  // Fix any windows / absolute path
+  // Clean uploaded file path from Windows or absolute paths
   const cleanPath = (path) => {
     if (!path) return "";
-    const cleaned = path
-      .replace(/\\/g, "/")
-      .replace(/^.*uploads\//, "uploads/");
-    return cleaned.startsWith("http") ? cleaned : `${BASE}/${cleaned}`;
+    const fixed = path.replace(/\\/g, "/").replace(/^.*uploads\//, "uploads/");
+    return fixed.startsWith("http") ? fixed : `${BASE}/${fixed}`;
   };
 
   useEffect(() => {
@@ -38,26 +36,37 @@ export default function ViewBook() {
 
   if (loading)
     return (
-      <div className="min-h-screen flex justify-center items-center bg-[#050813] text-white">
-        Loading Book...
+      <div className="min-h-screen flex justify-center items-center bg-[#020617] text-cyan-400 text-xl">
+        Loading book...
       </div>
     );
 
   if (!book)
     return (
-      <div className="min-h-screen flex justify-center items-center bg-[#050813] text-red-400">
-        Book not found
+      <div className="min-h-screen flex justify-center items-center bg-[#020617] text-red-400 text-xl">
+        Book not found.
       </div>
     );
 
   return (
-    <div className="min-h-screen bg-[#050813] text-white px-6 py-10">
+    <div className="min-h-screen bg-gradient-to-br from-[#020617] via-[#0a1124] to-[#1e293b] text-white px-6 py-10">
       {/* MAIN CARD */}
-      <div className="max-w-6xl mx-auto bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl grid md:grid-cols-3 gap-6">
-        {/* LEFT SIDE - BOOK VIEW */}
-        <div className="md:col-span-2 space-y-6">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <FaBookOpen className="text-cyan-400" />
+      <div
+        className="
+        max-w-8xl mx-auto 
+        bg-white/5 rounded-3xl 
+        shadow-2xl shadow-cyan-900/20 
+        border border-white/10 
+        backdrop-blur-lg 
+        grid md:grid-cols-3 gap-10 
+        p-10
+      "
+      >
+        {/* LEFT SIDE — PDF VIEWER & TITLE */}
+        <div className="md:col-span-2 space-y-8">
+          {/* TITLE */}
+          <h1 className="text-4xl font-bold flex items-center gap-3 text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400">
+            <FaBookOpen className="text-cyan-300 drop-shadow" />
             {book.title}
           </h1>
 
@@ -65,35 +74,36 @@ export default function ViewBook() {
           {book.file ? (
             <iframe
               src={cleanPath(book.file)}
-              title="Book PDF"
-              className="w-full h-[520px] rounded-xl border border-cyan-400/20 bg-black shadow-lg"
+              className="w-full h-[550px] rounded-2xl 
+                         border border-cyan-400/30 shadow-xl bg-black/40"
             />
           ) : (
-            <div className="text-gray-400">No book file available</div>
+            <p className="text-gray-400">No file available</p>
           )}
 
-          {/* ABOUT */}
-          <div className="bg-black/60 p-4 rounded-xl border border-white/10">
-            <h3 className="text-lg font-semibold text-cyan-400 mb-1">
-              About Book
+          {/* ABOUT SECTION */}
+          <div className="bg-black/40 p-6 rounded-xl border border-white/10">
+            <h3 className="text-lg font-bold text-cyan-300 mb-2">
+              About This Book
             </h3>
-            <p className="text-gray-300">
-              {book.about || "No description provided"}
+            <p className="text-gray-300 leading-relaxed">
+              {book.about || "No description provided."}
             </p>
           </div>
         </div>
 
-        {/* RIGHT SIDE - DETAILS */}
-        <div className="space-y-5 bg-black/50 p-6 rounded-xl border border-white/10">
+        {/* RIGHT SIDE — INFORMATION PANEL */}
+        <div className="bg-black/40 p-6 rounded-2xl border border-white/10 shadow-xl space-y-6">
           {/* THUMBNAIL */}
           {book.thumbnail && (
             <img
               src={cleanPath(book.thumbnail)}
               alt="Book Thumbnail"
-              className="w-full h-44 object-cover rounded-lg border border-white/10 mb-4"
+              className="w-full h-48 object-cover rounded-xl border border-cyan-400/20 shadow-lg"
             />
           )}
 
+          {/* DETAILS */}
           <Info label="Group" value={book.group} />
           <Info label="Standard" value={book.standard} />
           <Info label="Board" value={book.board} />
@@ -106,10 +116,10 @@ export default function ViewBook() {
   );
 }
 
-/* ✅ Small info component */
+/* Reusable Info Component */
 const Info = ({ label, value }) => (
   <div>
-    <p className="text-xs text-gray-500">{label}</p>
-    <p className="text-sm font-medium">{value || "-"}</p>
+    <p className="text-xs text-gray-500 uppercase tracking-wider">{label}</p>
+    <p className="text-[15px] font-semibold text-cyan-300">{value || "-"}</p>
   </div>
 );

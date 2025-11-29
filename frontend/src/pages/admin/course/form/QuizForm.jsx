@@ -168,17 +168,39 @@ export default function QuizForm() {
   };
 
   return (
-    <div className="p-10 bg-[#020617] text-white min-h-screen">
-      <h1 className="text-3xl font-bold mb-10 flex justify-center items-center gap-2 text-pink-400">
-        <FaQuestionCircle />
-        {isEdit ? "Edit Quiz" : "Add New Quiz"}
-      </h1>
+    <div className="min-h-screen bg-gradient-to-br from-[#020617] via-[#0a1025] to-[#111827] text-white px-6 py-10">
+      {/* HEADER */}
+      <div className="max-w-5xl mx-auto flex flex-col items-center mb-10">
+        <div className="flex items-center gap-4">
+          <FaQuestionCircle className="text-4xl text-pink-400 drop-shadow-lg" />
 
+          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 bg-clip-text text-transparent tracking-wide">
+            {isEdit ? "Edit Quiz" : "Create New Quiz"}
+          </h1>
+        </div>
+
+        <p className="text-gray-400 mt-2 text-sm">
+          Add your MCQ question with options & correct answer.
+        </p>
+      </div>
+
+      {/* FORM */}
       <form
         onSubmit={handleSubmit}
-        className="bg-gray-900 max-w-6xl mx-auto rounded-2xl p-10 space-y-6 border border-gray-800"
+        className="
+        max-w-5xl mx-auto
+        bg-[#0f172a]/70
+        backdrop-blur-xl
+        rounded-3xl
+        border border-white/10
+        shadow-2xl shadow-pink-900/20
+        p-10
+        space-y-10
+      "
       >
-        {/* ROW 1 */}
+        {/* ========================== */}
+        {/*        BASIC DROPDOWNS     */}
+        {/* ========================== */}
         <div className="grid md:grid-cols-5 gap-6">
           <Dropdown
             label="Group"
@@ -223,7 +245,9 @@ export default function QuizForm() {
           />
         </div>
 
-        {/* ROW 2 */}
+        {/* ========================== */}
+        {/*       SUBJECT / LESSON     */}
+        {/* ========================== */}
         <div className="grid md:grid-cols-2 gap-6">
           <Dropdown
             label="Subject"
@@ -242,17 +266,34 @@ export default function QuizForm() {
           />
         </div>
 
-        {/* QUESTION */}
-        <textarea
-          name="question"
-          value={formData.question}
-          onChange={handleChange}
-          rows="3"
-          placeholder="Enter quiz question..."
-          className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700"
-        />
+        {/* ========================== */}
+        {/*         QUESTION FIELD     */}
+        {/* ========================== */}
+        <div>
+          <p className="text-sm text-gray-300 mb-2">Quiz Question</p>
 
-        {/* OPTIONS */}
+          <textarea
+            name="question"
+            value={formData.question}
+            onChange={handleChange}
+            rows="4"
+            placeholder="Enter your quiz question here..."
+            className="
+            w-full p-4 rounded-xl
+            bg-[#111827]/70 
+            border border-white/10
+            focus:border-pink-500
+            focus:outline-none
+            transition
+          "
+          ></textarea>
+        </div>
+
+        {/* ========================== */}
+        {/*          OPTIONS           */}
+        {/* ========================== */}
+        <p className="text-sm text-gray-300 font-medium">Options</p>
+
         <div className="grid md:grid-cols-2 gap-4">
           {formData.options.map((opt, idx) => (
             <input
@@ -261,36 +302,66 @@ export default function QuizForm() {
               value={opt}
               onChange={(e) => handleOptionChange(idx, e.target.value)}
               placeholder={`Option ${String.fromCharCode(65 + idx)}`}
-              className="p-3 rounded-lg bg-gray-800 border border-gray-700"
+              className="
+              p-4 rounded-xl 
+              bg-[#111827]/70 
+              border border-white/10
+              focus:border-pink-500
+              focus:outline-none
+              transition
+            "
             />
           ))}
         </div>
 
-        {/* CORRECT ANSWER */}
-        <select
-          name="correctAnswerIndex"
-          value={formData.correctAnswerIndex}
-          onChange={handleChange}
-          className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700"
-        >
-          <option value="">Select Correct Answer</option>
-          <option value="0">Option A</option>
-          <option value="1">Option B</option>
-          <option value="2">Option C</option>
-          <option value="3">Option D</option>
-        </select>
+        {/* ========================== */}
+        {/*    CORRECT ANSWER SELECT   */}
+        {/* ========================== */}
+        <div>
+          <p className="text-sm text-gray-300 mb-2">Correct Answer</p>
 
+          <select
+            name="correctAnswerIndex"
+            value={formData.correctAnswerIndex}
+            onChange={handleChange}
+            className="
+            w-full p-4 rounded-xl
+            bg-[#111827]/70 
+            border border-white/10
+            focus:border-pink-500
+            focus:outline-none
+            transition
+          "
+          >
+            <option value="">Select Correct Answer</option>
+            <option value="0">Option A</option>
+            <option value="1">Option B</option>
+            <option value="2">Option C</option>
+            <option value="3">Option D</option>
+          </select>
+        </div>
+
+        {/* ========================== */}
+        {/*       SUBMIT BUTTON        */}
+        {/* ========================== */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-pink-600 py-3 rounded-lg font-bold"
+          className="
+          w-full py-4 rounded-xl
+          flex items-center justify-center gap-3
+          text-lg font-semibold
+          bg-gradient-to-r from-pink-600 to-purple-600
+          hover:brightness-110 transition 
+          shadow-lg shadow-pink-700/30
+        "
         >
-        
+          <FaSave />
           {loading ? "Saving..." : isEdit ? "Update Quiz" : "Save Quiz"}
         </button>
 
         {message && (
-          <p className="text-center mt-4 text-green-400">{message}</p>
+          <p className="text-center text-green-400 mt-2">{message}</p>
         )}
       </form>
     </div>
