@@ -156,6 +156,8 @@ const ViewQuiz = React.lazy(() => import("./pages/admin/course/view/ViewQuiz"));
 // 🔹 CHAT
 import ChatList from "./pages/admin/chat/ChatList";
 import ChatWindow from "./pages/admin/chat/ChatWindow";
+          import ProfileSettings from "./pages/common/ProfileSettings";
+
 
 // ✨ Animation Wrapper
 function PageWrapper({ children }) {
@@ -330,7 +332,8 @@ function AnimatedRoutes() {
          <Route path="/student/team/:userId" element={<ChatWindow />} />
          
 
-          <Route path="/student/settings" element={<StudentProfile />} />
+            <Route path="settings" element={<ProfileSettings />} />  
+
         </Route>
 
         {/* ================= ADMIN ROUTES ================= */}
@@ -399,6 +402,10 @@ function AnimatedRoutes() {
           {/* CHAT */}
           <Route path="team" element={<ChatList />} />
           <Route path="team/:userId" element={<ChatWindow />} />
+
+
+          <Route path="settings" element={<ProfileSettings />} />
+
         </Route>
 
         {/* Fallback */}

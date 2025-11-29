@@ -10,6 +10,9 @@ const userSchema = new mongoose.Schema(
     phone: { type: String, required: true, trim: true },
     password: { type: String, required: true },
 
+    // 💰 Wallet / Balance
+    balance: { type: Number, default: 0 },
+
     // Role & Permissions
     isSuperAdmin: { type: Boolean, default: false },
     role: {
@@ -32,14 +35,9 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-
-// Hash password before saving (only if not already hashed)
-
+// Hash password before saving (only if needed)
 userSchema.pre("save", async function (next) {
-  // Skip if not modified
   if (!this.isModified("password")) return next();
-
-  // Skip if password already hashed
   if (this.password.startsWith("$2b$")) return next();
 
   const salt = await bcrypt.genSalt(10);
@@ -47,11 +45,8 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-
-// Compare input password with hashed password
-
+// Compare password
 userSchema.methods.comparePassword = async function (candidatePassword) {
-  // If plain password stored (legacy case), fix it automatically
   if (!this.password.startsWith("$2b$")) {
     if (this.password === candidatePassword) {
       this.password = await bcrypt.hash(candidatePassword, 10);
@@ -59,13 +54,10 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
       return true;
     }
   }
-  // Normal bcrypt comparison
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-
-// Hide sensitive fields when sending user data
-
+// Remove sensitive fields in output
 userSchema.methods.toJSON = function () {
   const obj = this.toObject();
   delete obj.password;

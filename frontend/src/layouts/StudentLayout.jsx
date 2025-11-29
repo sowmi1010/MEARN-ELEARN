@@ -15,7 +15,6 @@ import {
   FaArrowRight,
   FaSignOutAlt,
 } from "react-icons/fa";
-import { GiGraduateCap } from "react-icons/gi";
 import { TbReportAnalytics } from "react-icons/tb";
 
 export default function StudentLayout() {
@@ -23,9 +22,25 @@ export default function StudentLayout() {
   const fileInputRef = useRef(null);
   const [user, setUser] = useState(null);
 
+  /* =====================================================
+        LOAD USER FROM LOCAL STORAGE
+  ===================================================== */
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) setUser(JSON.parse(savedUser));
+  }, []);
+
+  /* =====================================================
+        🔥 LISTEN FOR PROFILE UPDATE (AUTO REFRESH SIDEBAR)
+  ===================================================== */
+  useEffect(() => {
+    function refreshUser() {
+      const saved = localStorage.getItem("user");
+      if (saved) setUser(JSON.parse(saved));
+    }
+
+    window.addEventListener("user-updated", refreshUser);
+    return () => window.removeEventListener("user-updated", refreshUser);
   }, []);
 
   const handleGlobalSearch = (value) => {
@@ -42,14 +57,9 @@ export default function StudentLayout() {
   const handleBack = () => navigate(-1);
   const handleForward = () => navigate(1);
 
-  /* ===================== MENU WITH ICONS ====================== */
   const menu = [
     { to: "/student", label: "Dashboard", icon: <HiOutlineHome /> },
-    {
-      to: "/student/videos",
-      label: "Videos",
-      icon: <MdOutlineOndemandVideo />,
-    },
+    { to: "/student/videos", label: "Videos", icon: <MdOutlineOndemandVideo /> },
     { to: "/student/books", label: "Books", icon: <FiBook /> },
     { to: "/student/notes", label: "Notes", icon: <HiOutlineClipboardList /> },
     { to: "/student/tests", label: "Tests", icon: <RiTestTubeLine /> },
@@ -58,11 +68,7 @@ export default function StudentLayout() {
     { to: "/student/todo", label: "To-Do", icon: <FaTasks /> },
     { to: "/student/marks", label: "Marks", icon: <TbReportAnalytics /> },
     { to: "/student/courses", label: "Courses", icon: <RiBookOpenLine /> },
-    {
-      to: "/student/certificate",
-      label: "Certificates",
-      icon: <PiCertificate />,
-    },
+    { to: "/student/certificate", label: "Certificates", icon: <PiCertificate /> },
     { to: "/student/team", label: "Team", icon: <FiUsers /> },
     { to: "/student/settings", label: "Settings", icon: <FiSettings /> },
   ];
@@ -70,19 +76,18 @@ export default function StudentLayout() {
   return (
     <div className="flex h-screen w-full bg-[#07070f] text-gray-100">
       {/* =====================================================
-            SIDEBAR — PREMIUM UDEMY STYLE
+            SIDEBAR 
       ===================================================== */}
-      <aside
-        className="w-64 fixed top-0 left-0 h-full bg-gradient-to-b 
-        from-[#0d0d1a] to-[#0a0a14] border-r border-purple-800/30 shadow-2xl"
-      >
+      <aside className="w-64 fixed top-0 left-0 h-full bg-gradient-to-b 
+        from-[#0d0d1a] to-[#0a0a14] border-r border-purple-800/30 shadow-2xl">
+
         {/* Profile Section */}
         <div className="p-6 text-center border-b border-purple-800/30">
           <div
             onClick={() => fileInputRef.current.click()}
             className="w-20 h-20 mx-auto rounded-full overflow-hidden 
-              border-2 border-purple-500 shadow-purple-500/30 shadow-md
-              cursor-pointer hover:scale-105 transition"
+            border-2 border-purple-500 shadow-purple-500/30 shadow-md
+            cursor-pointer hover:scale-105 transition"
           >
             <img
               src={
@@ -100,12 +105,7 @@ export default function StudentLayout() {
           </h2>
           <p className="text-gray-400 text-sm">Last Try Academy</p>
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            accept="image/*"
-          />
+          <input ref={fileInputRef} type="file" className="hidden" accept="image/*" />
         </div>
 
         {/* Menu */}
@@ -116,8 +116,7 @@ export default function StudentLayout() {
               to={m.to}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium 
-                  transition-all duration-300
-                  ${
+                  transition-all duration-300 ${
                     isActive
                       ? "bg-purple-600 text-white shadow-xl shadow-purple-600/30 scale-[1.02]"
                       : "text-gray-300 hover:bg-purple-900/30 hover:text-purple-300"
@@ -147,33 +146,29 @@ export default function StudentLayout() {
             MAIN AREA
       ===================================================== */}
       <div className="flex-1 ml-64 flex flex-col">
-        {/* =================== TOP NAVBAR =================== */}
         <header
           className="h-16 bg-[#0f0f1a]/80 backdrop-blur-md 
           border-b border-purple-800/30 flex items-center justify-between 
           px-6 fixed top-0 left-64 right-0 z-20 shadow-lg"
         >
-          {/* Glass Search Bar */}
           <div
             className="flex items-center bg-[#1a1a2b]/60 backdrop-blur-xl 
-  rounded-full px-4 py-2 w-80 border border-purple-700/30"
+            rounded-full px-4 py-2 w-80 border border-purple-700/30"
           >
             <FaSearch className="text-gray-400 mr-2" />
             <input
               type="text"
               placeholder="Search lessons, quizzes, courses..."
               className="bg-transparent text-sm text-gray-200 outline-none w-full"
-              onChange={(e) => handleGlobalSearch(e.target.value)} // 🔥 GLOBAL SEARCH
+              onChange={(e) => handleGlobalSearch(e.target.value)}
             />
           </div>
 
-          {/* Buttons */}
           <div className="flex items-center gap-4">
             <button
               onClick={handleBack}
               className="w-10 h-10 bg-purple-600 text-white rounded-full 
-                flex items-center justify-center hover:bg-purple-700 
-                shadow-lg transition"
+              flex items-center justify-center hover:bg-purple-700 shadow-lg transition"
             >
               <FaArrowLeft />
             </button>
@@ -181,8 +176,7 @@ export default function StudentLayout() {
             <button
               onClick={handleForward}
               className="w-10 h-10 bg-purple-600 text-white rounded-full 
-                flex items-center justify-center hover:bg-purple-700 
-                shadow-lg transition"
+              flex items-center justify-center hover:bg-purple-700 shadow-lg transition"
             >
               <FaArrowRight />
             </button>
@@ -199,7 +193,6 @@ export default function StudentLayout() {
           </div>
         </header>
 
-        {/* =================== PAGE CONTENT =================== */}
         <main className="flex-1 mt-16 p-6 overflow-y-auto bg-[#07070f]">
           <Outlet />
         </main>

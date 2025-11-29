@@ -81,6 +81,8 @@ export default function AdminLayout() {
     { to: "students", label: "Students", icon: <HiOutlineUserGroup /> },
     { to: "payments", label: "Payments", icon: <HiOutlineCurrencyRupee /> },
     { to: "team", label: "Team", icon: <HiOutlineUserGroup /> },
+        { to: "settings", label: "Settings", icon: <HiOutlineUser /> },
+
   ];
 
   return (

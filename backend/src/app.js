@@ -94,6 +94,10 @@ const todoRoutes = require("./routes/todoRoutes")
 const marks = require("./routes/marks")
 const certificateRoutes = require("./routes/certificateRoutes")
 
+
+const profileRoutes = require("./routes/common/profileRoutes");
+
+
 /* ======================================================
    ✅ 5. Register API routes (ORDER MATTERS)
 ====================================================== */
@@ -120,6 +124,8 @@ app.use("/api/chat/user", userLookupRoutes);
 app.use("/api/todos", todoRoutes)
 app.use("/api/marks", marks)
 app.use("/api/certificates", certificateRoutes)
+app.use("/api/profile", profileRoutes);
+
 /* ======================================================
    ✅ 6. Health check
 ====================================================== */
