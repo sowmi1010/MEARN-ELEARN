@@ -1,13 +1,27 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import api from "../../../utils/api";
 import { useNavigate } from "react-router-dom";
 
 export default function Courses() {
   const navigate = useNavigate();
+
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Pagination
+  const [page, setPage] = useState(1);
+  const limit = 4;
+
+  // Global Search
+  const [search, setSearch] = useState("");
+
   const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    const handler = (e) => setSearch(e.detail || "");
+    window.addEventListener("global-search", handler);
+    return () => window.removeEventListener("global-search", handler);
+  }, []);
 
   useEffect(() => {
     loadMyCourses();
@@ -47,74 +61,112 @@ export default function Courses() {
     }
   }
 
+  /* =====================================================
+        📌 SEARCH + PAGINATION (CLIENT SIDE)
+  ===================================================== */
+  const filtered = useMemo(() => {
+    const term = search.toLowerCase();
+
+    return groups.filter((p) => {
+      return (
+        p.metadata?.group?.toLowerCase().includes(term) ||
+        p.metadata?.standard?.toLowerCase().includes(term) ||
+        p.metadata?.language?.toLowerCase().includes(term) ||
+        p.metadata?.board?.toLowerCase().includes(term) ||
+        p.metadata?.title?.toLowerCase().includes(term)
+      );
+    });
+  }, [groups, search]);
+
+  const totalPages = Math.ceil(filtered.length / limit);
+
+  const paginated = useMemo(() => {
+    const start = (page - 1) * limit;
+    return filtered.slice(start, start + limit);
+  }, [filtered, page]);
+
+  /* =====================================================
+        📌 UI START
+  ===================================================== */
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-purple-400 text-xl">
+      <div className="min-h-screen flex items-center justify-center text-purple-400 text-xl animate-pulse">
         Loading your universe...
       </div>
     );
   }
 
-  if (groups.length === 0) {
+  if (filtered.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-400">
-        No courses purchased yet
+      <div className="min-h-screen flex items-center justify-center text-gray-400 text-lg">
+        No courses found matching your search.
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#05010f] via-[#0a0320] to-[#12062f] text-white px-6 py-10 relative overflow-hidden">
+
       {/* BACKGROUND ORBS */}
       <div className="absolute top-10 left-10 w-72 h-72 bg-purple-700/20 blur-[120px] rounded-full"></div>
       <div className="absolute bottom-10 right-20 w-96 h-96 bg-pink-600/20 blur-[150px] rounded-full"></div>
 
+      {/* HEADER */}
       <h1 className="text-4xl font-extrabold text-purple-400 mb-12">
         My Learning Universe
       </h1>
 
+      {/* COURSES LIST */}
       <div className="relative border-l-2 border-purple-500/30 pl-10 space-y-16">
-        {groups.map((payment, index) => {
-          const group = formatGroup(payment.metadata?.group);
 
-          const standard = payment.metadata?.standard;
-          const board = payment.metadata?.board;
-          const language = payment.metadata?.language;
-          const title = payment.metadata?.title;
-          const groupCode = payment.metadata?.groupCode;
+        {paginated.map((payment) => {
+          const group = formatGroup(payment.metadata?.group);
+          const meta = payment.metadata;
 
           return (
             <div
               key={payment._id}
               className="relative group flex flex-col md:flex-row md:items-center gap-8 hover:translate-x-2 transition-all duration-500"
             >
-              {/* GLOW DOT */}
+              {/* DOT */}
               <span className="absolute -left-[15px] top-6 w-6 h-6 bg-purple-500 rounded-full shadow-[0_0_25px_#a855f7]"></span>
 
-              {/* CONTENT */}
-              <div className="flex-1 bg-white/5 backdrop-blur-md border border-white/10 p-8 rounded-3xl shadow-2xl">
+              {/* CARD */}
+              <div className="
+                flex-1 
+                bg-white/5 
+                backdrop-blur-md 
+                border border-white/10 
+                p-8 
+                rounded-3xl 
+                shadow-2xl 
+                hover:shadow-purple-600/20 
+                hover:border-purple-500/40 
+                transition-all
+              ">
                 <h2 className="text-3xl font-bold text-cyan-400">
                   {group} GROUP
                 </h2>
 
-                {standard && (
-                  <p className="text-gray-400 mt-2">
-                    {standard} • {board} • {language}
+                <p className="text-gray-400 mt-2">
+                  {meta.standard} • {meta.board} • {meta.language}
+                </p>
+
+                {meta.groupCode && (
+                  <p className="text-sm text-yellow-400 mt-1">
+                    {meta.groupCode}
                   </p>
                 )}
 
-                {groupCode && (
-                  <p className="text-sm text-yellow-400 mt-1">{groupCode}</p>
-                )}
-
-                {!standard && title && (
-                  <p className="text-gray-400 mt-2">{title}</p>
+                {!meta.standard && meta.title && (
+                  <p className="text-gray-400 mt-2">{meta.title}</p>
                 )}
 
                 <p className="text-sm text-purple-300 mt-3">
                   Purchased: {new Date(payment.createdAt).toDateString()}
                 </p>
 
+                {/* FOOTER */}
                 <div className="flex items-center justify-between mt-6">
                   <p className="text-2xl font-bold text-green-400">
                     ₹ {payment.amount}
@@ -124,15 +176,58 @@ export default function Courses() {
                     onClick={() =>
                       navigate(`/student/courses/${group.toLowerCase()}`)
                     }
-                    className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:scale-105 rounded-xl text-white font-semibold shadow-lg transition"
+                    className="
+                      px-6 py-3 
+                      bg-gradient-to-r from-purple-600 to-pink-600 
+                      rounded-xl 
+                      font-semibold 
+                      shadow-lg 
+                      hover:scale-105 
+                      transition
+                    "
                   >
-                    Continue Learning
+                    Continue Learning →
                   </button>
                 </div>
               </div>
             </div>
           );
         })}
+      </div>
+
+      {/* PAGINATION */}
+      <div className="flex justify-center gap-4 mt-14">
+        <button
+          onClick={() => setPage((p) => Math.max(p - 1, 1))}
+          disabled={page === 1}
+          className={`px-4 py-2 rounded-lg font-semibold transition
+            ${
+              page === 1
+                ? "bg-gray-800 text-gray-500 cursor-not-allowed"
+                : "bg-purple-600 hover:bg-purple-700"
+            }
+          `}
+        >
+          Previous
+        </button>
+
+        <span className="px-6 py-2 bg-white/10 rounded-lg backdrop-blur-md font-semibold text-purple-300">
+          {page} / {totalPages}
+        </span>
+
+        <button
+          onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+          disabled={page === totalPages}
+          className={`px-4 py-2 rounded-lg font-semibold transition
+            ${
+              page === totalPages
+                ? "bg-gray-800 text-gray-500 cursor-not-allowed"
+                : "bg-purple-600 hover:bg-purple-700"
+            }
+          `}
+        >
+          Next
+        </button>
       </div>
     </div>
   );

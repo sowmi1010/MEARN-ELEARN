@@ -1,9 +1,14 @@
+// src/pages/student/Quiz.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../../utils/api";
 import SubjectTabs from "../components/SubjectTabs";
+import Pagination from "../../../components/common/Pagination";
 import { subjectMap } from "../../../utils/courseOptions";
 
+/* --------------------------------------------
+   ACTIVE USER FILTERS
+-------------------------------------------- */
 const activeGroup = localStorage.getItem("activeGroup");
 const activeStandard = localStorage.getItem("activeStandard");
 const activeBoard = localStorage.getItem("activeBoard");
@@ -12,16 +17,22 @@ const activeCourse = localStorage.getItem("activeCourse");
 const activeGroupCode = localStorage.getItem("activeGroupCode");
 
 export default function Quiz() {
-  const navigate = useNavigate();
   const { subject } = useParams();
+  const navigate = useNavigate();
 
   const [allQuizzes, setAllQuizzes] = useState([]);
   const [subjects, setSubjects] = useState([]);
-  const [activeSubject, setActiveSubject] = useState(subject || null);
-  const [filter, setFilter] = useState("");
+  const [activeSubject, setActiveSubject] = useState(subject || "");
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
-  /* ================= SUBJECT LIST ================= */
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const perPage = 6;
+
+  /* --------------------------------------------
+     SUBJECT LIST
+  -------------------------------------------- */
   const getSubjects = () => {
     const group = activeGroup?.toUpperCase();
     const standard = activeStandard;
@@ -34,21 +45,15 @@ export default function Quiz() {
     if (standard === "9th" || standard === "10th")
       return subjectMap.LEAF?.[standard] || [];
 
-    if (standard === "11th" || standard === "12th") {
-      if (code === "BIO MATHS")
-        return subjectMap.LEAF?.[`${standard}-BIO MATHS`] || [];
-
-      if (code === "COMPUTER")
-        return subjectMap.LEAF?.[`${standard}-COMPUTER`] || [];
-
-      if (code === "COMMERCE")
-        return subjectMap.LEAF?.[`${standard}-COMMERCE`] || [];
-    }
+    if (standard === "11th" || standard === "12th")
+      return subjectMap.LEAF?.[`${standard}-${code}`] || [];
 
     return [];
   };
 
-  /* ================= LOAD QUIZZES ================= */
+  /* --------------------------------------------
+     LOAD QUIZZES
+  -------------------------------------------- */
   const loadQuizzes = async () => {
     try {
       setLoading(true);
@@ -64,20 +69,22 @@ export default function Quiz() {
           board: activeBoard,
           language: activeLanguage,
           groupCode: activeGroupCode,
-          subject: activeSubject || undefined,   // ✅ MAIN FIX
+          subject: activeSubject || undefined,
         },
       });
 
       setAllQuizzes(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      console.error("Failed to load quizzes", err);
+      console.error("Quiz load failed:", err);
       setAllQuizzes([]);
     } finally {
       setLoading(false);
     }
   };
 
-  /* ================= FIRST LOAD ================= */
+  /* --------------------------------------------
+     FIRST LOAD
+  -------------------------------------------- */
   useEffect(() => {
     setSubjects(getSubjects());
 
@@ -87,25 +94,32 @@ export default function Quiz() {
     loadQuizzes();
   }, [subject, activeSubject]);
 
-  /* ================= GLOBAL SEARCH ================= */
+  /* --------------------------------------------
+     GLOBAL SEARCH
+  -------------------------------------------- */
   useEffect(() => {
-    const handle = (e) => {
-      const text = (e?.detail || "").toString().trim();
-      setFilter(text);
+    const handler = (e) => {
+      setSearchQuery((e.detail || "").toString().trim());
+      setCurrentPage(1);
     };
 
-    window.addEventListener("global-search", handle);
-    return () => window.removeEventListener("global-search", handle);
+    window.addEventListener("global-search", handler);
+    return () => window.removeEventListener("global-search", handler);
   }, []);
 
-  /* ================= CLICK TAB ================= */
+  /* --------------------------------------------
+     SUBJECT TAB CHANGE
+  -------------------------------------------- */
   const handleSubjectChange = (sub) => {
     setActiveSubject(sub);
+    setCurrentPage(1);
     localStorage.setItem("activeSubject", sub);
-    setFilter("");
+    setSearchQuery("");
   };
 
-  /* ================= FINAL FILTER ================= */
+  /* --------------------------------------------
+     FILTERED QUIZZES
+  -------------------------------------------- */
   const filtered = useMemo(() => {
     let list = [...allQuizzes];
 
@@ -117,102 +131,129 @@ export default function Quiz() {
       );
     }
 
-    if (filter) {
-      const f = filter.toLowerCase();
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
       list = list.filter(
-        (q) =>
-          (q.subject || "").toLowerCase().includes(f) ||
-          (q.lesson || "").toLowerCase().includes(f) ||
-          (q.question || "").toLowerCase().includes(f)
+        (item) =>
+          item.subject?.toLowerCase().includes(q) ||
+          item.lesson?.toLowerCase().includes(q) ||
+          item.question?.toLowerCase().includes(q)
       );
     }
 
     return list;
-  }, [allQuizzes, activeSubject, filter]);
+  }, [allQuizzes, activeSubject, searchQuery]);
 
-  /* ================= GROUP BY LESSON ================= */
+  /* --------------------------------------------
+     GROUP BY LESSON
+  -------------------------------------------- */
   const grouped = useMemo(() => {
-    const g = {};
+    const map = {};
 
     filtered.forEach((q) => {
       const key = q.lesson || "General";
 
-      if (!g[key]) {
-        g[key] = {
+      if (!map[key]) {
+        map[key] = {
+          lesson: key,
           subject: q.subject,
-          lesson: q.lesson,
           total: 0,
-          questions: [],
+          items: [],
         };
       }
 
-      g[key].questions.push(q);
-      g[key].total++;
+      map[key].items.push(q);
+      map[key].total++;
     });
 
-    return Object.values(g);
+    return Object.values(map);
   }, [filtered]);
 
-  const handleStart = (group) => {
+  /* --------------------------------------------
+     PAGINATION
+  -------------------------------------------- */
+  const totalPages = Math.ceil(grouped.length / perPage);
+  const paginated = grouped.slice(
+    (currentPage - 1) * perPage,
+    currentPage * perPage
+  );
+
+  /* --------------------------------------------
+     START QUIZ
+  -------------------------------------------- */
+  const handleStart = (g) => {
     navigate(
-      `/student/quiz/play/${group.questions[0]._id}?count=${group.questions.length}`
+      `/student/quiz/play/${g.items[0]._id}?count=${g.items.length}`
     );
   };
 
-  /* ================= UI ================= */
+  /* --------------------------------------------
+     UI
+  -------------------------------------------- */
   return (
-    <div className="min-h-screen bg-[#0b0f1a] p-8 text-white">
+    <div className="min-h-screen bg-[#0b0f1a] text-gray-100 p-6 md:p-10">
 
-      <h1 className="text-3xl font-bold text-purple-400 mb-1">
+      {/* HEADER */}
+      <h1 className="text-2xl md:text-3xl font-extrabold text-purple-400 mb-2">
         Quiz – {activeCourse}
       </h1>
 
       <p className="text-gray-400 mb-4">
-        {activeGroup} • {activeStandard} • {activeBoard}
-        {activeSubject && (
-          <span className="text-blue-400 ml-2">/ {activeSubject}</span>
-        )}
+        {activeGroup} • {activeStandard} • {activeBoard} • {activeLanguage}
       </p>
 
+      {/* SUBJECT TABS */}
       <SubjectTabs
         subjects={subjects}
         activeSubject={activeSubject}
         onChange={handleSubjectChange}
       />
 
+      {/* SUBJECT BADGE */}
       {activeSubject && (
-        <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-700/20 border border-purple-500/40">
-          <span className="text-purple-300 text-sm">Showing:</span>
-          <span className="font-semibold text-purple-400">
+        <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 
+          rounded-full bg-purple-700/20 border border-purple-500/40 text-sm">
+          Showing:
+          <span className="font-semibold text-purple-300">
             {activeSubject}
           </span>
         </div>
       )}
 
+      {/* LOADING */}
       {loading && (
-        <p className="text-center text-gray-400 mt-10">
-          Loading quizzes...
-        </p>
+        <p className="text-center text-gray-400 mt-10">Loading quizzes...</p>
       )}
 
+      {/* EMPTY */}
       {!loading && grouped.length === 0 && (
-        <p className="text-gray-400 mt-10 text-center">
+        <p className="text-center text-gray-400 mt-16 text-lg">
           No quizzes found for{" "}
           <span className="text-purple-400">{activeSubject}</span>
         </p>
       )}
 
-      <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {grouped.map((g, i) => (
+      {/* QUIZ CARDS */}
+      <div className="grid gap-8 mt-10 sm:grid-cols-2 lg:grid-cols-3">
+        {paginated.map((g, index) => (
           <div
-            key={i}
-            className="bg-[#111827]/80 border border-purple-800/40 rounded-xl p-6 shadow-xl hover:border-purple-600 hover:shadow-purple-500/30 transition"
+            key={index}
+            className="
+              bg-[#111827]/80 
+              border border-purple-800/40 
+              rounded-xl 
+              p-6 
+              shadow-xl 
+              hover:border-purple-600 
+              hover:shadow-purple-500/30 
+              transition
+            "
           >
-            <div className="flex justify-between">
-              <span className="px-3 py-1 bg-purple-700/30 rounded text-xs">
+            <div className="flex justify-between items-center">
+              <span className="text-xs px-3 py-1 rounded bg-purple-700/30">
                 {g.subject}
               </span>
-              <span className="px-3 py-1 bg-blue-700/30 rounded text-xs">
+              <span className="text-xs px-3 py-1 rounded bg-blue-700/30">
                 {g.total} Q
               </span>
             </div>
@@ -223,13 +264,20 @@ export default function Quiz() {
 
             <button
               onClick={() => handleStart(g)}
-              className="mt-6 w-full py-2 bg-purple-600 hover:bg-purple-700 rounded-lg"
+              className="w-full mt-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition"
             >
               Start Quiz →
             </button>
           </div>
         ))}
       </div>
+
+      {/* PAGINATION */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        setCurrentPage={setCurrentPage}
+      />
     </div>
   );
 }

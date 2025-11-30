@@ -5,14 +5,17 @@ import api from "../../../utils/api";
 export default function NoteViewer() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [note, setNote] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:4000";
 
+  /* --------------------------------------------
+        LOAD NOTE
+  -------------------------------------------- */
   useEffect(() => {
-    async function loadNote() {
-      setLoading(true);
+    async function fetchNote() {
       try {
         const token = localStorage.getItem("token");
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -20,32 +23,71 @@ export default function NoteViewer() {
         const res = await api.get(`/notes/${id}`, { headers });
         setNote(res.data);
       } catch (err) {
-        console.error("Failed to load note:", err);
+        console.error("Error loading note:", err);
       } finally {
         setLoading(false);
       }
     }
 
-    loadNote();
+    fetchNote();
   }, [id]);
 
-  if (loading) return <div className="p-6 text-gray-300">Loading...</div>;
-  if (!note) return <div className="p-6 text-red-400">Note not found.</div>;
+  /* --------------------------------------------
+        LOADING STATE
+  -------------------------------------------- */
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0b0f1a] flex items-center justify-center">
+        <div className="text-gray-400 animate-pulse text-lg">Loading note…</div>
+      </div>
+    );
+  }
 
-  const filePath = (note.file || "").replace(/^\/+/, "");
+  if (!note) {
+    return (
+      <div className="min-h-screen bg-[#0b0f1a] flex flex-col items-center justify-center text-gray-300">
+        <p className="text-xl">❌ Note not found.</p>
+        <button
+          onClick={() => navigate(-1)}
+          className="mt-4 bg-purple-700 hover:bg-purple-800 px-6 py-2 rounded-lg text-white"
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
+  /* --------------------------------------------
+        FILE HANDLING
+  -------------------------------------------- */
+  const filePath = note.file?.replace(/^\/+/, "") || "";
   const fileUrl = `${BASE_URL}/${filePath}`;
 
   const isPDF = filePath.toLowerCase().endsWith(".pdf");
   const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(filePath);
   const isDoc = /\.(doc|docx)$/i.test(filePath);
 
+  /* --------------------------------------------
+        FINAL UI
+  -------------------------------------------- */
   return (
-    <div className="p-6 min-h-screen bg-[#0b0f1a] text-gray-100">
-      
-      {/* HEADER */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-extrabold text-purple-400">
+    <div className="min-h-screen bg-gradient-to-br from-[#080812] to-[#0b0f1a] p-4 sm:p-6 text-gray-100">
+
+      {/* ---------------- HEADER ---------------- */}
+      <div
+        className="
+          sticky top-0 z-30
+          flex items-center justify-between
+          backdrop-blur-xl bg-[#0d0d17]/70
+          border border-purple-900/40
+          shadow-lg shadow-black/40
+          px-4 py-4 rounded-xl mb-6
+        "
+      >
+   
+
+        <div className="flex-1 text-center">
+          <h1 className="text-xl sm:text-2xl font-bold text-purple-300 tracking-wide">
             {note.title}
           </h1>
           <p className="text-sm text-gray-400 mt-1">
@@ -53,69 +95,84 @@ export default function NoteViewer() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <a
-            href={fileUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-sm text-white"
-          >
-            Open File
-          </a>
-        </div>
+        <div className="w-20 opacity-0">btn</div>
       </div>
 
-      {/* VIEWER BOX */}
-      <div className="bg-[#081024] rounded-2xl overflow-hidden border border-purple-800/30 shadow-xl p-4">
-        
-        {isPDF ? (
-          // PDF VIEWER
+      {/* ---------------- VIEWER BOX ---------------- */}
+      <div
+        className="
+          rounded-2xl overflow-hidden
+          border border-purple-900/40
+          bg-[#0e0e18] 
+          shadow-2xl shadow-black/50
+          p-4
+        "
+      >
+        {isPDF && (
           <iframe
             src={fileUrl}
-            className="w-full h-[85vh] rounded-xl shadow-inner bg-black"
-            title={note.title}
+            title="PDF Viewer"
+            className="w-full h-[78vh] sm:h-[85vh] md:h-[88vh] bg-black rounded-xl"
           />
+        )}
 
-        ) : isImage ? (
-          // IMAGE VIEWER
+        {isImage && (
           <div className="w-full flex justify-center">
             <img
               src={fileUrl}
               alt={note.title}
-              className="max-h-[85vh] rounded-xl object-contain shadow-xl"
+              className="max-h-[80vh] rounded-xl object-contain shadow-xl"
             />
           </div>
+        )}
 
-        ) : isDoc ? (
-          // DOC / DOCX
-          <div className="p-6 text-center text-gray-300">
-            <p className="text-lg mb-3 font-medium">Word Document</p>
+        {isDoc && (
+          <div className="text-center py-10 text-gray-300">
+            <p className="text-lg mb-4 font-medium">📄 Word Document</p>
             <a
               href={fileUrl}
               target="_blank"
-              rel="noreferrer"
-              className="bg-purple-600 hover:bg-purple-700 px-5 py-2 rounded-lg inline-block"
+              rel="noopener noreferrer"
+              className="
+                px-6 py-3 bg-purple-600 hover:bg-purple-700
+                rounded-xl text-white shadow-purple-900/40 shadow-md
+              "
             >
-              Click to Open Document
+              Open Document
             </a>
           </div>
+        )}
 
-        ) : (
-          // UNKNOWN FILE
-          <div className="p-6 text-gray-300 text-center">
-            This file format cannot be previewed.
+        {!isPDF && !isImage && !isDoc && (
+          <div className="text-center text-gray-300 py-10">
+            Unknown file format.
             <br />
             <a
               href={fileUrl}
+              className="mt-3 inline-block text-purple-300 underline"
               target="_blank"
-              rel="noreferrer"
-              className="text-purple-300 underline mt-2 inline-block"
             >
               Open / Download File
             </a>
           </div>
         )}
       </div>
+
+      {/* ---------------- DOWNLOAD BUTTON ---------------- */}
+      <div className="flex justify-center mt-6">
+        <a
+          href={fileUrl}
+          download
+          className="
+            px-6 py-3 bg-purple-700 hover:bg-purple-800 
+            rounded-xl shadow-md shadow-purple-900/40 
+            text-white font-medium transition-all
+          "
+        >
+          ⬇ Download Note
+        </a>
+      </div>
+
     </div>
   );
 }

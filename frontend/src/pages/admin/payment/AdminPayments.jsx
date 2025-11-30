@@ -6,9 +6,13 @@ import "jspdf-autotable";
 import { Link } from "react-router-dom";
 import { FaFilePdf, FaFileExcel, FaUserCircle } from "react-icons/fa";
 import useGlobalSearch from "../../../hooks/useGlobalSearch";
+import Pagination from "../../../components/common/Pagination";
+
 
 export default function AdminPayments() {
 const { search } = useGlobalSearch("global-search");
+
+
 
   const [payments, setPayments] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -255,6 +259,14 @@ const { search } = useGlobalSearch("global-search");
             ))}
           </tbody>
         </table>
+        {/* PAGINATION */}
+              <div className="mt-10 flex justify-center">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  setCurrentPage={setCurrentPage}
+                />
+              </div>
 
         {/* EMPTY STATE */}
         {currentPayments.length === 0 && (

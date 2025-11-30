@@ -1,13 +1,13 @@
+// middlewares/auth.js
 const jwt = require("jsonwebtoken");
-
 const Admin = require("../models/Admin");
-const User = require("../models/User");
 const Mentor = require("../models/Mentor");
 const Student = require("../models/Student");
+const User = require("../models/User");
 
 /*
   MODEL PRIORITY ORDER
-  So we always check from highest privilege → lowest.
+  Highest privilege first so admin docs found first
 */
 const MODEL_ORDER = [
   { Model: Admin, role: "admin" },
@@ -18,67 +18,35 @@ const MODEL_ORDER = [
 
 module.exports = async (req, res, next) => {
   try {
-    // Read JWT token
     const header = req.headers.authorization || "";
     const token = header.startsWith("Bearer ") ? header.split(" ")[1] : null;
+    if (!token) return res.status(401).json({ message: "Token missing" });
 
-    if (!token) {
-      return res.status(401).json({ message: "Token missing" });
-    }
-
-    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decoded?.id) {
-      return res.status(401).json({ message: "Invalid token" });
-    }
+    if (!decoded?.id) return res.status(401).json({ message: "Invalid token" });
 
-    // Attempt lookup in all models
     let found = null;
-
     for (const entry of MODEL_ORDER) {
-      const { Model, role } = entry;
-
-      const doc = await Model.findById(decoded.id).select("-password");
+      const doc = await entry.Model.findById(decoded.id).select("-password");
       if (doc) {
-        found = { doc, role, Model };
+        found = { doc, role: entry.role, Model: entry.Model };
         break;
       }
     }
 
-    if (!found) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!found) return res.status(404).json({ message: "User not found" });
 
     const { doc, role, Model } = found;
 
-    // Build readable name
-    const name =
-      doc.name ||
-      `${doc.firstName || ""} ${doc.lastName || ""}`.trim();
+    // readable name
+    const name = doc.name || `${doc.firstName || ""} ${doc.lastName || ""}`.trim();
 
-    // -------------------------------------------------------
-    // 🔥 FINAL ROLE — FIXED FOR ALL COLLECTIONS
-    // -------------------------------------------------------
-    let finalRole = role; // detected role from collection
+    // final role adjustments
+    let finalRole = role;
+    if (role === "user" && doc.role === "admin") finalRole = "admin";
+    if (doc.role === "admin") finalRole = "admin";
+    if (doc.isSuperAdmin === true) finalRole = "admin"; // treat superadmin as admin in routes
 
-    // If stored in User model BUT marked admin → treat as admin
-    if (role === "user" && doc.role === "admin") {
-      finalRole = "admin";
-    }
-
-    // If admin document has its own role field
-    if (doc.role === "admin") {
-      finalRole = "admin";
-    }
-
-    // SuperAdmin override
-    if (doc.isSuperAdmin === true) {
-      finalRole = "admin";
-    }
-
-    // -------------------------------------------------------
-    // 🔥 BUILD req.user OBJECT
-    // -------------------------------------------------------
     req.user = {
       _id: doc._id,
       id: doc._id.toString(),
@@ -90,9 +58,8 @@ module.exports = async (req, res, next) => {
       isSuperAdmin: doc.isSuperAdmin === true,
     };
 
-    // These help later (profileRoutes)
-    req.model = Model; // model used
-    req.userDoc = doc; // raw DB doc
+    req.model = Model;
+    req.userDoc = doc;
 
     next();
   } catch (err) {

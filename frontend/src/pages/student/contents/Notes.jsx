@@ -1,9 +1,14 @@
-import React, { useEffect, useState } from "react";
+// src/pages/student/Notes.jsx
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../../utils/api";
 import SubjectTabs from "../components/SubjectTabs";
+import Pagination from "../../../components/common/Pagination";
 import { subjectMap } from "../../../utils/courseOptions";
 
+/* --------------------------------------------
+   ACTIVE USER INFO
+-------------------------------------------- */
 const activeGroup = localStorage.getItem("activeGroup");
 const activeStandard = localStorage.getItem("activeStandard");
 const activeBoard = localStorage.getItem("activeBoard");
@@ -13,19 +18,24 @@ const activeGroupCode = localStorage.getItem("activeGroupCode");
 
 export default function Notes() {
   const navigate = useNavigate();
-  const { subject } = useParams(); // ✅ subject from URL
+  const { subject } = useParams();
 
   const [notes, setNotes] = useState([]);
   const [subjects, setSubjects] = useState([]);
-  const [activeSubject, setActiveSubject] = useState(subject || null);
+  const [activeSubject, setActiveSubject] = useState(subject || "");
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const perPage = 6;
 
   const BASE_URL =
     import.meta.env.VITE_BASE_URL || "http://localhost:4000";
 
-  /* ===============================
-     GET SUBJECTS BASED ON GROUP
-  =============================== */
+  /* --------------------------------------------
+     SUBJECT LIST
+  -------------------------------------------- */
   const getSubjects = () => {
     const group = activeGroup?.toUpperCase();
     const standard = activeStandard;
@@ -33,40 +43,27 @@ export default function Notes() {
 
     if (!group) return [];
 
-    // ✅ ROOT / STEM / FLOWER / FRUIT / SEED
-    if (group !== "LEAF") {
-      return Array.isArray(subjectMap[group]) ? subjectMap[group] : [];
-    }
+    if (group !== "LEAF") return subjectMap[group] || [];
 
-    // ✅ LEAF - 9TH & 10TH
-    if (standard === "9th" || standard === "10th") {
+    if (standard === "9th" || standard === "10th")
       return subjectMap.LEAF?.[standard] || [];
-    }
 
-    // ✅ LEAF - 11TH & 12TH
-    if (standard === "11th" || standard === "12th") {
-      if (code === "BIO MATHS")
-        return subjectMap.LEAF?.[`${standard}-BIO MATHS`] || [];
-
-      if (code === "COMPUTER")
-        return subjectMap.LEAF?.[`${standard}-COMPUTER`] || [];
-
-      if (code === "COMMERCE")
-        return subjectMap.LEAF?.[`${standard}-COMMERCE`] || [];
-    }
+    if (standard === "11th" || standard === "12th")
+      return subjectMap.LEAF?.[`${standard}-${code}`] || [];
 
     return [];
   };
 
-  /* ===============================
+  /* --------------------------------------------
      LOAD NOTES
-  =============================== */
-  const fetchNotes = async (currentSubject = null, searchText = "") => {
+  -------------------------------------------- */
+  const loadNotes = async () => {
     try {
       setLoading(true);
 
-      const token = localStorage.getItem("token");
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const headers = localStorage.getItem("token")
+        ? { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        : {};
 
       const res = await api.get("/notes", {
         headers,
@@ -76,146 +73,167 @@ export default function Notes() {
           board: activeBoard,
           language: activeLanguage,
           groupCode: activeGroupCode,
-          subject: currentSubject,
-          search: searchText,
+          subject: activeSubject || undefined,
+          search: searchQuery || undefined,
         },
       });
 
       setNotes(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      console.error("Failed to load notes", err);
+      console.error("Failed to load notes:", err);
       setNotes([]);
     } finally {
       setLoading(false);
     }
   };
 
-  /* ===============================
+  /* --------------------------------------------
      FIRST LOAD
-  =============================== */
+  -------------------------------------------- */
   useEffect(() => {
-    const list = getSubjects();
-    setSubjects(list);
+    setSubjects(getSubjects());
 
     const saved = subject || localStorage.getItem("activeSubject");
+    if (saved) setActiveSubject(saved);
 
-    if (saved) {
-      setActiveSubject(saved);
-      fetchNotes(saved);
-    } else {
-      fetchNotes();
-    }
-  }, [subject]);
+    loadNotes();
+  }, [subject, activeSubject]);
 
-  /* ===============================
-     SEARCH SUPPORT
-  =============================== */
+  /* --------------------------------------------
+     GLOBAL SEARCH HANDLER
+  -------------------------------------------- */
   useEffect(() => {
     const handler = (e) => {
-      const text = e.detail || "";
-      fetchNotes(activeSubject, text);
+      const text = (e.detail || "").toString().trim();
+      setSearchQuery(text);
+      setCurrentPage(1);
     };
 
     window.addEventListener("global-search", handler);
     return () => window.removeEventListener("global-search", handler);
-  }, [activeSubject]);
+  }, []);
 
-  /* ===============================
-     SUBJECT TAB CLICK
-  =============================== */
-  const handleSubjectChange = (newSubject) => {
-    setActiveSubject(newSubject);
-    localStorage.setItem("activeSubject", newSubject);
-    fetchNotes(newSubject);
+  /* --------------------------------------------
+     SUBJECT CHANGE
+  -------------------------------------------- */
+  const handleSubjectChange = (sub) => {
+    setActiveSubject(sub);
+    setSearchQuery("");
+    setCurrentPage(1);
+    localStorage.setItem("activeSubject", sub);
   };
 
-  /* ===============================
-     UI
-  =============================== */
-  return (
-    <div className="min-h-screen bg-[#0b0f1a] p-8 text-gray-100">
+  /* --------------------------------------------
+     FILTERED NOTES
+  -------------------------------------------- */
+  const filteredNotes = useMemo(() => {
+    let list = [...notes];
 
-      {/* ===== HEADER ===== */}
-      <h1 className="text-3xl font-bold text-purple-400 mb-2">
-        Notes - {activeCourse}
+    if (searchQuery) {
+      const text = searchQuery.toLowerCase();
+      list = list.filter(
+        (n) =>
+          n.title?.toLowerCase().includes(text) ||
+          n.subject?.toLowerCase().includes(text) ||
+          n.lesson?.toLowerCase().includes(text)
+      );
+    }
+
+    return list;
+  }, [notes, searchQuery]);
+
+  /* --------------------------------------------
+     PAGINATION
+  -------------------------------------------- */
+  const totalPages = Math.ceil(filteredNotes.length / perPage);
+  const paginated = filteredNotes.slice(
+    (currentPage - 1) * perPage,
+    currentPage * perPage
+  );
+
+  /* --------------------------------------------
+     UI
+  -------------------------------------------- */
+  return (
+    <div className="min-h-screen bg-[#0b0f1a] text-gray-100 p-6 md:p-10">
+
+      {/* HEADER */}
+      <h1 className="text-2xl md:text-3xl font-extrabold text-purple-400 mb-2">
+        Notes – {activeCourse}
       </h1>
 
       <p className="text-gray-400 mb-6">
         {activeGroup} • {activeStandard} • {activeBoard} • {activeLanguage}
         {activeSubject && (
-          <>
-            {"  /  "}
-            <span className="text-blue-400 font-semibold">
-              {activeSubject}
-            </span>
-          </>
+          <span className="ml-2 text-blue-400 font-semibold">
+            / {activeSubject}
+          </span>
         )}
       </p>
 
-      {/* ===== SUBJECT TABS ===== */}
-      <div className="mb-10">
-        <SubjectTabs
-          subjects={subjects}
-          activeSubject={activeSubject}
-          onChange={handleSubjectChange}
-        />
-      </div>
+      {/* SUBJECT TABS */}
+      <SubjectTabs
+        subjects={subjects}
+        activeSubject={activeSubject}
+        onChange={handleSubjectChange}
+      />
 
-      {/* ===== NOTES TIMELINE ===== */}
-      <div className="mt-6 space-y-6 relative">
+      {/* LOADING */}
+      {loading && (
+        <p className="text-gray-400 mt-10 text-center">Loading notes...</p>
+      )}
 
-        {/* Side Line */}
-        <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-purple-900/40"></div>
+      {/* EMPTY */}
+      {!loading && filteredNotes.length === 0 && (
+        <p className="text-gray-400 mt-10 text-center">
+          No notes found for{" "}
+          <span className="text-purple-400">{activeSubject}</span>
+        </p>
+      )}
 
-        {loading && (
-          <div className="text-gray-400 ml-10">
-            Loading notes...
-          </div>
-        )}
+      {/* NOTES TIMELINE */}
+      <div className="relative mt-10 space-y-8">
 
-        {!loading && notes.length === 0 && (
-          <div className="text-gray-400 ml-10">
-            No notes found for{" "}
-            <span className="text-purple-400 font-semibold">
-              {activeSubject || "this course"}
-            </span>
-          </div>
-        )}
+        {/* Vertical Line */}
+        <div className="absolute left-5 md:left-10 top-0 bottom-0 w-[2px] bg-purple-900/40"></div>
 
-        {notes.map((note) => {
-          const thumb = note.thumbnail
+        {paginated.map((note) => {
+          const imageUrl = note.thumbnail
             ? `${BASE_URL}/${note.thumbnail.replace(/^\/+/, "")}`
             : "/default-thumbnail.png";
 
           return (
-            <div key={note._id} className="ml-10 relative group transition">
+            <div
+              key={note._id}
+              onClick={() => navigate(`/student/notes/view/${note._id}`)}
+              className="relative ml-12 md:ml-20 cursor-pointer group"
+            >
+              {/* Dot */}
+              <div className="absolute -left-7 md:-left-12 top-5 w-4 h-4 rounded-full bg-purple-600 shadow-lg shadow-purple-500/40"></div>
 
-              <div className="absolute -left-[34px] top-5 w-4 h-4 rounded-full bg-purple-600 shadow-lg shadow-purple-500/30"></div>
-
-              <div
-                className="
-                  bg-[#111827] 
-                  hover:bg-[#1a2338] 
-                  border border-purple-800/20 
-                  p-5 
-                  rounded-xl 
-                  shadow-lg 
-                  transition 
-                  flex items-start gap-5 
-                  cursor-pointer
-                "
-                onClick={() => navigate(`/student/notes/view/${note._id}`)}
-              >
-                <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+              {/* Card */}
+              <div className="
+                bg-[#111827]/80 
+                hover:bg-[#1a2338] 
+                border border-purple-800/30 
+                rounded-xl 
+                p-5 
+                shadow-lg 
+                flex 
+                gap-5 
+                transition 
+                hover:border-purple-500/50
+              ">
+                <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 shadow-md">
                   <img
-                    src={thumb}
+                    src={imageUrl}
                     onError={(e) => (e.target.src = "/default-thumbnail.png")}
                     className="w-full h-full object-cover"
                   />
                 </div>
 
                 <div>
-                  <h2 className="text-xl font-semibold text-purple-300">
+                  <h2 className="text-lg font-bold text-purple-300">
                     {note.title}
                   </h2>
 
@@ -223,8 +241,8 @@ export default function Notes() {
                     {note.subject} • {note.lesson}
                   </p>
 
-                  <p className="text-gray-300 mt-2 line-clamp-2 text-[15px]">
-                    {note.description || "No description available"}
+                  <p className="text-gray-300 mt-2 line-clamp-2 text-sm">
+                    {note.description || "No description available."}
                   </p>
                 </div>
               </div>
@@ -232,6 +250,13 @@ export default function Notes() {
           );
         })}
       </div>
+
+      {/* PAGINATION */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        setCurrentPage={setCurrentPage}
+      />
     </div>
   );
 }

@@ -41,32 +41,48 @@ export default function ChatList() {
   }, [currentUser?._id]);
 
   /* ============ LOAD CHATS ============ */
+  // FIXED USER MAPPING + UI
+
   useEffect(() => {
     const loadChats = async () => {
       try {
         const { data } = await api.get("/chat/list");
 
-        if (!data) return setItems([]);
+        if (!data || data.length === 0) {
+          setItems([]);
+          setMode("chats");
+          return;
+        }
 
         const mapped = data
           .map((chat) => {
-            const other = chat.participants?.find(
-              (u) => u?._id !== currentUser._id
+            // pick the recipient (NOT current user)
+            const otherUser = chat.participants?.find(
+              (p) => p?._id !== currentUser._id
             );
-            if (!other) return null;
+
+            if (!otherUser) return null;
 
             return {
               _id: chat._id,
-              user: other,
+
+              user: {
+                _id: otherUser._id,
+                firstName: otherUser.firstName || otherUser.name || "Unknown",
+                lastName: otherUser.lastName || "",
+                photo: otherUser.photo || "/default-avatar.png",
+                role: otherUser.role || "",
+              },
+
               lastMessage: chat.lastMessage || null,
-              unread: 0,
+              unread: chat.unreadCount || 0,
               isNew: false,
-              online: false,
             };
           })
           .filter(Boolean);
 
         setItems(mapped);
+        setMode("chats");
       } catch (err) {
         console.error("Load chats error:", err);
       }
@@ -117,16 +133,26 @@ export default function ChatList() {
 
   const openChat = async (targetUserId) => {
     try {
-      await api.post("/chat/access", { userId: targetUserId });
+      const res = await api.post("/chat/access", {
+        userId: targetUserId, // your backend name
+      });
+
+      if (!res.data?._id) {
+        console.warn("Chat access has no chatId");
+        return;
+      }
+
       navigate(`${basePath}/${targetUserId}`);
     } catch (err) {
-      console.error(err);
+      console.error("Open chat error:", err?.response?.data || err.message);
     }
   };
 
   /* ============ FILTER ============ */
   const filtered = items.filter((i) => {
-    const name = `${i?.user?.firstName || ""} ${i?.user?.lastName || ""}`.toLowerCase();
+    const name = `${i?.user?.firstName || ""} ${
+      i?.user?.lastName || ""
+    }`.toLowerCase();
     return name.includes(search);
   });
 
@@ -143,7 +169,8 @@ export default function ChatList() {
      ========================================================== */
 
   return (
-    <div className="
+    <div
+      className="
         h-full flex flex-col 
         bg-gradient-to-br from-[#0a0f1e] to-[#0f172a] 
         backdrop-blur-xl 
@@ -152,7 +179,8 @@ export default function ChatList() {
       "
     >
       {/* HEADER */}
-      <div className="
+      <div
+        className="
           p-5 border-b border-white/10 
           bg-white/5 backdrop-blur-md 
           flex justify-between items-center
@@ -201,7 +229,8 @@ export default function ChatList() {
               {/* LEFT */}
               <div className="flex items-center gap-4">
                 {/* Avatar */}
-                <div className="
+                <div
+                  className="
                     w-12 h-12 rounded-full bg-gradient-to-br 
                     from-blue-600 to-cyan-500 p-[2px]
                     shadow-lg shadow-blue-500/30
@@ -242,7 +271,8 @@ export default function ChatList() {
                 </span>
 
                 {item.unread > 0 && (
-                  <span className="
+                  <span
+                    className="
                       bg-green-400 text-black text-xs px-2 py-0.5 
                       rounded-full font-bold shadow-lg
                     "
