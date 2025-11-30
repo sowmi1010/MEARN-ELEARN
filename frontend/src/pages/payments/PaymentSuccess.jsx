@@ -65,7 +65,7 @@ export default function PaymentSuccess() {
         <div className="flex flex-col sm:flex-row justify-center gap-5 mt-10">
 
           <Link
-            to="/student/courses"
+            to="/student"
             className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-full font-bold shadow-lg hover:scale-105 transition"
           >
             Go To My Courses

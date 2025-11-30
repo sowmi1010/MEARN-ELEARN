@@ -32,7 +32,7 @@ export default function Certificate() {
           className="w-32 mb-4 opacity-60"
         />
         <p className="text-2xl text-purple-300 font-semibold">
-          No Certificates Yet 🎓
+          No Certificates Yet 
         </p>
         <p className="text-gray-400 text-sm mt-2">
           Complete a course to earn your first certificate

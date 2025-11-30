@@ -15,7 +15,7 @@ import {
   HiCheckBadge,
 } from "react-icons/hi2";
 
-/* 🚀 PREMIUM PERMISSION LIST */
+/* PREMIUM PERMISSION LIST */
 const availablePermissions = [
   { key: "dashboard", label: "Dashboard", icon: <HiOutlineChartBar /> },
   { key: "home", label: "Home Page", icon: <HiOutlineHome /> },

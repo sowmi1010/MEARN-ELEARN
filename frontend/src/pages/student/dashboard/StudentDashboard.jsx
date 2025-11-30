@@ -373,7 +373,7 @@ export default function StudentDashboard() {
         </div>
 
         <footer className="mt-6 text-center text-gray-500 text-sm">
-          Keep learning — small steps every day. 🚀
+          Keep learning — small steps every day.
         </footer>
       </div>
     </main>

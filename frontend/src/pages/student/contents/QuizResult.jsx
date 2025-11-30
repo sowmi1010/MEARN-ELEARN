@@ -183,7 +183,7 @@ export default function QuizResult() {
       </div>
 
       <footer className="mt-20 text-center text-gray-500 text-sm">
-        Keep practicing to improve your performance. 🚀
+        Keep practicing to improve your performance.
       </footer>
     </div>
   );

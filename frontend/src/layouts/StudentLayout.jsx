@@ -166,7 +166,7 @@ export default function StudentLayout() {
                   {user?.name || "User"}
                 </div>
                 <div className="text-xs text-gray-400">
-                  Welcome back 🎓
+                  Welcome back 
                 </div>
               </div>
             )}

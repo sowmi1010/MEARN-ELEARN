@@ -182,8 +182,8 @@ liveSocket(io);
    ✅ 11. Start Server
 ====================================================== */
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📡 API at http://localhost:${PORT}/api`);
+  console.log(`Server running on port ${PORT}`);
+  console.log(`API at http://localhost:${PORT}/api`);
 });
 
 module.exports = app;
