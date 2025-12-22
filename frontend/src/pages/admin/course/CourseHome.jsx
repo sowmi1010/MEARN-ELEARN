@@ -114,12 +114,13 @@ export default function CourseHome() {
           ))}
 
           {/* LIVE Button */}
-          <button
-            onClick={() => alert("Live feature coming soon!")}
-            className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold shadow-md hover:shadow-red-700 transition-all duration-200"
-          >
-            <FaBroadcastTower /> Live
-          </button>
+<button
+  onClick={() => navigate("/admin/courses/add-live")}
+  className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold shadow-md hover:shadow-red-700 transition-all duration-200"
+>
+  <FaBroadcastTower /> Live
+</button>
+
         </div>
       </div>
 

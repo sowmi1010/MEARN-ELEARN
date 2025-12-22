@@ -22,6 +22,7 @@ import {
   FaEye,
   FaEdit,
   FaPlus,
+  FaBroadcastTower,
 } from "react-icons/fa";
 
 /* CONSTANTS */
@@ -43,6 +44,7 @@ const tabs = [
   { key: "notes", label: "Notes", icon: <FaStickyNote /> },
   { key: "tests", label: "Tests", icon: <FaClipboardList /> },
   { key: "quiz", label: "Quiz", icon: <FaQuestionCircle /> },
+  { key: "live", label: "Live", icon: <FaBroadcastTower /> },
 ];
 
 export default function ContentManager() {
@@ -67,7 +69,8 @@ export default function ContentManager() {
 
   /* 🔍 GLOBAL SEARCH */
   const { search } = useGlobalSearch("global-search");
-  const safeSearch = typeof search === "string" ? search.toLowerCase().trim() : "";
+  const safeSearch =
+    typeof search === "string" ? search.toLowerCase().trim() : "";
 
   /* PAGINATION */
   const [currentPage, setCurrentPage] = useState(1);
@@ -81,32 +84,47 @@ export default function ContentManager() {
     const { standard } = filters;
     if (!standard) return [];
 
-    if (standard === "9th" || standard === "10th") return subjectMap.LEAF[standard];
+    if (standard === "9th" || standard === "10th")
+      return subjectMap.LEAF[standard];
 
     const groupCodes = items.map((i) => i.groupCode?.toUpperCase());
-    if (groupCodes.includes("BIO MATHS")) return subjectMap.LEAF[`${standard}-BIO MATHS`];
-    if (groupCodes.includes("COMPUTER")) return subjectMap.LEAF[`${standard}-COMPUTER`];
-    if (groupCodes.includes("COMMERCE")) return subjectMap.LEAF[`${standard}-COMMERCE`];
+    if (groupCodes.includes("BIO MATHS"))
+      return subjectMap.LEAF[`${standard}-BIO MATHS`];
+    if (groupCodes.includes("COMPUTER"))
+      return subjectMap.LEAF[`${standard}-COMPUTER`];
+    if (groupCodes.includes("COMMERCE"))
+      return subjectMap.LEAF[`${standard}-COMMERCE`];
 
     return [];
   };
 
   /* ENDPOINT */
-  const getEndpoint = () => ({
-    videos: "/videos",
-    books: "/books",
-    notes: "/notes",
-    tests: "/tests",
-    quiz: "/quizzes",
-  }[activeTab]);
+  const getEndpoint = () =>
+    ({
+      videos: "/videos",
+      books: "/books",
+      notes: "/notes",
+      tests: "/tests",
+      quiz: "/quizzes",
+      live: "/live",
+    }[activeTab]);
 
   /* ROUTES */
-  const getViewRoute = (id) => `/admin/courses/view/${activeTab.slice(0, -1)}/${id}`;
-  const getEditRoute = (id) => `/admin/courses/${activeTab}/edit/${id}`;
+  const getViewRoute = (id) =>
+    activeTab === "live"
+      ? `/admin/courses/view/live/${id}`
+      : `/admin/courses/view/${activeTab.slice(0, -1)}/${id}`;
+
+  const getEditRoute = (id) =>
+    activeTab === "live"
+      ? `/admin/courses/live/edit/${id}`
+      : `/admin/courses/${activeTab}/edit/${id}`;
 
   /* THUMBNAIL FIXER */
   const getThumbnailUrl = (item) =>
-    item?.thumbnail ? `${fileBase}/${item.thumbnail.replace(/\\/g, "/")}` : "/default-thumb.png";
+    item?.thumbnail
+      ? `${fileBase}/${item.thumbnail.replace(/\\/g, "/")}`
+      : "/default-thumb.png";
 
   /* API CALL */
   useEffect(() => {
@@ -163,7 +181,6 @@ export default function ContentManager() {
 
   return (
     <div className="p-8 bg-[#040711] text-white min-h-screen">
-
       {/* HEADER */}
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold text-blue-400">
@@ -172,13 +189,16 @@ export default function ContentManager() {
 
         <button
           onClick={() =>
-            navigate({
-              videos: "/admin/courses/add-video",
-              books: "/admin/courses/add-book",
-              notes: "/admin/courses/add-notes",
-              tests: "/admin/courses/add-test",
-              quiz: "/admin/courses/add-quiz",
-            }[activeTab])
+            navigate(
+              {
+                videos: "/admin/courses/add-video",
+                books: "/admin/courses/add-book",
+                notes: "/admin/courses/add-notes",
+                tests: "/admin/courses/add-test",
+                quiz: "/admin/courses/add-quiz",
+                      live: "/admin/courses/add-live", 
+              }[activeTab]
+            )
           }
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-5 py-2 rounded-xl font-semibold"
         >
@@ -206,22 +226,45 @@ export default function ContentManager() {
       {/* FILTER BOX */}
       <div className="bg-[#020617]/80 p-6 rounded-2xl border border-gray-800 mb-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <Dropdown
+            label="Standard"
+            name="standard"
+            value={filters.standard}
+            options={standardOptions[groupName] || []}
+            onChange={handleChange}
+          />
 
-          <Dropdown label="Standard" name="standard" value={filters.standard}
-            options={standardOptions[groupName] || []} onChange={handleChange} />
+          <Dropdown
+            label="Board"
+            name="board"
+            value={filters.board}
+            options={boardOptions}
+            onChange={handleChange}
+          />
 
-          <Dropdown label="Board" name="board" value={filters.board}
-            options={boardOptions} onChange={handleChange} />
+          <Dropdown
+            label="Language"
+            name="language"
+            value={filters.language}
+            options={languageOptions}
+            onChange={handleChange}
+          />
 
-          <Dropdown label="Language" name="language" value={filters.language}
-            options={languageOptions} onChange={handleChange} />
+          <Dropdown
+            label="Subject"
+            name="subject"
+            value={filters.subject}
+            options={getSubjects()}
+            onChange={handleChange}
+          />
 
-          <Dropdown label="Subject" name="subject" value={filters.subject}
-            options={getSubjects()} onChange={handleChange} />
-
-          <Dropdown label="Category" name="category" value={filters.category}
-            options={categories} onChange={handleChange} />
-
+          <Dropdown
+            label="Category"
+            name="category"
+            value={filters.category}
+            options={categories}
+            onChange={handleChange}
+          />
         </div>
       </div>
 
@@ -229,9 +272,7 @@ export default function ContentManager() {
       {loading ? (
         <p className="text-center text-blue-400 mt-10">Loading...</p>
       ) : currentItems.length === 0 ? (
-        <p className="text-center text-gray-500 mt-10">
-          No content found.
-        </p>
+        <p className="text-center text-gray-500 mt-10">No content found.</p>
       ) : (
         <>
           <div className="overflow-x-auto rounded-xl border border-gray-800 bg-[#020617] mb-6">
@@ -251,7 +292,10 @@ export default function ContentManager() {
 
               <tbody>
                 {currentItems.map((item, idx) => (
-                  <tr key={item._id} className="border-t border-gray-800 hover:bg-[#0b1120]">
+                  <tr
+                    key={item._id}
+                    className="border-t border-gray-800 hover:bg-[#0b1120]"
+                  >
                     <td className="p-4 text-gray-500">
                       {indexOfFirst + idx + 1}
                     </td>
@@ -277,20 +321,22 @@ export default function ContentManager() {
                     <td className="p-4">{item.category}</td>
 
                     <td className="p-4 flex justify-center gap-4">
-                      <FaEye className="cursor-pointer text-blue-400 text-lg"
+                      <FaEye
+                        className="cursor-pointer text-blue-400 text-lg"
                         onClick={() => navigate(getViewRoute(item._id))}
                       />
-                      <FaEdit className="cursor-pointer text-yellow-400 text-lg"
+                      <FaEdit
+                        className="cursor-pointer text-yellow-400 text-lg"
                         onClick={() => navigate(getEditRoute(item._id))}
                       />
-                      <FaTrash className="cursor-pointer text-red-400 text-lg"
+                      <FaTrash
+                        className="cursor-pointer text-red-400 text-lg"
                         onClick={() => handleDelete(item._id)}
                       />
                     </td>
                   </tr>
                 ))}
               </tbody>
-
             </table>
           </div>
 

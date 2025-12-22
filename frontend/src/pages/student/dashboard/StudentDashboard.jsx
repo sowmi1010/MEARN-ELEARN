@@ -5,6 +5,7 @@ import api from "../../../utils/api";
 import MyCoursesDropdown from "../../../components/student/MyCoursesDropdown";
 import ContinueLearning from "../../../components/student/ContinueLearning";
 import PerformanceChart from "../../../components/student/PerformanceChart";
+import UpcomingLive from "../../../components/student/UpcomingLive";
 
 import { FaChartLine, FaListUl, FaBolt, FaClock } from "react-icons/fa";
 
@@ -15,7 +16,8 @@ const ALLOWED_LANGUAGES = ["Tamil", "English"];
 function isAllowedCourse(course) {
   if (!course) return false;
   if (course.board && !ALLOWED_BOARDS.includes(course.board)) return false;
-  if (course.language && !ALLOWED_LANGUAGES.includes(course.language)) return false;
+  if (course.language && !ALLOWED_LANGUAGES.includes(course.language))
+    return false;
   return true;
 }
 
@@ -45,6 +47,7 @@ export default function StudentDashboard() {
 
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [upcomingLives, setUpcomingLives] = useState([]);
 
   const [progress, setProgress] = useState({
     hoursWatched: 0,
@@ -67,7 +70,9 @@ export default function StudentDashboard() {
     setLoading(true);
     try {
       const payRes = await api.get("/student/dashboard/payments", { headers });
-      const list = Array.isArray(payRes.data.payments) ? payRes.data.payments : [];
+      const list = Array.isArray(payRes.data.payments)
+        ? payRes.data.payments
+        : [];
 
       const purchased = [];
 
@@ -81,6 +86,7 @@ export default function StudentDashboard() {
           board: meta.board,
           language: meta.language,
           groupCode: meta.groupCode,
+          subject: meta.subject, // 🔥 ADD THIS
           title: meta.title,
         };
 
@@ -96,7 +102,8 @@ export default function StudentDashboard() {
       let active = null;
 
       const savedName = localStorage.getItem("activeCourse");
-      if (savedName) active = purchased.find((c) => getCourseName(c) === savedName);
+      if (savedName)
+        active = purchased.find((c) => getCourseName(c) === savedName);
 
       if (!active && purchased.length > 0) active = purchased[0];
 
@@ -115,6 +122,36 @@ export default function StudentDashboard() {
       setLoading(false);
     }
   }, [headers]);
+  const loadUpcomingLives = async (course) => {
+    if (!course) return;
+
+    const subject = course.subject || localStorage.getItem("activeSubject");
+
+    try {
+      const res = await api.get("/live/upcoming", {
+        params: {
+          group: course.group,
+          standard: course.standard,
+          groupCode: course.groupCode,
+          board: course.board,
+          language: course.language,
+          subject, // ✅ FINAL FIX
+        },
+      });
+
+      console.log("UPCOMING LIVES", res.data);
+      setUpcomingLives(res.data || []);
+    } catch (err) {
+      console.error("Upcoming live error:", err);
+      setUpcomingLives([]);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedCourse) {
+      loadUpcomingLives(selectedCourse);
+    }
+  }, [selectedCourse]);
 
   /* ================= Fetch Progress & Todos ================= */
   useEffect(() => {
@@ -157,6 +194,12 @@ export default function StudentDashboard() {
     loadOverview();
   }, []);
 
+  useEffect(() => {
+    if (selectedCourse) {
+      loadUpcomingLives(selectedCourse);
+    }
+  }, [selectedCourse]);
+
   /* ================= Local Storage Sync ================= */
   function syncLocalStorage(course) {
     localStorage.setItem("activeCourse", getCourseName(course));
@@ -164,8 +207,8 @@ export default function StudentDashboard() {
     localStorage.setItem("activeStandard", course.standard || "");
     localStorage.setItem("activeBoard", course.board || "");
     localStorage.setItem("activeLanguage", course.language || "");
-    localStorage.setItem("activeSubject", course.title || "");
     localStorage.setItem("activeGroupCode", course.groupCode || "");
+    localStorage.setItem("activeSubject", course.subject || "");
   }
 
   function clearStorage() {
@@ -182,6 +225,7 @@ export default function StudentDashboard() {
   const handleSelect = (course) => {
     setSelectedCourse(course);
     syncLocalStorage(course);
+    loadUpcomingLives(course);
     setRefreshKey((k) => k + 1);
   };
 
@@ -280,6 +324,9 @@ export default function StudentDashboard() {
             </div>
 
             <ContinueLearning selectedCourse={selectedCourse} />
+
+            {/* 🔴 UPCOMING LIVE */}
+            <UpcomingLive events={upcomingLives} />
           </aside>
         </div>
 
@@ -320,7 +367,11 @@ export default function StudentDashboard() {
 
                     <button
                       onClick={async () => {
-                        await api.put(`/todos/toggle/${t._id}`, {}, { headers });
+                        await api.put(
+                          `/todos/toggle/${t._id}`,
+                          {},
+                          { headers }
+                        );
                         const res = await api.get("/todos", { headers });
                         setTodos(res.data.todos || []);
                         setProgress((prev) => ({

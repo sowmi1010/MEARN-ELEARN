@@ -166,8 +166,11 @@ const BookForm = React.lazy(() => import("./pages/admin/course/form/BookForm"));
 const NotesForm = React.lazy(() =>
   import("./pages/admin/course/form/NotesForm")
 );
+const LiveForm = React.lazy(() => import("./pages/admin/course/form/LiveForm"))
 const TestForm = React.lazy(() => import("./pages/admin/course/form/TestForm"));
 const QuizForm = React.lazy(() => import("./pages/admin/course/form/QuizForm"));
+const ViewLive = React.lazy(() => import("./pages/admin/course/view/ViewLive"));
+
 
 const ViewVideo = React.lazy(() =>
   import("./pages/admin/course/view/ViewVideo")
@@ -184,6 +187,8 @@ const ViewBook = React.lazy(() =>
 const ViewQuiz = React.lazy(() =>
   import("./pages/admin/course/view/ViewQuiz")
 );
+
+
 
 /* Admin Chat */
 const ChatList = React.lazy(() => import("./pages/admin/chat/ChatList"));
@@ -342,16 +347,16 @@ function AnimatedRoutes() {
             <Route path="courses/tests/edit/:id" element={<TestForm />} />
             <Route path="courses/add-quiz" element={<QuizForm />} />
             <Route path="courses/quiz/edit/:id" element={<QuizForm />} />
-
+            <Route path="courses/add-live" element={<LiveForm />} />
+            <Route path="courses/live/edit/:id" element={<LiveForm />} />
             <Route path="courses/view/video/:id" element={<ViewVideo />} />
             <Route path="courses/view/note/:id" element={<ViewNotes />} />
             <Route path="courses/view/test/:id" element={<ViewTest />} />
             <Route path="courses/view/book/:id" element={<ViewBook />} />
             <Route path="courses/view/quiz/:id" element={<ViewQuiz />} />
-
+            <Route path="courses/view/live/:id" element={<ViewLive />} />
             <Route path="team" element={<ChatList />} />
             <Route path="team/:userId" element={<ChatWindow />} />
-
             <Route path="settings" element={<ProfileSettings />} />
           </Route>
         </Route>
