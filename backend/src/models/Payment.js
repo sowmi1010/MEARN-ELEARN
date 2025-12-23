@@ -8,7 +8,7 @@ const paymentSchema = new mongoose.Schema(
       required: true,
     },
 
-    // Optional real DB course (not used for group bundles)
+    // ✅ OPTIONAL: for static group payments
     course: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Course",
@@ -17,18 +17,18 @@ const paymentSchema = new mongoose.Schema(
 
     provider: {
       type: String,
-      enum: ["razorpay", "stripe", "demo"],
+      enum: ["demo", "razorpay", "stripe"],
       default: "demo",
     },
 
     providerPaymentId: {
       type: String,
-      required: true,
+      default: () => `DEMO_${Date.now()}`,
     },
 
     amount: {
       type: Number,
-      default: 0,
+      required: true,
     },
 
     currency: {
@@ -38,21 +38,18 @@ const paymentSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["created", "successful", "failed"],
+      enum: ["successful", "failed"],
       default: "successful",
     },
 
-    // ✅ EXTENDED METADATA
     metadata: {
-      title: { type: String },      // ROOT MONTHLY / PYTHON / TNPSC etc
-      group: { type: String },      // root / stem / leaf / seed / flower
-
-      // ✅ NEW FIELDS
-      standard: { type: String },   // 4th / 5th / 10th
-      board: { type: String },      // CBSE / Tamil Nadu
-      language: { type: String },   // English / Tamil
-      groupCode: { type: String },  // For Leaf only
-      planType: { type: String },   // monthly / yearly
+      title: String,
+      group: String,
+      standard: String,
+      board: String,
+      language: String,
+      groupCode: String,
+      planType: String,
     },
   },
   { timestamps: true }

@@ -64,6 +64,7 @@ export default function PaymentPage() {
           title: course.title,
           price: course.price,
           group: course.group || courseId,
+          planType: course.title?.includes("YEARLY") ? "yearly" : "monthly",
 
           standard: course.standard || null,
           board: course.board || null,
@@ -77,7 +78,6 @@ export default function PaymentPage() {
 
       toast.success("✅ Payment saved successfully!");
       navigate("/payment-success", { state: course });
-
     } catch (err) {
       console.error(err);
       toast.error("Payment Failed");
@@ -88,13 +88,11 @@ export default function PaymentPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#050b18] flex items-center justify-center px-4 py-12">
-
       {/* Floating blur blobs */}
       <div className="absolute top-20 left-10 w-60 h-60 bg-indigo-400/20 blur-3xl rounded-full" />
       <div className="absolute bottom-20 right-10 w-60 h-60 bg-pink-400/20 blur-3xl rounded-full" />
 
       <div className="relative w-full max-w-2xl bg-white/80 dark:bg-[#0d172b]/90 backdrop-blur-2xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 md:p-10 shadow-[0_25px_70px_rgba(15,23,42,0.4)]">
-
         {/* HEADER */}
         <div className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-extrabold text-indigo-600 dark:text-indigo-400">
@@ -125,9 +123,7 @@ export default function PaymentPage() {
           )}
 
           {course.groupCode && (
-            <p className="text-xs text-yellow-500 mt-1">
-              {course.groupCode}
-            </p>
+            <p className="text-xs text-yellow-500 mt-1">{course.groupCode}</p>
           )}
         </div>
 
@@ -171,9 +167,11 @@ export default function PaymentPage() {
           onClick={handlePay}
           disabled={processing}
           className={`mt-8 w-full py-4 rounded-2xl text-white text-lg font-bold shadow-xl transition-all duration-300
-            ${processing
-              ? "bg-gray-500 cursor-not-allowed"
-              : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:scale-[1.03] hover:shadow-2xl"}
+            ${
+              processing
+                ? "bg-gray-500 cursor-not-allowed"
+                : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:scale-[1.03] hover:shadow-2xl"
+            }
           `}
         >
           {processing ? "Processing Payment..." : "Confirm & Pay"}
@@ -183,7 +181,6 @@ export default function PaymentPage() {
         <p className="mt-4 text-xs text-center text-gray-400">
           By continuing, you agree to Last Try Academy’s terms & policies.
         </p>
-
       </div>
     </div>
   );

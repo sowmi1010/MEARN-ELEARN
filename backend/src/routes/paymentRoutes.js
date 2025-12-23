@@ -9,9 +9,8 @@ const Course = require("../models/Course");
 const mongoose = require("mongoose");
 
 
-// ---------------------------------------------
-// 🔥 DEMO PAYMENT — FIXED (Stores full group info)
-// ---------------------------------------------
+const Enrollment = require("../models/Enrollment");
+
 router.post("/demo-pay", auth, async (req, res) => {
   try {
     const {
@@ -23,6 +22,7 @@ router.post("/demo-pay", auth, async (req, res) => {
       board,
       language,
       groupCode,
+      planType = "monthly", // ✅ DEFAULT
     } = req.body;
 
     const userId = req.user.id;
@@ -31,11 +31,11 @@ router.post("/demo-pay", auth, async (req, res) => {
       return res.status(400).json({ message: "Title or Price missing" });
     }
 
-    // Check valid DB course
     const course = mongoose.Types.ObjectId.isValid(courseId)
       ? await Course.findById(courseId)
       : null;
 
+    // ✅ SAVE PAYMENT
     const payment = await Payment.create({
       user: userId,
       course: course ? course._id : null,
@@ -43,8 +43,6 @@ router.post("/demo-pay", auth, async (req, res) => {
       providerPaymentId: "DEMO_" + Date.now(),
       amount: Number(price),
       status: "successful",
-
-      // ✅ ALL DATA SAVED HERE
       metadata: {
         title,
         group,
@@ -52,7 +50,28 @@ router.post("/demo-pay", auth, async (req, res) => {
         board,
         language,
         groupCode,
+        planType,
       },
+    });
+
+    // ✅ CALCULATE DATES
+    const startDate = new Date();
+    const endDate = new Date(startDate);
+
+    if (planType === "yearly") {
+      endDate.setFullYear(endDate.getFullYear() + 1);
+    } else {
+      endDate.setMonth(endDate.getMonth() + 1);
+    }
+
+    // ✅ CREATE ENROLLMENT (THIS WAS FAILING)
+    await Enrollment.create({
+      student: userId,
+      course: course ? course._id : null,
+      payment: payment._id,
+      planType,
+      startDate,
+      endDate, // ✅ REQUIRED FIELD
     });
 
     res.json({
@@ -65,6 +84,7 @@ router.post("/demo-pay", auth, async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
 
 
 // ---------------------------------------------
